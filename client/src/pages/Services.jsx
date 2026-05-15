@@ -228,67 +228,6 @@ const Services = () => {
     stored = stored.slice(0, 5);
 
     localStorage.setItem("recentWorkers", JSON.stringify(stored));
-
-            </div>
-      {/* HEADER */}
-      {/* HERO + SEARCH SECTION */}
-
-<section className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-
-    <div className="max-w-3xl">
-
-      {/* LABEL */}
-
-      <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-2 rounded-full text-sm font-medium text-blue-100 mb-6">
-        🚀 Trusted Local Professionals
-      </div>
-
-      {/* TITLE */}
-
-      <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight tracking-tight">
-        Find Skilled Professionals Near You
-      </h1>
-
-      {/* DESCRIPTION */}
-
-      <p className="text-slate-300 mt-6 text-lg leading-relaxed max-w-2xl">
-        Compare ratings, pricing and availability before booking trusted experts for your home services.
-      </p>
-
-      {/* SEARCH CONTAINER */}
-
-      <div className="bg-white rounded-3xl p-4 sm:p-5 mt-10 shadow-xl border border-white/10">
-
-        {/* SEARCH ROW */}
-
-        <div className="flex flex-col lg:flex-row gap-4">
-
-          {/* SEARCH INPUT */}
-
-          <div className="relative flex-1">
-
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
-              🔍
-            </span>
-
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search electricians, plumbers..."
-              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-            />
-
-          </div>
-
-          {/* SORT */}
-
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-5 py-4 rounded-2xl border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-    setRecentWorkers(stored);
   };
 
   return (
@@ -375,27 +314,6 @@ const Services = () => {
   </div>
 
 </section>
-        <div className="flex flex-wrap justify-center gap-2">
-          {categories.map((category) => (
-            <button
-              key={category}
-              type="button"
-              onClick={() => setCategoryFilter(category)}
-              className={`rounded-full border px-5 py-2 text-sm font-semibold transition ${
-                categoryFilter === category
-                  ? "border-blue-600 bg-blue-600 text-white"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-blue-400 hover:text-blue-600"
-              }`}
-            >
-              {category !== "All" && iconMap[category] && (
-                <span className="mr-2">{iconMap[category]}</span>
-              )}
-
-              {category}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {recentWorkers.length > 0 && (
         <div className="mb-14">

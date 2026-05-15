@@ -19,94 +19,78 @@ const Icon = ({ children, className = "" }) => (
 
 const IconSearch = ({ className = "" }) => (
   <Icon className={className}>
-    <circle cx="11" cy="11" r="7" />
-    <path d="M20 20l-3.5-3.5" />
-  </Icon>
-);
+      {/* HOW IT WORKS SECTION */}
+      <section id="how-it-works" className="bg-slate-50 py-24">
+        <div className="mx-auto max-w-7xl px-4 text-center">
+          <h2 className="mb-4 text-5xl font-extrabold text-slate-900">
+            How it works
+          </h2>
 
-const IconCalendar = ({ className = "" }) => (
-  <Icon className={className}>
-    <rect x="4" y="5.5" width="16" height="15" rx="2.5" />
-    <path d="M8 3.5v4" />
-    <path d="M16 3.5v4" />
-    <path d="M4 9h16" />
-  </Icon>
-);
+          <p className="mb-16 text-lg text-slate-600">
+            Three simple steps to get it done.
+          </p>
 
-const IconCheckCircle = ({ className = "" }) => (
-  <Icon className={className}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M8.5 12.5l2.2 2.2L16 9.5" />
-  </Icon>
-);
+          <div className="grid gap-14 md:grid-cols-3">
+            {[
+              {
+                step: "1",
+                title: "Search and Select",
+                desc: "Browse profiles and read reviews.",
+                IconComp: IconSearch,
+              },
+              {
+                step: "2",
+                title: "Book Directly",
+                desc: "Schedule appointments instantly.",
+                IconComp: IconCalendar,
+              },
+              {
+                step: "3",
+                title: "Relax and Enjoy",
+                desc: "Let the expert handle the job.",
+                IconComp: IconCheckCircle,
+              },
+            ].map((step) => (
+              <div key={step.step} className="relative">
+                <div className="mx-auto mb-6 flex h-[92px] w-[92px] items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
+                  <step.IconComp className="h-11 w-11 text-slate-900" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">
+                  {step.step}. {step.title}
+                </h3>
+                <p className="mx-auto mt-2 max-w-xs text-slate-600">
+                  {step.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-const IconBolt = ({ className = "" }) => (
-  <Icon className={className}>
-    <path d="M13 2L4 14h7l-1 8 10-14h-7z" />
-  </Icon>
-);
-
-const IconPipe = ({ className = "" }) => (
-  <Icon className={className}>
-    <path d="M8 6h6a3 3 0 013 3v2" />
-    <path d="M17 11h-6a3 3 0 00-3 3v4" />
-    <path d="M7 18h2" />
-    <path d="M15 6h2" />
-  </Icon>
-);
-
-const IconSaw = ({ className = "" }) => (
-  <Icon className={className}>
-    <path d="M5 15l7-7 7 7" />
-    <path d="M6.5 13.5l-2 2" />
-    <path d="M17.5 13.5l2 2" />
-    <path d="M8 17h8" />
-  </Icon>
-);
-
-const IconBrush = ({ className = "" }) => (
-  <Icon className={className}>
-    <path d="M14 3l7 7-7 7-7-7z" />
-    <path d="M7 14l-3 7" />
-    <path d="M5 18h4" />
-  </Icon>
-);
-
-const IconBroom = ({ className = "" }) => (
-  <Icon className={className}>
-    <path d="M10 3l8 8" />
-    <path d="M9 8l7 7" />
-    <path d="M3 21l6-6" />
-    <path d="M5 19l3 3" />
-  </Icon>
-);
-
-const IconSnowflake = ({ className = "" }) => (
-  <Icon className={className}>
-    <path d="M12 2v20" />
-    <path d="M4.5 6.5l15 11" />
-    <path d="M19.5 6.5l-15 11" />
-  </Icon>
-);
-
-const IconBug = ({ className = "" }) => (
-  <Icon className={className}>
-    <path d="M9 9h6" />
-    <path d="M10 6l2-2 2 2" />
-    <rect x="8" y="9" width="8" height="10" rx="4" />
-    <path d="M6 13h2" />
-    <path d="M16 13h2" />
-    <path d="M7 19l-2 2" />
-    <path d="M17 19l2 2" />
-  </Icon>
-);
-
-const ALL_WORKERS = [
-  {
-    id: 1,
-    name: "John Doe",
-    profession: "Electrician",
-    rating: 4.8,
+      {/* CTA SECTION */}
+      <section className="bg-[#0056D2] py-20 text-center text-white">
+        <div className="mx-auto max-w-3xl px-4">
+          <h2 className="mb-4 text-4xl font-extrabold">Need help today?</h2>
+          <p className="mb-8 text-lg text-white/80">
+            Book trusted professionals in minutes and get your home back on
+            track.
+          </p>
+          <div className="flex flex-col justify-center gap-4 sm:flex-row">
+            <Link
+              to="/services"
+              className="rounded-xl bg-white px-8 py-3 font-semibold text-[#0056D2] shadow-sm transition hover:bg-slate-100"
+            >
+              Find a Pro
+            </Link>
+            <Link
+              to="/worker-register"
+              className="rounded-xl border border-white/40 px-8 py-3 font-semibold text-white transition hover:bg-white/10"
+            >
+              Become a Pro
+            </Link>
+          </div>
+        </div>
+      </section>
     price: "$40/hr",
     availability: "Available today",
     responseTime: "Replies in 20 min",
@@ -322,8 +306,7 @@ const Home = () => {
 
       {/* STATS SECTION */}
       <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div className="mx-auto max-w-7xl px-4 grid grid-cols-2 gap-6 md:grid-cols-4">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 sm:px-6 lg:grid-cols-4 lg:px-8">
           {[
             { number: "10K+", label: "Happy Customers" },
             { number: "500+", label: "Verified Pros" },
@@ -331,8 +314,6 @@ const Home = () => {
             { number: "4.9/5", label: "Rating" },
           ].map((item) => (
             <div
-              key={idx}
-              className="bg-white rounded-3xl p-8 text-center shadow-sm border flex flex-col justify-center min-h-[180px]"
               key={item.label}
               className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm transition hover:shadow-xl"
             >
@@ -507,10 +488,10 @@ const Home = () => {
             How it works
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-8 mt-16 items-stretch">
           <p className="mb-16 text-lg text-slate-600">
             Three simple steps to get it done.
           </p>
+
           <div className="grid gap-14 md:grid-cols-3">
             {[
               {
@@ -531,13 +512,6 @@ const Home = () => {
                 desc: "Let the expert handle the job.",
                 IconComp: IconCheckCircle,
               },
-            ].map((item) => (
-              <div
-                key={item.step}
-                className="bg-white rounded-3xl p-10 border shadow-sm flex flex-col items-center text-center h-full"
-              >
-                <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold mx-auto">
-                  {item.step}
             ].map((step) => (
               <div key={step.step} className="relative">
                 <div className="mx-auto mb-6 flex h-[92px] w-[92px] items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
@@ -555,15 +529,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 bg-blue-600 text-white text-center">
-        <div className="max-w-3xl mx-auto px-6 flex flex-col items-center">
-          <h2 className="text-5xl font-extrabold">
-            Need Help Today?
-          </h2>
-
-          <p className="mt-5 text-lg text-blue-100">
-            Hire trusted professionals in minutes.
       {/* CTA SECTION */}
       <section className="bg-[#0056D2] py-20 text-center text-white">
         <div className="mx-auto max-w-3xl px-4">
