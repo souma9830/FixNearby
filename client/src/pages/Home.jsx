@@ -19,78 +19,86 @@ const Icon = ({ children, className = "" }) => (
 
 const IconSearch = ({ className = "" }) => (
   <Icon className={className}>
-      {/* HOW IT WORKS SECTION */}
-      <section id="how-it-works" className="bg-slate-50 py-24">
-        <div className="mx-auto max-w-7xl px-4 text-center">
-          <h2 className="mb-4 text-5xl font-extrabold text-slate-900">
-            How it works
-          </h2>
+    <circle cx="11" cy="11" r="7" />
+    <line x1="16.65" y1="16.65" x2="21" y2="21" />
+  </Icon>
+);
 
-          <p className="mb-16 text-lg text-slate-600">
-            Three simple steps to get it done.
-          </p>
+const IconCalendar = ({ className = "" }) => (
+  <Icon className={className}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </Icon>
+);
 
-          <div className="grid gap-14 md:grid-cols-3">
-            {[
-              {
-                step: "1",
-                title: "Search and Select",
-                desc: "Browse profiles and read reviews.",
-                IconComp: IconSearch,
-              },
-              {
-                step: "2",
-                title: "Book Directly",
-                desc: "Schedule appointments instantly.",
-                IconComp: IconCalendar,
-              },
-              {
-                step: "3",
-                title: "Relax and Enjoy",
-                desc: "Let the expert handle the job.",
-                IconComp: IconCheckCircle,
-              },
-            ].map((step) => (
-              <div key={step.step} className="relative">
-                <div className="mx-auto mb-6 flex h-[92px] w-[92px] items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm">
-                  <step.IconComp className="h-11 w-11 text-slate-900" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">
-                  {step.step}. {step.title}
-                </h3>
-                <p className="mx-auto mt-2 max-w-xs text-slate-600">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+const IconCheckCircle = ({ className = "" }) => (
+  <Icon className={className}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="9 12 11 14 15 10" />
+  </Icon>
+);
 
-      {/* CTA SECTION */}
-      <section className="bg-[#0056D2] py-20 text-center text-white">
-        <div className="mx-auto max-w-3xl px-4">
-          <h2 className="mb-4 text-4xl font-extrabold">Need help today?</h2>
-          <p className="mb-8 text-lg text-white/80">
-            Book trusted professionals in minutes and get your home back on
-            track.
-          </p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <Link
-              to="/services"
-              className="rounded-xl bg-white px-8 py-3 font-semibold text-[#0056D2] shadow-sm transition hover:bg-slate-100"
-            >
-              Find a Pro
-            </Link>
-            <Link
-              to="/worker-register"
-              className="rounded-xl border border-white/40 px-8 py-3 font-semibold text-white transition hover:bg-white/10"
-            >
-              Become a Pro
-            </Link>
-          </div>
-        </div>
-      </section>
+const IconBolt = ({ className = "" }) => (
+  <Icon className={className}>
+    <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </Icon>
+);
+
+const IconPipe = ({ className = "" }) => (
+  <Icon className={className}>
+    <path d="M7 7h6a4 4 0 0 1 4 4v6" />
+    <circle cx="7" cy="7" r="2" />
+    <circle cx="17" cy="17" r="2" />
+  </Icon>
+);
+
+const IconSaw = ({ className = "" }) => (
+  <Icon className={className}>
+    <path d="M3 17l5-5 3 3 5-5 5 5" />
+  </Icon>
+);
+
+const IconBrush = ({ className = "" }) => (
+  <Icon className={className}>
+    <path d="M14 4l6 6" />
+    <path d="M4 20c2 0 4-2 4-4 0-1 1-2 2-2" />
+    <path d="M12 12l8-8" />
+  </Icon>
+);
+
+const IconSnowflake = ({ className = "" }) => (
+  <Icon className={className}>
+    <line x1="12" y1="2" x2="12" y2="22" />
+    <line x1="2" y1="12" x2="22" y2="12" />
+    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+    <line x1="19.07" y1="4.93" x2="4.93" y2="19.07" />
+  </Icon>
+);
+
+const IconBroom = ({ className = "" }) => (
+  <Icon className={className}>
+    <line x1="6" y1="4" x2="18" y2="16" />
+    <path d="M3 21h8l3-3-8-8-3 3z" />
+  </Icon>
+);
+
+const IconBug = ({ className = "" }) => (
+  <Icon className={className}>
+    <path d="M8 9h8v8a4 4 0 0 1-8 0z" />
+    <line x1="12" y1="5" x2="12" y2="9" />
+    <line x1="5" y1="12" x2="8" y2="12" />
+    <line x1="16" y1="12" x2="19" y2="12" />
+  </Icon>
+);
+
+const ALL_WORKERS = [
+  {
+    id: 1,
+    name: "John Doe",
+    profession: "Electrician",
+    rating: 4.8,
     price: "$40/hr",
     availability: "Available today",
     responseTime: "Replies in 20 min",
@@ -239,21 +247,6 @@ const Home = () => {
 
   return (
     <div className="bg-white">
-      {/* HERO */}
-      <section className="relative">
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-[36px] overflow-hidden shadow-2xl min-h-[500px]">
-            <img
-              src="/hero-section.png"
-              alt="Hero"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-center">
-              <div className="text-white max-w-3xl px-6">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight tracking-tight">
-                  Trusted Home Services Near You
-                </h1>
       {/* HERO SECTION */}
       <section className="relative overflow-hidden bg-white">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
@@ -365,7 +358,7 @@ const Home = () => {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-            {workers.map((worker) => {
+            {ALL_WORKERS.map((worker) => {
               const WorkerIcon =
                 workerIconMap[worker.profession] || IconBolt;
 
