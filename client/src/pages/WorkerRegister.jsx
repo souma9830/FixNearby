@@ -14,6 +14,7 @@ const WorkerRegister = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleChange = (e) => {
     setFormData({
@@ -21,6 +22,24 @@ const WorkerRegister = () => {
       [e.target.name]: e.target.value,
     });
     if(error) setError("");
+    if(fieldErrors[e.target.name]) {
+      setFieldErrors({ ...fieldErrors, [e.target.name]: "" });
+    }
+  };
+
+  const fieldMessages = {
+    name: "Please enter your full name",
+    category: "Please select a service category",
+    experience: "Please enter your years of experience",
+    location: "Please enter your location",
+    contact: "Please enter your contact number",
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    if (!value.trim()) {
+      setFieldErrors((prev) => ({ ...prev, [name]: fieldMessages[name] }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -42,6 +61,7 @@ const WorkerRegister = () => {
         location: "",
         contact: "",
       });
+      setFieldErrors({});
 
     } catch (err) {
       setError(err.message || "Worker Registration failed, Try again");
@@ -49,9 +69,9 @@ const WorkerRegister = () => {
       setLoading(false);
     }
   };
-     //                 INPUT STYLE
-   const inputStyles = (field) =>
-    `appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md`;
+
+  //                 INPUT STYLE
+  const inputStyles = `appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`;
 
   return (
     <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -69,73 +89,104 @@ const WorkerRegister = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
 
-          <div className="rounded-md shadow-sm space-y-4">
+          <div className="flex flex-col gap-4">
 
             {/* Name */}
-            <input
-              type="text"
-              name="name"
-              placeholder="Full Name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className={inputStyles["name"]}
-            />
+            <div>
+              <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={formData.name}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+                className={inputStyles}
+              />
+              {fieldErrors.name && (
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.name}</p>
+              )}
+            </div>
 
             {/* Category */}
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              required
-              className={inputStyles["category"]}
-            >
-              <option value="">Select Service Category</option>
-              <option value="Electrician">Electrician</option>
-              <option value="Plumber">Plumber</option>
-              <option value="Carpenter">Carpenter</option>
-              <option value="Painter">Painter</option>
-              <option value="AC Technician">AC Technician</option>
-              <option value="Cleaner">Cleaner</option>
-              <option value="Mechanic">Mechanic</option>
-              <option value="Gardener">Gardener</option>
-              <option value="Appliance Repair">Appliance Repair</option>
-              <option value="Pest Control">Pest Control</option>
-            </select>
+            <div>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+                className={inputStyles}
+              >
+                <option value="">Select Service Category</option>
+                <option value="Electrician">Electrician</option>
+                <option value="Plumber">Plumber</option>
+                <option value="Carpenter">Carpenter</option>
+                <option value="Painter">Painter</option>
+                <option value="AC Technician">AC Technician</option>
+                <option value="Cleaner">Cleaner</option>
+                <option value="Mechanic">Mechanic</option>
+                <option value="Gardener">Gardener</option>
+                <option value="Appliance Repair">Appliance Repair</option>
+                <option value="Pest Control">Pest Control</option>
+              </select>
+              {fieldErrors.category && (
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.category}</p>
+              )}
+            </div>
 
             {/* Experience */}
-            <input
-              type="number"
-              min="0"
-              name="experience"
-              placeholder="Experience (e.g. 3 years)"
-              value={formData.experience}
-              onChange={handleChange}
-              required
-              className={inputStyles["experience"]}
-            />
+            <div>
+              <input
+                type="number"
+                min="0"
+                name="experience"
+                placeholder="Experience (e.g. 3 years)"
+                value={formData.experience}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+                className={inputStyles}
+              />
+              {fieldErrors.experience && (
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.experience}</p>
+              )}
+            </div>
 
             {/* Location */}
-            <input
-              type="text"
-              name="location"
-              placeholder="Location"
-              value={formData.location}
-              onChange={handleChange}
-              required
-              className={inputStyles["location"]}
-            />
+            <div>
+              <input
+                type="text"
+                name="location"
+                placeholder="Location"
+                value={formData.location}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+                className={inputStyles}
+              />
+              {fieldErrors.location && (
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.location}</p>
+              )}
+            </div>
 
             {/* Contact */}
-            <input
-              type="tel"
-              name="contact"
-              placeholder="Contact Number"
-              value={formData.contact}
-              onChange={handleChange}
-              required
-              className={inputStyles["contact"]}
-            />
+            <div>
+              <input
+                type="tel"
+                name="contact"
+                placeholder="Contact Number"
+                value={formData.contact}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                required
+                className={inputStyles}
+              />
+              {fieldErrors.contact && (
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.contact}</p>
+              )}
+            </div>
+
           </div>
 
           {/* Error Message */}
