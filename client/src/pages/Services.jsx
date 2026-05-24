@@ -14,7 +14,7 @@ const mockWorkers = [
     responseTime: "Replies in 20 min",
     outcomeText:
       "Open the full profile to compare pricing, reviews, and booking slots.",
-    mockOffset: { lat: 0.012, lon: 0.008 },
+    mockOffset: { lat: 0.08, lon: 0.004 },
     verified: true,
   },
   {
@@ -27,7 +27,7 @@ const mockWorkers = [
     responseTime: "Replies in 15 min",
     outcomeText:
       "See availability first, then confirm a plumbing booking in one flow.",
-    mockOffset: { lat: -0.005, lon: 0.02 },
+    mockOffset: { lat: -0.006, lon: 0.07 },
     verified: true,
   },
   {
@@ -40,7 +40,7 @@ const mockWorkers = [
     responseTime: "Replies in 35 min",
     outcomeText:
       "Review past work and request a carpentry visit from the profile page.",
-    mockOffset: { lat: 0.03, lon: -0.015 },
+    mockOffset: { lat: 0.09, lon: -0.04 },
     verified: true,
   },
   {
@@ -52,7 +52,7 @@ const mockWorkers = [
     availability: "Next slot tomorrow",
     responseTime: "Replies in 25 min",
     outcomeText: "Check service details and move straight into booking when ready.",
-    mockOffset: { lat: -0.022, lon: -0.01 },
+    mockOffset: { lat: -0.07, lon: -0.05 },
     verified: true,
   },
   {
@@ -64,7 +64,7 @@ const mockWorkers = [
     availability: "Emergency slots open",
     responseTime: "Replies in 10 min",
     outcomeText: "View service scope, urgency fit, and book an AC repair visit quickly.",
-    mockOffset: { lat: 0.008, lon: -0.025 },
+    mockOffset: { lat: 0.05, lon: -0.08 },
     verified: true,
   },
   {
@@ -77,7 +77,7 @@ const mockWorkers = [
     responseTime: "Replies in 30 min",
     outcomeText:
       "Open the profile to compare rates and schedule a cleaning appointment.",
-    mockOffset: { lat: 0.05, lon: 0.03 },
+    mockOffset: { lat: 0.12, lon: 0.09 },
     verified: true,
   },
   {
@@ -90,7 +90,7 @@ const mockWorkers = [
     responseTime: "Replies in 20 min",
     outcomeText:
       "See diagnostic pricing and book a mechanic visit with clearer expectations.",
-    mockOffset: { lat: -0.04, lon: 0.015 },
+    mockOffset: { lat: -0.10, lon: 0.06 },
     verified: true,
   },
   {
@@ -103,7 +103,7 @@ const mockWorkers = [
     responseTime: "Replies in 40 min",
     outcomeText:
       "Review service options and book a gardener for regular or one-time visits.",
-    mockOffset: { lat: 0.003, lon: 0.004 },
+    mockOffset: { lat: 0.07, lon: -0.11 },
     verified: true,
   },
   {
@@ -116,7 +116,7 @@ const mockWorkers = [
     responseTime: "Replies in 25 min",
     outcomeText:
       "Open the profile to check appliance support and request a repair appointment.",
-    mockOffset: { lat: -0.018, lon: -0.03 },
+    mockOffset: { lat: -0.09, lon: -0.08 },
     verified: true,
   },
   {
@@ -129,7 +129,7 @@ const mockWorkers = [
     responseTime: "Replies in 15 min",
     outcomeText:
       "View treatment details and book an inspection without leaving the flow.",
-    mockOffset: { lat: 0.025, lon: -0.005 },
+    mockOffset: { lat: 0.11, lon: -0.05 },
     verified: true,
   },
 ];
@@ -473,12 +473,24 @@ const Services = () => {
                   </p>
                 </div>
 
-                <div className="p-8 pt-0">
+                <div className="p-8 pt-0 space-y-3">
+                  <a
+                    title="Open worker location in Google Maps"
+                    href={`https://www.google.com/maps?q=${
+                      coords
+                        ? `${coords.latitude + worker.mockOffset.lat},${coords.longitude + worker.mockOffset.lon}`
+                        : worker.profession
+                    }`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full rounded-xl border border-blue-600 bg-white py-4 text-center font-bold text-blue-600 transition hover:bg-blue-50">
+                    📍 Open in Google Maps
+                  </a>
+
                   <Link
                     to={`/worker/${worker.id}`}
                     onClick={() => handleRecentlyViewed(worker)}
-                    className="block w-full rounded-xl bg-slate-900 py-4 text-center font-bold text-white transition hover:bg-blue-600"
-                  >
+                    className="block w-full rounded-xl bg-slate-900 py-4 text-center font-bold text-white transition hover:bg-blue-600">
                     View Profile and Book
                   </Link>
                 </div>
