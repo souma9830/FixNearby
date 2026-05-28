@@ -38,12 +38,16 @@ export const workerLogin = async (data) => {
 export const fetchWorkers = async () => {
   try {
     const res = await api.get("/workers");
-    return (res.data || []).map(worker => ({
+    const workersArray = res.data?.workers || res.data || [];
+    return workersArray.map(worker => ({
       ...worker,
       id: worker._id || worker.id,
       profession: worker.category || worker.profession,
       price: worker.price ? (worker.price.toString().startsWith('$') ? worker.price : `$${worker.price}/hr`) : "$30/hr",
-      availability: worker.availability || "Available today",
+      availability: worker.availability || 
+        (worker.availabilityStatus === "available" ? "Available today" : 
+         worker.availabilityStatus === "busy" ? "Busy" : 
+         worker.availabilityStatus === "offline" ? "Offline" : "Available today"),
       responseTime: worker.responseTime || "Replies in 15 min",
       outcomeText: worker.outcomeText || `Review past work and request a ${worker.category?.toLowerCase() || 'service'} visit.`,
       mockOffset: worker.mockOffset || { lat: (Math.random() - 0.5) * 0.05, lon: (Math.random() - 0.5) * 0.05 },

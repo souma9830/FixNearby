@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Star,
@@ -7,6 +7,8 @@ import {
   ShieldCheck,
   ThumbsUp,
   Sparkles,
+  Lightbulb,
+  X,
 } from "lucide-react";
 
 const Feedback = () => {
@@ -18,6 +20,35 @@ const Feedback = () => {
 
   const [submitted, setSubmitted] = useState(false);
   const [hoveredStar, setHoveredStar] = useState(0);
+
+  /* ONBOARDING HINTS */
+  const [showHints, setShowHints] = useState(true);
+  const [activeHint, setActiveHint] = useState(0);
+
+  const hints = [
+    {
+      title: "Start with your name",
+      text: "Enter your full name so we can personalize your feedback experience.",
+    },
+    {
+      title: "Give a star rating",
+      text: "Click on the stars to rate your overall experience.",
+    },
+    {
+      title: "Share detailed feedback",
+      text: "Tell us what you liked and what we can improve.",
+    },
+  ];
+
+  useEffect(() => {
+    if (!showHints) return;
+
+    const interval = setInterval(() => {
+      setActiveHint((prev) => (prev + 1) % hints.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [showHints]);
 
   const handleChange = (e) => {
     setForm({
@@ -167,7 +198,55 @@ const Feedback = () => {
             </div>
 
             {/* FEEDBACK FORM */}
-            <div className="bg-white border border-slate-200 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] p-8 sm:p-10">
+            <div className="relative bg-white border border-slate-200 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] p-8 sm:p-10">
+
+              {/* ONBOARDING HINT */}
+              {showHints && (
+                <div className="absolute -top-5 right-6 max-w-sm bg-[#0056D2] text-white rounded-2xl px-5 py-4 shadow-2xl animate-bounce">
+
+                  <div className="flex items-start justify-between gap-4">
+
+                    <div className="flex gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                        <Lightbulb className="w-5 h-5" />
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-sm">
+                          {hints[activeHint].title}
+                        </h4>
+
+                        <p className="text-sm text-blue-100 mt-1 leading-relaxed">
+                          {hints[activeHint].text}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setShowHints(false)}
+                      className="text-white/80 hover:text-white"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+
+                  </div>
+
+                  {/* Hint Indicators */}
+                  <div className="flex gap-2 mt-4">
+                    {hints.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          activeHint === index
+                            ? "w-8 bg-white"
+                            : "w-2 bg-white/40"
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                </div>
+              )}
 
               <div className="mb-8">
 
@@ -195,7 +274,7 @@ const Feedback = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
 
                 {/* NAME */}
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Your Name
                   </label>
@@ -209,6 +288,12 @@ const Feedback = () => {
                     required
                     className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-primary transition"
                   />
+
+                  {!form.name && (
+                    <span className="absolute right-4 top-[52px] text-xs text-slate-400">
+                      Step 1
+                    </span>
+                  )}
                 </div>
 
                 {/* RATING */}
@@ -251,7 +336,7 @@ const Feedback = () => {
                 </div>
 
                 {/* MESSAGE */}
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Your Feedback
                   </label>
@@ -264,6 +349,12 @@ const Feedback = () => {
                     required
                     className="w-full h-36 resize-none rounded-2xl border border-slate-300 bg-white px-5 py-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-primary transition"
                   />
+
+                  {!form.message && (
+                    <span className="absolute right-4 top-[52px] text-xs text-slate-400">
+                      Step 3
+                    </span>
+                  )}
                 </div>
 
                 {/* BUTTON */}

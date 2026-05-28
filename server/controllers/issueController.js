@@ -146,3 +146,26 @@ export const getIssueById = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+export const updateIssueStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, note } = req.body;
+        
+        const issue = await Issue.findById(id);
+        if (!issue) return res.status(404).json({ message: "Issue not found" });
+
+        // Logic: Calculate ETA if moving to in-progress
+        if (status === 'in-progress' && issue.status !== 'in-progress') {
+            issue.estimatedArrival = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours from now
+        }
+
+        issue.status = status;
+        issue.statusHistory.push({ status, updatedAt: new Date(), note });
+        await issue.save();
+
+        res.status(200).json(issue);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

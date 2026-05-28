@@ -1,23 +1,16 @@
-import axios from 'axios';
+import api from './apiClient';
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('Not authenticated');
-  return { Authorization: `Bearer ${token}` };
-};
-
-// Worker updates their status
+// Worker updates their status (requires auth via apiClient interceptor)
 export const updateAvailabilityStatus = async (status) => {
-  const res = await axios.put(
+  const res = await api.put(
     '/api/availability/status',
-    { availabilityStatus: status },
-    { headers: getAuthHeaders() }
+    { availabilityStatus: status }
   );
   return res.data;
 };
 
-// Fetch a worker's status
+// Fetch a worker's status (public — no auth required)
 export const getWorkerStatus = async (workerId) => {
-  const res = await axios.get(`/api/availability/status/${workerId}`);
+  const res = await api.get(`/api/availability/status/${workerId}`);
   return res.data;
-};
+};

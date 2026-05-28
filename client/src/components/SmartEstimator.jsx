@@ -153,8 +153,27 @@ const HowItWorks = () => (
   </div>
 );
 
+// Insert this block before your existing return in SmartEstimator
+const ProgressTracker = ({ issue }) => {
+    if (!issue.estimatedArrival) return null;
+    
+    return (
+        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mt-6">
+            <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-bold text-indigo-800 uppercase">Service Status</span>
+                <span className="text-[10px] text-indigo-500 font-medium">
+                    ETA: {new Date(issue.estimatedArrival).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+            </div>
+            <div className="w-full bg-indigo-200 h-2 rounded-full overflow-hidden">
+                <div className="bg-indigo-600 h-full animate-pulse" style={{ width: '65%' }} />
+            </div>
+        </div>
+    );
+};
+
 /* ─── Main Component ─────────────────────────────────────────────────── */
-const SmartEstimator = ({ profession, priceString, onBookWithEstimate }) => {
+const SmartEstimator = ({ profession, priceString, onBookWithEstimate, issue}) => {
   const config      = getEstimatorConfig(profession);
   const hourlyRate  = parseHourlyRate(priceString);
 
@@ -253,6 +272,8 @@ const SmartEstimator = ({ profession, priceString, onBookWithEstimate }) => {
           </div>
         )}
       </div>
+
+      {issue && <ProgressTracker issue={issue} />}
 
       {/* ── Highlight chips (summary bar) ── */}
       {highlights.length > 0 && (

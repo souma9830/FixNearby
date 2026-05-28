@@ -6,7 +6,8 @@ import {
   getNearbyIssues,
   createIssue,
   upvoteIssue,
-  getIssueById
+  getIssueById,
+  updateIssueStatus
 } from '../controllers/issueController.js';
 
 const router = express.Router();
@@ -39,5 +40,7 @@ router.post('/:id/upvote', upvoteIssue);
 
 // GET /:id
 router.get('/:id', getIssueById);
+
+router.patch('/:id/status', updateIssueStatus);
 
 export default router;

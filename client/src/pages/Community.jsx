@@ -345,89 +345,88 @@ const Community = () => {
       </section>
 
       {/* COMMUNITY PREVIEW */}
-<section className="py-24 bg-slate-900 text-white">
-  <div className="max-w-7xl mx-auto px-6">
-    <div className="grid lg:grid-cols-2 gap-14 items-center">
-      
-      {/* LEFT */}
-      <div>
-        <span className="bg-blue-500/20 text-blue-300 px-4 py-2 rounded-full text-sm font-semibold">
-          Community Hub
-        </span>
-
-        <h2 className="mt-6 text-5xl font-extrabold leading-tight">
-          Join Thousands Of Skilled Professionals
-        </h2>
-
-        <p className="mt-6 text-slate-300 text-lg leading-relaxed">
-          Discover trending discussions, connect with experts,
-          share experiences, and learn home maintenance tips
-          from trusted workers and homeowners.
-        </p>
-
-        <div className="mt-10 flex gap-4 flex-wrap">
-          <Link
-            to="/community"
-            className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl font-bold transition"
-          >
-            Explore Community
-          </Link>
-
-          <Link
-            to="/services"
-            className="border border-white/20 px-8 py-4 rounded-2xl font-bold hover:bg-white/10 transition"
-          >
-            Browse Services
-          </Link>
-        </div>
-      </div>
-
-      {/* RIGHT */}
-      <div className="grid gap-5">
-        {[
-          {
-            title: "Electrical Safety Tips",
-            desc: "Simple ways to keep your home safe from electrical issues.",
-            comments: "124 comments",
-          },
-          {
-            title: "Best Plumbing Fixes",
-            desc: "Learn quick plumbing solutions from verified experts.",
-            comments: "89 comments",
-          },
-          {
-            title: "Painting Inspiration",
-            desc: "Trending color combinations for modern homes.",
-            comments: "56 comments",
-          },
-        ].map((post, idx) => (
-          <div
-            key={idx}
-            className="bg-white/5 border border-white/10 rounded-3xl p-6 hover:border-blue-400/40 transition"
-          >
-            <div className="flex items-center justify-between">
-              <span className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-xs font-semibold">
-                Trending
+      <section className="py-24 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-14 items-center">
+            {/* LEFT */}
+            <div>
+              <span className="bg-blue-500/20 text-blue-300 px-4 py-2 rounded-full text-sm font-semibold">
+                Community Hub
               </span>
 
-              <span className="text-sm text-slate-400">
-                {post.comments}
-              </span>
+              <h2 className="mt-6 text-5xl font-extrabold leading-tight">
+                Join Thousands Of Skilled Professionals
+              </h2>
+
+              <p className="mt-6 text-slate-300 text-lg leading-relaxed">
+                Discover trending discussions, connect with experts,
+                share experiences, and learn home maintenance tips
+                from trusted workers and homeowners.
+              </p>
+
+              <div className="mt-10 flex gap-4 flex-wrap">
+                <Link
+                  to="/community"
+                  className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-2xl font-bold transition"
+                >
+                  Explore Community
+                </Link>
+
+                <Link
+                  to="/services"
+                  className="border border-white/20 px-8 py-4 rounded-2xl font-bold hover:bg-white/10 transition"
+                >
+                  Browse Services
+                </Link>
+              </div>
             </div>
 
-            <h3 className="mt-5 text-2xl font-bold">
-              {post.title}
-            </h3>
+            {/* RIGHT */}
+            <div className="grid gap-5">
+              {[
+                {
+                  title: "Electrical Safety Tips",
+                  desc: "Simple ways to keep your home safe from electrical issues.",
+                  comments: "124 comments",
+                },
+                {
+                  title: "Best Plumbing Fixes",
+                  desc: "Learn quick plumbing solutions from verified experts.",
+                  comments: "89 comments",
+                },
+                {
+                  title: "Painting Inspiration",
+                  desc: "Trending color combinations for modern homes.",
+                  comments: "56 comments",
+                },
+              ].map((post, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white/5 border border-white/10 rounded-3xl p-6 hover:border-blue-400/40 transition"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-xs font-semibold">
+                      Trending
+                    </span>
 
-            <p className="mt-3 text-slate-300 leading-relaxed">
-              {post.desc}
-            </p>
+                    <span className="text-sm text-slate-400">
+                      {post.comments}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-5 text-2xl font-bold">
+                    {post.title}
+                  </h3>
+
+                  <p className="mt-3 text-slate-300 leading-relaxed">
+                    {post.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
-    </div>
-  </div>
-</section>
+        </div>
+      </section>
 
       {/* CTA */}
       <section className="py-28">

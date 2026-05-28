@@ -27,6 +27,8 @@ const DuplicateWarningModal = ({
     return d != null ? formatDistance(d / 1000) : 'unknown';
   };
 
+  const formattedDistance = duplicateIssue ? formatIssueDistance(duplicateIssue) : '';
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'open':
@@ -65,14 +67,16 @@ const DuplicateWarningModal = ({
           </p>
 
           {/* Distance Badge */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-full px-4 py-1.5 shadow-sm">
-              <MapPin size={14} className="text-blue-600" />
-              <span className="text-sm font-semibold text-blue-700">
-                {formattedDistance} away
-              </span>
+          {formattedDistance && (
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-full px-4 py-1.5 shadow-sm">
+                <MapPin size={14} className="text-blue-600" />
+                <span className="text-sm font-semibold text-blue-700">
+                  {formattedDistance} away
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Duplicate Issue Details (single or list) */}
           {candidateList && candidateList.length > 0 ? (

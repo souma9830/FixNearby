@@ -16,6 +16,14 @@ export const protect = async (req, res, next) => {
       req.user = await User.findById(decoded.id).select('-password');
       
       if (!req.user) {
+        // Check if the token belongs to a Worker
+        const worker = await Worker.findById(decoded.id).select('-password');
+        if (worker) {
+          req.user = worker;
+        }
+      }
+      
+      if (!req.user) {
         return res.status(401).json({ success: false, message: 'User not found' });
       }
       

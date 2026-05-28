@@ -142,21 +142,18 @@ const WorkerLogin = () => {
       const response = 
         await workerLogin(formData);
 
-      // STORE TOKEN
-      if (response?.token) {
+      // STORE SESSION under the canonical key used by apiClient & AuthContext
+      if (response?.token && response?.worker) {
 
         localStorage.setItem(
-          "workerToken",
-          response.token
-        );
-      }
-
-      // STORE WORKER DATA
-      if (response?.worker) {
-
-        localStorage.setItem(
-          "workerData",
-          JSON.stringify(response.worker)
+          "fixnearby_user",
+          JSON.stringify({
+            _id: response.worker._id,
+            name: response.worker.name,
+            email: response.worker.email,
+            phone: response.worker.phone,
+            token: response.token,
+          })
         );
       }
 

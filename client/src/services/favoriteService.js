@@ -1,26 +1,15 @@
 // client/src/services/favoriteService.js
 
-import axios from "axios";
+import api from "./apiClient";
 
 const BASE_URL = "/api/favorites";
-
-// Helper: get auth token from localStorage
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  if (!token) throw new Error("User not authenticated");
-  return { Authorization: `Bearer ${token}` };
-};
 
 /**
  * Add a worker to favorites
  * @param {string} workerId
  */
 export const addFavorite = async (workerId) => {
-  const response = await axios.post(
-    `${BASE_URL}/${workerId}`,
-    {},
-    { headers: getAuthHeaders() }
-  );
+  const response = await api.post(`${BASE_URL}/${workerId}`, {});
   return response.data;
 };
 
@@ -29,9 +18,7 @@ export const addFavorite = async (workerId) => {
  * @param {string} workerId
  */
 export const removeFavorite = async (workerId) => {
-  const response = await axios.delete(`${BASE_URL}/${workerId}`, {
-    headers: getAuthHeaders(),
-  });
+  const response = await api.delete(`${BASE_URL}/${workerId}`);
   return response.data;
 };
 
@@ -52,9 +39,7 @@ export const toggleFavorite = async (workerId, isCurrentlyBookmarked) => {
  * Fetch all saved/favorite workers for logged-in user
  */
 export const getFavorites = async () => {
-  const response = await axios.get(BASE_URL, {
-    headers: getAuthHeaders(),
-  });
+  const response = await api.get(BASE_URL);
   return response.data; // Array of { _id, worker: {...}, createdAt }
 };
 

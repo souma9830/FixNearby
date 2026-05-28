@@ -72,7 +72,18 @@ const issueSchema = new mongoose.Schema({
   resolvedAt: {
     type: Date,
     default: null
-  }
+  },
+  estimatedArrival: {
+    type: Date,
+    default: null
+  },
+  statusHistory: [{
+    status: String,
+    updatedAt: { type: Date, default: Date.now },
+    note: String
+  }],
+  // Ensure these exist for calculation
+  createdAt: { type: Date, default: Date.now },
 }, {
   timestamps: true
 });
