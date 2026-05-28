@@ -50,7 +50,7 @@ const Feedback = () => {
 
       {/* HERO SECTION */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[#0056D2]/5 blur-3xl" />
+        <div className="absolute inset-0 bg-primary/5 blur-3xl" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 relative z-10">
 
@@ -63,7 +63,7 @@ const Feedback = () => {
 
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
               Share Your Experience with{" "}
-              <span className="text-[#0056D2]">FixNearby</span>
+              <span className="text-primary">FixNearby</span>
             </h1>
 
             <p className="mt-6 text-lg sm:text-xl text-slate-600 leading-relaxed">
@@ -88,7 +88,7 @@ const Feedback = () => {
               <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
 
                 <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-6">
-                  <MessageSquare className="w-8 h-8 text-[#0056D2]" />
+                  <MessageSquare className="w-8 h-8 text-primary" />
                 </div>
 
                 <h2 className="text-3xl font-extrabold text-slate-900">
@@ -207,7 +207,7 @@ const Feedback = () => {
                     value={form.name}
                     onChange={handleChange}
                     required
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#0056D2] transition"
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-primary transition"
                   />
                 </div>
 
@@ -262,14 +262,14 @@ const Feedback = () => {
                     value={form.message}
                     onChange={handleChange}
                     required
-                    className="w-full h-36 resize-none rounded-2xl border border-slate-300 bg-white px-5 py-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-[#0056D2] transition"
+                    className="w-full h-36 resize-none rounded-2xl border border-slate-300 bg-white px-5 py-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-primary transition"
                   />
                 </div>
 
                 {/* BUTTON */}
                 <button
                   type="submit"
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0056D2] px-6 py-4 text-white font-bold text-lg shadow-lg shadow-blue-200 hover:bg-[#0047AF] hover:-translate-y-0.5 transition-all duration-300"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 text-white font-bold text-lg shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-0.5 transition-all duration-300"
                 >
                   <Send className="w-5 h-5" />
                   Submit Feedback
@@ -284,7 +284,7 @@ const Feedback = () => {
                   Need help?{" "}
                   <Link
                     to="/contact"
-                    className="font-semibold text-[#0056D2] hover:underline"
+                    className="font-semibold text-primary hover:underline"
                   >
                     Contact Support
                   </Link>

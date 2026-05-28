@@ -17,6 +17,110 @@
     "findPro": "विशेषज्ञ खोजें",
     "becomePro": "विशेषज्ञ बनें"
   },
+  "home": {
+    "viewProfileAndBook": "प्रोफ़ाइल देखें और बुक करें",
+    "jobs": "काम",
+    "trustBadge": "{{count}}+ गृहस्वामियों का भरोसा",
+    "ratingCard": {
+      "title": "{{rating}}/{{total}} रेटिंग",
+      "basedOnReviews": "समीक्षाओं के आधार पर"
+    },
+    "quickBooking": {
+      "title": "त्वरित बुकिंग",
+      "subtitle": "मिनटों में भरोसेमंद पेशेवरों से जुड़ें।"
+    },
+    "nearby": {
+      "title": "आपके सबसे पास",
+      "browseAllPros": "सभी प्रो देखें",
+      "distanceLabel": "आपके पास: {{distance}}",
+      "status": {
+        "liveLocation": "लाइव लोकेशन",
+        "detectingLocation": "लोकेशन पता की जा रही है...",
+        "locationUnavailable": "लोकेशन उपलब्ध नहीं है"
+      }
+    },
+    "recommendations": {
+      "aiPowered": "AI-संचालित सुझाव",
+      "title": "आपके लिए सुझाए गए",
+      "subtitle": "रेटिंग, नजदीकी, जवाब की गति और बुकिंग इतिहास के आधार पर क्रमबद्ध।",
+      "seeAllWorkers": "सभी वर्कर्स देखें",
+      "filter": "फ़िल्टर:",
+      "any": "कोई भी",
+      "showLess": "कम दिखाएं",
+      "showAllWorkers": "सभी {{count}} वर्कर्स दिखाएं",
+      "howScoringWorksTitle": "स्कोरिंग कैसे काम करती है:",
+      "howScoringWorksDescription": "हर वर्कर को रेटिंग (३०), नजदीकी (२५), बुकिंग मात्रा (२०), प्रतिक्रिया समय (१५) और दोबारा आने वाले ग्राहकों (१०) के आधार पर अधिकतम १०० अंक दिए जाते हैं। अधिक स्कोर = आपके लिए बेहतर मैच।"
+    }
+  },
+  "locationErrors": {
+    "notSupported": "आपके ब्राउज़र में जियोलोकेशन समर्थित नहीं है।",
+    "couldNotRetrieve": "आपकी लोकेशन प्राप्त नहीं हो सकी।",
+    "permissionDeniedBrowserSettings": "लोकेशन अनुमति अस्वीकृत है। इसे अपने ब्राउज़र सेटिंग्स में सक्षम करें।",
+    "informationUnavailable": "लोकेशन जानकारी उपलब्ध नहीं है।",
+    "timeoutTryAgain": "लोकेशन अनुरोध का समय समाप्त हो गया। कृपया फिर से कोशिश करें।"
+  },
+  "locationBanner": {
+    "detecting": "आपकी लोकेशन पता की जा रही है...",
+    "permissionDenied": "⚠️ लोकेशन एक्सेस अस्वीकृत है। नजदीकी सेवाएं देखने के लिए इसे ब्राउज़र सेटिंग्स में सक्षम करें।",
+    "retry": "फिर से कोशिश करें",
+    "loading": "लोड हो रहा है...",
+    "locationDetected": "📍 लोकेशन मिल गई - आपके पास की सेवाएं दिखाई जा रही हैं",
+    "toastSuccess": "लोकेशन सफलतापूर्वक मिल गई!",
+    "toastError": "लोकेशन नहीं मिल पाई। कृपया फिर से कोशिश करें।"
+  },
+  "auth": {
+    "createAccount": "खाता बनाएं",
+    "joinFixNearby": "FixNearby से जुड़ें और शुरुआत करें",
+    "becomeWorker": "वर्कर बनें",
+    "registerServiceProfile": "FixNearby पर अपनी सेवा प्रोफ़ाइल रजिस्टर करें"
+  },
+  "register": {
+    "fullName": "पूरा नाम",
+    "emailAddress": "ईमेल पता",
+    "phoneNumber": "फोन नंबर",
+    "password": "पासवर्ड",
+    "createAccount": "खाता बनाएं",
+    "creatingAccount": "आपका खाता बनाया जा रहा है...",
+    "alreadyHaveAccount": "क्या आपका पहले से खाता है?",
+    "signIn": "साइन इन",
+    "validation": {
+      "usernameRequired": "यूज़रनेम आवश्यक है",
+      "invalidEmail": "अमान्य ईमेल पता",
+      "passwordMin": "पासवर्ड कम से कम {{min}} अक्षरों का होना चाहिए",
+      "invalidPhone": "मान्य फोन नंबर दर्ज करें"
+    }
+  },
+  "workerRegister": {
+    "accountCredentials": "खाता विवरण",
+    "passwordMinChars": "पासवर्ड (कम से कम {{min}} अक्षर)",
+    "professionalDetails": "पेशेवर विवरण",
+    "selectServiceCategory": "सेवा श्रेणी चुनें",
+    "yearsOfExperience": "अनुभव के वर्ष",
+    "location": "स्थान",
+    "contactDigits": "संपर्क नंबर ({{digits}} अंक)",
+    "bioAboutMe": "परिचय / मेरे बारे में",
+    "iAgreeTo": "मैं सहमत हूं",
+    "termsAndConditions": "नियम एवं शर्तों",
+    "and": "और",
+    "privacyPolicy": "गोपनीयता नीति",
+    "registering": "रजिस्टर किया जा रहा है...",
+    "registerAsWorker": "वर्कर के रूप में रजिस्टर करें",
+    "validation": {
+      "enterFullName": "कृपया अपना पूरा नाम दर्ज करें",
+      "enterEmail": "कृपया अपना ईमेल पता दर्ज करें",
+      "enterPassword": "कृपया अपना पासवर्ड दर्ज करें",
+      "selectCategory": "कृपया सेवा श्रेणी चुनें",
+      "enterExperience": "कृपया अपना अनुभव दर्ज करें",
+      "enterLocation": "कृपया अपना स्थान दर्ज करें",
+      "enterValidContact": "कृपया मान्य १०-अंकीय फोन नंबर दर्ज करें",
+      "enterBio": "कृपया अपना परिचय दर्ज करें",
+      "uploadProfilePicture": "कृपया अपनी प्रोफ़ाइल तस्वीर अपलोड करें",
+      "enterValidEmail": "कृपया मान्य ईमेल पता दर्ज करें",
+      "passwordMin": "पासवर्ड कम से कम {{min}} अक्षरों का होना चाहिए",
+      "contactExactDigits": "फोन नंबर में ठीक {{digits}} अंक होने चाहिए",
+      "bioMin": "परिचय कम से कम {{min}} अक्षरों का होना चाहिए"
+    }
+  },
   "stats": {
     "customers": "खुश ग्राहक",
     "pros": "सत्यापित विशेषज्ञ",
@@ -38,5 +142,101 @@
     "subtext": "मिनटों में विश्वसनीय पेशेवरों को बुक करें।",
     "findPro": "विशेषज्ञ खोजें",
     "becomePro": "विशेषज्ञ बनें"
+  },
+  "services": {
+    "header": {
+      "title": "अपने पास भरोसेमंद सेवाएं खोजें"
+    },
+    "locationStatus": {
+      "success": "नजदीकी पेशेवर दिखाए जा रहे हैं",
+      "loading": "आपकी लोकेशन पता की जा रही है...",
+      "default": "बेहतर दूरी परिणामों के लिए लोकेशन सक्षम करें"
+    },
+    "searchPlaceholder": "सेवाएं खोजें...",
+    "sort": {
+      "nearest": "सबसे नजदीक",
+      "topRated": "उच्च रेटिंग",
+      "lowestPrice": "सबसे कम कीमत"
+    },
+    "categories": {
+      "all": "सभी",
+      "electrician": "इलेक्ट्रीशियन",
+      "plumber": "प्लंबर",
+      "carpenter": "बढ़ई",
+      "painter": "पेंटर",
+      "acTechnician": "एसी तकनीशियन",
+      "cleaner": "क्लीनर",
+      "mechanic": "मैकेनिक",
+      "gardener": "माली",
+      "applianceRepair": "उपकरण मरम्मत",
+      "pestControl": "कीट नियंत्रण"
+    },
+    "recentlyViewed": "हाल ही में देखे गए पेशेवर",
+    "emptyState": {
+      "title": "कोई सेवा नहीं मिली",
+      "description": "ज्यादा व्यापक खोज करें या चुनी गई श्रेणी रीसेट करें।",
+      "resetFilters": "फिल्टर रीसेट करें"
+    },
+    "showingCount": "{{count}} सेवाएं दिखाई जा रही हैं",
+    "verified": "सत्यापित",
+    "ratingLabel": "रेटिंग {{rating}}",
+    "getDirections": "दिशा-निर्देश पाएं",
+    "openInGoogleMaps": "Google Maps में खोलें",
+    "viewProfileAndBook": "प्रोफ़ाइल देखें और बुक करें",
+    "availability": {
+      "availableToday": "आज उपलब्ध",
+      "nextSlotAfternoon": "अगला स्लॉट आज दोपहर",
+      "availableTomorrowMorning": "कल सुबह उपलब्ध",
+      "nextSlotTomorrow": "अगला स्लॉट कल",
+      "emergencySlotsOpen": "इमरजेंसी स्लॉट खुले हैं",
+      "weekendAvailability": "सप्ताहांत में उपलब्ध",
+      "availableThisEvening": "आज शाम उपलब्ध",
+      "morningSlotsOpen": "सुबह के स्लॉट खुले हैं",
+      "inspectionSlotsOpen": "निरीक्षण स्लॉट खुले हैं"
+    },
+    "responseTime": {
+      "replies10": "10 मिनट में जवाब",
+      "replies15": "15 मिनट में जवाब",
+      "replies20": "20 मिनट में जवाब",
+      "replies25": "25 मिनट में जवाब",
+      "replies30": "30 मिनट में जवाब",
+      "replies35": "35 मिनट में जवाब",
+      "replies40": "40 मिनट में जवाब"
+    },
+    "outcomes": {
+      "comparePricingReviews": "कीमत, समीक्षा और बुकिंग स्लॉट की तुलना करने के लिए पूरी प्रोफ़ाइल खोलें।",
+      "confirmPlumbingFlow": "पहले उपलब्धता देखें, फिर एक ही चरण में प्लंबिंग बुकिंग पक्की करें।",
+      "requestCarpentryVisit": "पिछला काम देखें और प्रोफ़ाइल पेज से बढ़ई का विजिट अनुरोध करें।",
+      "checkDetailsBook": "सेवा विवरण देखें और तैयार होने पर सीधे बुकिंग करें।",
+      "acRepairVisit": "सेवा दायरा और तात्कालिकता देखें और जल्दी से एसी रिपेयर विजिट बुक करें।",
+      "cleaningAppointment": "रेट की तुलना करने और सफाई अपॉइंटमेंट शेड्यूल करने के लिए प्रोफ़ाइल खोलें।",
+      "mechanicVisit": "डायग्नोस्टिक कीमत देखें और स्पष्ट उम्मीदों के साथ मैकेनिक विजिट बुक करें।",
+      "gardenerVisit": "सेवा विकल्प देखें और नियमित या एक बार के लिए माली बुक करें।",
+      "applianceRepair": "उपकरण सहायता जांचने और रिपेयर अपॉइंटमेंट अनुरोध करने के लिए प्रोफ़ाइल खोलें।",
+      "treatmentInspection": "ट्रीटमेंट विवरण देखें और बिना फ्लो छोड़े निरीक्षण बुक करें।"
+    }
+  },
+  "footer": {
+    "brandDescription": "मरम्मत, रखरखाव, सफाई और घरेलू सेवाओं के लिए भरोसेमंद स्थानीय पेशेवरों को आत्मविश्वास के साथ बुक करें - सत्यापित विशेषज्ञ, तेज प्रतिक्रिया समय और आसान बुकिंग।",
+    "info": {
+      "availableLocal": "आपके स्थानीय क्षेत्र में उपलब्ध",
+      "support247": "24/7 ग्राहक सहायता",
+      "verifiedTrusted": "सत्यापित और भरोसेमंद पेशेवर"
+    },
+    "navigationTitle": "नेविगेशन",
+    "supportTitle": "सहायता",
+    "supportLinks": {
+      "helpCenter": "सहायता केंद्र",
+      "contact": "संपर्क",
+      "feedback": "फीडबैक"
+    },
+    "stayUpdatedTitle": "अपडेट रहें",
+    "stayUpdatedDescription": "नई सेवाओं, छूट और प्लेटफॉर्म फीचर्स के अपडेट सीधे अपने इनबॉक्स में पाएं।",
+    "searchPlaceholder": "सेवाएं खोजें...",
+    "emailPlaceholder": "अपना ईमेल दर्ज करें",
+    "subscribe": "सब्सक्राइब करें",
+    "copyright": "© {{year}} FixNearby. सर्वाधिकार सुरक्षित।",
+    "privacyPolicy": "गोपनीयता नीति",
+    "termsOfService": "सेवा की शर्तें"
   }
 }

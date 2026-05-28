@@ -79,7 +79,7 @@ const FAQ = () => {
                     {faq.question}
                   </h3>
 
-                  <span className="text-2xl font-bold text-[#0056D2]">
+                  <span className="text-2xl font-bold text-primary">
                     {activeIndex === index ? "−" : "+"}
                   </span>
                 </button>
@@ -102,7 +102,7 @@ const FAQ = () => {
           </div>
 
           {/* SUPPORT CARD */}
-          <div className="mt-16 bg-[#0056D2] rounded-3xl p-10 text-center text-white shadow-xl">
+          <div className="mt-16 bg-primary rounded-3xl p-10 text-center text-white shadow-xl">
             <h2 className="text-3xl font-extrabold mb-4">
               Still have questions?
             </h2>
@@ -111,7 +111,7 @@ const FAQ = () => {
               Our support team is here to help you anytime.
             </p>
 
-            <button className="bg-white text-[#0056D2] px-8 py-3 rounded-xl font-semibold hover:bg-slate-100 transition">
+            <button className="bg-white text-primary px-8 py-3 rounded-xl font-semibold hover:bg-slate-100 transition">
               Contact Support
             </button>
           </div>

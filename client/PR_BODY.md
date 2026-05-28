@@ -1,49 +1,38 @@
-## PR: feat(ui): UI refresh part 2 — theme utilities + card entry animations (NSoC'26 #188)
+## PR: feat(i18n): complete Hindi language support coverage (NSoC'26 #187)
 
-This PR bundles the UI refresh work for Issue #188. It refines color tokens, gradients, shadows, and CTA animations, and adds motion to card components for a livelier, gentler UI. This is intended as the final PR for the issue — please review the screenshots below and the testing steps.
+Closes #187
+
+This PR completes Hindi language support for the requested UI areas and improves accessibility by localizing key labels, action text, guidance text, and numeric displays.
 
 Summary of changes
-- Refined design tokens and color palette in `client/src/index.css` (palette variables, CTA gradient, shadows, card radius).
-- Added CTA utilities: `btn-cta`, `btn-cta-ghost`, `btn-cta-sweep`, `btn-cta-pulse` and the `.cta-section` background treatment.
-- Soften primary color and global font (`Plus Jakarta Sans`), improved font-smoothing and spacing.
-- Updated `client/src/pages/Home.jsx` to use the new CTA classes and adjusted hero layout for improved spacing.
-- Updated `client/src/components/Navbar.jsx` to consume theme classes (`bg-primary`, `text-primary`, `btn-primary`, `btn-outline`) for a consistent look.
-- Improved card hover and shadow utilities (`card-hover`, `shadow-elevated`) and used them across skeletons and recommended worker cards.
-- Added minor motion wrappers and Framer Motion usage for recommended worker cards (staggered entry) and pulse/shimmer animations for primary CTAs.
-- Hindi translations extended for `nav`, `hero`, `stats`, `howItWorks`, `cta` keys so the language toggle shows translated UI.
+- Added and wired Hindi translations for Home recommendation section, Services, Footer, Register, and Worker Register flows.
+- Localized strings requested in issue discussion (recommendations, filters, location states, profile CTA, account/professional form labels, and terms text).
+- Added reusable i18n keys in both English and Hindi locale files for maintainability.
+- Added Hindi numeral rendering for visible UI numbers (ratings, counts, worker totals, min rating chips, rank badges, character counters, and other numeric labels in updated sections).
+- Kept language toggle behavior intact and persistent via existing i18n setup.
 
-Files changed (high level)
-```
-${"" /* The full file list is in the branch. See the compare page for file diffs. */}
-```
+Screenshots
+- Home (Hindi):
+  - ![Home Hindi](images/pr-187/home-hi.png)
+- Services (Hindi):
+  - ![Services Hindi](images/pr-187/services-hi.png)
+- Register (Hindi):
+  - ![Register Hindi](images/pr-187/register-hi.png)
+- Worker Register (Hindi):
+  - ![Worker Register Hindi](images/pr-187/worker-register-hi.png)
 
-Testing
-1. From repo root:
+How to test
+1. Run frontend:
 
 ```bash
 cd client
 npm install
-npm run dev
-# open http://localhost:5175 (or the port Vite reports)
+npm run dev -- --host
 ```
 
-2. Verify:
-- Hero: headline, subtext and two CTAs (Find a Pro, Become a Pro) use the new styles and layout.
-- CTA: primary CTA has gradient, subtle pulse and hover lift; ghost CTA has blurred backdrop and border.
-- Cards: recommended worker cards animate into view and lift on hover with softer shadows and rounded corners.
-- Navbar: buttons and links use the new theme tokens.
-- Language toggle: switch to Hindi and confirm translations appear for Navbar, Hero, Stats, How It Works and CTAs.
-
-Screenshots
-- I captured screenshots while running the app locally. Attach them to the PR description (drag into the PR editor) and position them near the relevant sections.
-
-- Suggested screenshots to attach:
-  - `hero.png` — hero (headline + CTAs)
-  - `recommended-cards.png` — recommended worker cards showing entry animation (or stills after load)
-  - `cta-states.png` — CTA hover/normal/pulse states
-
-PR notes
-- This PR aims to be the final PR for Issue #188 (UI refresh). When creating the PR, add the PR reviewer(s) and include `Closes #188` in the PR description to automatically link/close the issue.
-- If you prefer, I can squash commits before you create the PR (I can do this here if you'd like).
-
-Thanks — please paste this content into the PR body on the compare page and attach the screenshots. If you want, I can also try to create the PR via `gh` after you install `gh` locally or authorize me to run it here.
+2. Open the app in browser and switch language to Hindi.
+3. Validate changed sections:
+- Home recommendations content and labels in Hindi.
+- Services and Footer translated labels and actions.
+- Register and Worker Register form labels, hints, and validation messages.
+- Numeric values rendered in Hindi digits in updated sections.

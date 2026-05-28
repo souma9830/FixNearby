@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import i18n from '../i18n';
 
 const GEO_OPTIONS = {
   enableHighAccuracy: true,
@@ -23,7 +24,7 @@ const useGeolocation = () => {
 
   const fetchLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser.');
+      setError(i18n.t('locationErrors.notSupported'));
       setLoading(false);
       return;
     }
@@ -43,14 +44,14 @@ const useGeolocation = () => {
         setError(null);
       },
       (err) => {
-        let message = 'Could not retrieve your location.';
+        let message = i18n.t('locationErrors.couldNotRetrieve');
         if (err.code === err.PERMISSION_DENIED) {
-          message = 'Location permission denied. Enable it in your browser settings.';
+          message = i18n.t('locationErrors.permissionDeniedBrowserSettings');
           setPermissionDenied(true);
         } else if (err.code === err.POSITION_UNAVAILABLE) {
-          message = 'Location information is unavailable.';
+          message = i18n.t('locationErrors.informationUnavailable');
         } else if (err.code === err.TIMEOUT) {
-          message = 'Location request timed out. Please try again.';
+          message = i18n.t('locationErrors.timeoutTryAgain');
         }
         setError(message);
         setLoading(false);

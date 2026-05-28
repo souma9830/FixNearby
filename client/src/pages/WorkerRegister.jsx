@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   FaUser,
   FaEnvelope,
@@ -18,6 +19,13 @@ import { workerSignup } from "../services/workerService";
 import useToast from "../hooks/useToast";
 
 const WorkerRegister = () => {
+  const { t, i18n } = useTranslation();
+  const localizeDigits = (value) => {
+    const text = String(value);
+    if (i18n.language !== "hi") return text;
+    const devanagariDigits = ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"];
+    return text.replace(/\d/g, (d) => devanagariDigits[Number(d)]);
+  };
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -47,15 +55,15 @@ const WorkerRegister = () => {
 
   // VALIDATION MESSAGES
   const fieldMessages = {
-    name: "Please enter your full name",
-    email: "Please enter your email address",
-    password: "Please enter your password",
-    category: "Please select a service category",
-    experience: "Please enter your years of experience",
-    location: "Please enter your location",
-    contact: "Please enter a valid 10-digit phone number",
-    bio: "Please enter your bio",
-    profilePicture: "Please upload your profile picture",
+    name: t("workerRegister.validation.enterFullName"),
+    email: t("workerRegister.validation.enterEmail"),
+    password: t("workerRegister.validation.enterPassword"),
+    category: t("workerRegister.validation.selectCategory"),
+    experience: t("workerRegister.validation.enterExperience"),
+    location: t("workerRegister.validation.enterLocation"),
+    contact: t("workerRegister.validation.enterValidContact"),
+    bio: t("workerRegister.validation.enterBio"),
+    profilePicture: t("workerRegister.validation.uploadProfilePicture"),
   };
 
   // PHONE VALIDATION
@@ -164,7 +172,7 @@ const WorkerRegister = () => {
       if (!emailRegex.test(value)) {
         setFieldErrors((prev) => ({
           ...prev,
-          email: "Please enter a valid email address",
+          email: t("workerRegister.validation.enterValidEmail"),
         }));
       }
     }
@@ -173,7 +181,7 @@ const WorkerRegister = () => {
     if (name === "password" && value.length < 8) {
       setFieldErrors((prev) => ({
         ...prev,
-        password: "Password must be at least 8 characters",
+        password: t("workerRegister.validation.passwordMin", { min: localizeDigits(8) }),
       }));
     }
 
@@ -181,7 +189,7 @@ const WorkerRegister = () => {
     if (name === "contact" && !validatePhone(value)) {
       setFieldErrors((prev) => ({
         ...prev,
-        contact: "Phone number must contain exactly 10 digits",
+        contact: t("workerRegister.validation.contactExactDigits", { digits: localizeDigits(10) }),
       }));
     }
 
@@ -189,7 +197,7 @@ const WorkerRegister = () => {
     if (name === "bio" && value.length < 20) {
       setFieldErrors((prev) => ({
         ...prev,
-        bio: "Bio should contain at least 20 characters",
+        bio: t("workerRegister.validation.bioMin", { min: localizeDigits(20) }),
       }));
     }
   };
@@ -229,7 +237,7 @@ const WorkerRegister = () => {
 
     if (!validatePhone(formData.contact)) {
       errors.contact =
-        "Phone number must contain exactly 10 digits";
+        t("workerRegister.validation.contactExactDigits", { digits: localizeDigits(10) });
     }
 
     if (!formData.bio.trim()) {
@@ -305,11 +313,11 @@ const WorkerRegister = () => {
           {/* HEADER */}
           <div className="text-center mb-7">
             <h2 className="text-4xl font-extrabold text-[#111827]">
-              Become a Worker
+              {t("auth.becomeWorker")}
             </h2>
 
             <p className="text-gray-500 mt-2 text-sm">
-              Register your service profile on FixNearby
+              {t("auth.registerServiceProfile")}
             </p>
           </div>
 
@@ -373,7 +381,7 @@ const WorkerRegister = () => {
             <div>
 
               <p className="text-xs font-bold tracking-[2px] text-gray-400 uppercase mb-4">
-                Account Credentials
+                {t("workerRegister.accountCredentials")}
               </p>
 
               <div className="space-y-4">
@@ -386,7 +394,7 @@ const WorkerRegister = () => {
                     <input
                       type="text"
                       name="name"
-                      placeholder="Full Name"
+                      placeholder={t("register.fullName")}
                       value={formData.name}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -409,7 +417,7 @@ const WorkerRegister = () => {
                     <input
                       type="email"
                       name="email"
-                      placeholder="Email Address"
+                      placeholder={t("register.emailAddress")}
                       value={formData.email}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -433,7 +441,7 @@ const WorkerRegister = () => {
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
-                      placeholder="Password (min. 8 chars)"
+                      placeholder={t("workerRegister.passwordMinChars", { min: localizeDigits(8) })}
                       value={formData.password}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -510,7 +518,7 @@ const WorkerRegister = () => {
             <div>
 
               <p className="text-xs font-bold tracking-[2px] text-gray-400 uppercase mb-4">
-                Professional Details
+                {t("workerRegister.professionalDetails")}
               </p>
 
               <div className="space-y-4">
@@ -528,7 +536,7 @@ const WorkerRegister = () => {
                       className={`${inputClass} appearance-none`}
                     >
                       <option value="">
-                        Select Service Category
+                        {t("workerRegister.selectServiceCategory")}
                       </option>
 
                       <option value="Electrician">
@@ -569,7 +577,7 @@ const WorkerRegister = () => {
                     <input
                       type="number"
                       name="experience"
-                      placeholder="Years of Experience"
+                      placeholder={t("workerRegister.yearsOfExperience")}
                       value={formData.experience}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -592,7 +600,7 @@ const WorkerRegister = () => {
                     <input
                       type="text"
                       name="location"
-                      placeholder="Location"
+                      placeholder={t("workerRegister.location")}
                       value={formData.location}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -615,7 +623,7 @@ const WorkerRegister = () => {
                     <input
                       type="tel"
                       name="contact"
-                      placeholder="Contact Number (10 digits)"
+                      placeholder={t("workerRegister.contactDigits", { digits: localizeDigits(10) })}
                       value={formData.contact}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -640,7 +648,7 @@ const WorkerRegister = () => {
                       name="bio"
                       rows="4"
                       maxLength="250"
-                      placeholder="Bio / About Me"
+                      placeholder={t("workerRegister.bioAboutMe")}
                       value={formData.bio}
                       onChange={handleChange}
                       onBlur={handleBlur}
@@ -649,7 +657,7 @@ const WorkerRegister = () => {
                   </div>
 
                   <div className="text-right text-xs text-gray-400 mt-1">
-                    {formData.bio.length} / 250
+                    {localizeDigits(formData.bio.length)} / {localizeDigits(250)}
                   </div>
 
                   {fieldErrors.bio && (
@@ -675,16 +683,16 @@ const WorkerRegister = () => {
               />
 
               <p className="text-sm text-gray-600 leading-relaxed">
-                I agree to the{" "}
+                {t("workerRegister.iAgreeTo")} {" "}
 
                 <span className="text-blue-600 font-medium cursor-pointer">
-                  Terms & Conditions
+                  {t("workerRegister.termsAndConditions")}
                 </span>
 
-                {" "}and{" "}
+                {" "}{t("workerRegister.and")} {" "}
 
                 <span className="text-blue-600 font-medium cursor-pointer">
-                  Privacy Policy
+                  {t("workerRegister.privacyPolicy")}
                 </span>
 
               </p>
@@ -720,15 +728,15 @@ const WorkerRegister = () => {
             >
 
               {loading
-                ? "Registering..."
-                : "Register as Worker"}
+                ? t("workerRegister.registering")
+                : t("workerRegister.registerAsWorker")}
 
             </button>
 
             {/* LOGIN */}
             <p className="text-center text-sm text-gray-400 pt-2">
 
-              Already have an account?{" "}
+              {t("register.alreadyHaveAccount")} {" "}
 
               <button
                     type="button"
@@ -742,7 +750,7 @@ const WorkerRegister = () => {
                       cursor-pointer
                     "
                   >
-                    Sign in
+                    {t("register.signIn")}
                 </button>
 
             </p>

@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FaGithub,
   FaEnvelope,
@@ -18,6 +19,7 @@ import {
 } from "react-icons/fa";
 
 const Footer = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -60,26 +62,24 @@ const Footer = () => {
           </div>
 
           <p className="mt-5 text-sm leading-relaxed text-gray-400 max-w-sm">
-            Book trusted local professionals for repairs, maintenance,
-            cleaning, and home services with confidence — verified experts,
-            fast response times, and seamless booking.
+            {t("footer.brandDescription")}
           </p>
 
           {/* Info */}
           <div className="mt-6 space-y-3 text-sm">
             <div className="flex items-center gap-3 text-gray-400">
               <FaMapMarkerAlt className="text-blue-400" />
-              <span>Available in your local area</span>
+              <span>{t("footer.info.availableLocal")}</span>
             </div>
 
             <div className="flex items-center gap-3 text-gray-400">
               <FaClock className="text-blue-400" />
-              <span>24/7 Customer Support</span>
+              <span>{t("footer.info.support247")}</span>
             </div>
 
             <div className="flex items-center gap-3 text-gray-400">
               <FaShieldAlt className="text-blue-400" />
-              <span>Verified & Trusted Professionals</span>
+              <span>{t("footer.info.verifiedTrusted")}</span>
             </div>
           </div>
 
@@ -106,35 +106,35 @@ const Footer = () => {
         {/* Navigation */}
         <div>
           <h3 className="text-white font-semibold mb-5 text-lg">
-            Navigation
+            {t("footer.navigationTitle")}
           </h3>
 
           <ul className="space-y-3 text-sm">
             <li>
               <Link to="/" className={linkClass("/")}>
                 <FaArrowRight className="text-xs" />
-                Home
+                {t("nav.home")}
               </Link>
             </li>
 
             <li>
               <Link to="/services" className={linkClass("/services")}>
                 <FaArrowRight className="text-xs" />
-                Services
+                {t("nav.services")}
               </Link>
             </li>
 
             <li>
               <Link to="/bookings" className={linkClass("/bookings")}>
                 <FaArrowRight className="text-xs" />
-                Bookings
+                {t("nav.bookings")}
               </Link>
             </li>
 
             <li>
               <Link to="/worker/register" className={linkClass("/worker/register")}>
                 <FaArrowRight className="text-xs" />
-                Join as a Pro
+                {t("nav.joinAsPro")}
               </Link>
             </li>
           </ul>
@@ -143,28 +143,28 @@ const Footer = () => {
         {/* Support */}
         <div>
           <h3 className="text-white font-semibold mb-5 text-lg">
-            Support
+            {t("footer.supportTitle")}
           </h3>
 
           <ul className="space-y-3 text-sm">
             <li>
               <Link to="/help" className={linkClass("/help")}>
                 <FaHeadset className="text-xs" />
-                Help Center
+                {t("footer.supportLinks.helpCenter")}
               </Link>
             </li>
 
             <li>
               <Link to="/contact" className={linkClass("/contact")}>
                 <FaEnvelope className="text-xs" />
-                Contact
+                {t("footer.supportLinks.contact")}
               </Link>
             </li>
 
             <li>
               <Link to="/feedback" className={linkClass("/feedback")}>
                 <FaArrowRight className="text-xs" />
-                Feedback
+                {t("footer.supportLinks.feedback")}
               </Link>
             </li>
           </ul>
@@ -186,12 +186,11 @@ const Footer = () => {
         {/* Newsletter + Search */}
         <div className="lg:col-span-2">
           <h3 className="text-white font-semibold mb-5 text-lg">
-            Stay Updated
+            {t("footer.stayUpdatedTitle")}
           </h3>
 
           <p className="text-sm text-gray-400 mb-5 max-w-sm leading-relaxed">
-            Get updates on new services, discounts, and platform features
-            delivered directly to your inbox.
+            {t("footer.stayUpdatedDescription")}
           </p>
 
           {/* Footer Search */}
@@ -202,7 +201,7 @@ const Footer = () => {
 
                 <input
                   type="text"
-                  placeholder="Search services..."
+                  placeholder={t("footer.searchPlaceholder")}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) =>
@@ -228,7 +227,7 @@ const Footer = () => {
 
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t("footer.emailPlaceholder")}
                 className="w-full pl-11 pr-4 py-3 rounded-xl bg-gray-900 border border-gray-700 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 transition"
               />
             </div>
@@ -237,7 +236,7 @@ const Footer = () => {
               type="submit"
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:opacity-90 text-white text-sm font-medium transition-all duration-300 hover:scale-105 shadow-lg shadow-blue-500/20"
             >
-              Subscribe
+              {t("footer.subscribe")}
             </button>
           </form>
         </div>
@@ -248,7 +247,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-400">
           
           <p className="text-center sm:text-left">
-            © {new Date().getFullYear()} FixNearby. All rights reserved.
+            {t("footer.copyright", { year: new Date().getFullYear() })}
           </p>
 
           <div className="flex items-center flex-wrap justify-center gap-6 mt-3 sm:mt-0">
@@ -256,14 +255,14 @@ const Footer = () => {
               to="/privacy"
               className="hover:text-blue-400 transition"
             >
-              Privacy Policy
+              {t("footer.privacyPolicy")}
             </Link>
 
             <Link
               to="/terms"
               className="hover:text-blue-400 transition"
             >
-              Terms of Service
+              {t("footer.termsOfService")}
             </Link>
 
             <a

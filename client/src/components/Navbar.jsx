@@ -71,7 +71,7 @@ const Navbar = () => {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
             <a href="/#how-it-works"
-              className="relative pb-0.5 text-sm font-medium text-slate-600 hover:text-[#0056D2] transition-colors duration-200 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-[#0056D2] after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200">
+              className="relative pb-0.5 text-sm font-medium text-slate-600 hover:text-primary transition-colors duration-200 after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-primary after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-200">
               {t("nav.howItWorks")}
             </a>
             <Link to="/services" className={desktopLinkCls('/services')}>{t("nav.services")}</Link>
@@ -81,7 +81,7 @@ const Navbar = () => {
                 <Link to="/bookings" className={desktopLinkCls('/bookings')}>{t("nav.bookings")}</Link>
                 <div className="relative group ml-1">
                   <button className="flex items-center gap-2 pl-2.5 pr-2 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 transition-all duration-200 cursor-pointer">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0056D2] to-cyan-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-cyan-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
                       {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
                     </div>
                     <span className="text-sm font-medium text-slate-700 max-w-[80px] truncate">
@@ -163,11 +163,11 @@ const Navbar = () => {
               <>
                 <div className="my-1 border-t border-slate-100" />
                 <Link to="/register"
-                  className="block text-center text-sm font-semibold text-white bg-[#0056D2] hover:bg-[#0047AF] px-5 py-2.5 rounded-xl transition-all duration-200">
+                  className="block text-center text-sm font-semibold text-white bg-primary hover:bg-blue-700 px-5 py-2.5 rounded-xl transition-all duration-200">
                   {t("nav.getStarted")}
                 </Link>
                 <Link to="/worker/register"
-                  className="block text-center text-sm font-semibold text-[#0056D2] border border-[#0056D2]/25 bg-blue-50/70 hover:bg-blue-100 px-4 py-2.5 rounded-xl transition-all duration-200">
+                  className="block text-center text-sm font-semibold text-primary border border-blue-200 bg-blue-50/70 hover:bg-blue-100 px-4 py-2.5 rounded-xl transition-all duration-200">
                   {t("nav.joinAsPro")}
                 </Link>
               </>

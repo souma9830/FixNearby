@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "../context/LocationContext";
 import { formatDistance, getDistanceKm } from "../utils/distance";
 
@@ -53,6 +54,25 @@ const workerIconMap = {
 };
 
 const CATEGORIES  = ["All", ...new Set(ALL_WORKERS.map((w) => w.profession))];
+
+const categoryTranslationKeys = {
+  Electrician: "services.categories.electrician",
+  Plumber: "services.categories.plumber",
+  Carpenter: "services.categories.carpenter",
+  Painter: "services.categories.painter",
+  "AC Technician": "services.categories.acTechnician",
+  Cleaner: "services.categories.cleaner",
+  Mechanic: "services.categories.mechanic",
+  Gardener: "services.categories.gardener",
+  "Appliance Repair": "services.categories.applianceRepair",
+  "Pest Control": "services.categories.pestControl",
+};
+
+const translateCategory = (t, category) => {
+  if (category === "All") return t("services.categories.all");
+  const key = categoryTranslationKeys[category];
+  return key ? t(key) : category;
+};
 const SORT_OPTIONS = [
   { value: "score",    label: "Best Match" },
   { value: "rating",   label: "Highest Rated" },
@@ -94,7 +114,7 @@ const SkeletonCard = () => (
 
 const ScoreMeter = ({ score }) => {
   const pct   = Math.round((score / 100) * 100);
-  const color = score >= 70 ? "#10b981" : score >= 55 ? "#0056D2" : "#f59e0b";
+  const color = score >= 70 ? "#10b981" : score >= 55 ? "#4f46e5" : "#f59e0b";
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs font-semibold">
@@ -114,6 +134,7 @@ const ScoreMeter = ({ score }) => {
 };
 
 const WorkerCard = ({ worker, rank }) => {
+  const { t } = useTranslation();
   const WorkerIcon = workerIconMap[worker.profession] || IconBolt;
   const isTop = rank <= 3;
 
@@ -135,7 +156,7 @@ const WorkerCard = ({ worker, rank }) => {
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="truncate font-bold text-slate-900">{worker.name}</h3>
-          <p className="text-sm font-semibold text-[#0056D2]">{worker.profession}</p>
+          <p className="text-sm font-semibold text-indigo-600">{worker.profession}</p>
         </div>
       </div>
 
@@ -174,9 +195,9 @@ const WorkerCard = ({ worker, rank }) => {
 
       <Link
         to={`/worker/${worker.id}`}
-        className="mt-auto block w-full rounded-xl bg-slate-900 py-3 text-center text-sm font-bold text-white transition hover:bg-[#0056D2]"
+        className="mt-auto block w-full rounded-xl bg-slate-900 py-3 text-center text-sm font-bold text-white transition hover:bg-indigo-600 hover:shadow-lg"
       >
-        View Profile & Book
+        {t("home.viewProfileAndBook")}
       </Link>
     </div>
   );
@@ -184,6 +205,7 @@ const WorkerCard = ({ worker, rank }) => {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const Recommendations = () => {
+  const { t } = useTranslation();
   const { coords } = useLocation();
 
   const [loading,         setLoading]         = useState(true);
@@ -248,13 +270,13 @@ const Recommendations = () => {
                 <IconSparkle className="h-3 w-3" /> AI-Powered
               </div>
               <h1 className="mt-2 text-3xl font-extrabold text-slate-900 sm:text-4xl">
-                Recommended For You
+                {t("home.recommendations.title")}
               </h1>
               <p className="mt-1 text-slate-500">
                 {loading ? "Calculating best matches..." : `${filtered.length} workers ranked by our AI scoring engine`}
               </p>
             </div>
-            <Link to="/" className="text-sm font-semibold text-[#0056D2] hover:underline">
+            <Link to="/" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
               ← Back to Home
             </Link>
           </div>
@@ -283,7 +305,7 @@ const Recommendations = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0056D2]"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -299,11 +321,11 @@ const Recommendations = () => {
                 onClick={() => setActiveCategory(cat)}
                 className={`rounded-full border px-3 py-1 text-xs font-bold transition ${
                   activeCategory === cat
-                    ? "border-[#0056D2] bg-[#0056D2] text-white"
+                    ? "border-indigo-600 bg-indigo-600 text-white"
                     : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                {cat}
+                {translateCategory(t, cat)}
               </button>
             ))}
           </div>
@@ -345,13 +367,13 @@ const Recommendations = () => {
             {coords && (
               <div>
                 <p className="mb-2 text-xs font-bold text-slate-600">
-                  Max Distance: <span className="text-[#0056D2]">{maxDistance} km</span>
+                  Max Distance: <span className="text-indigo-600">{maxDistance} km</span>
                 </p>
                 <input
                   type="range" min={1} max={100} step={1}
                   value={maxDistance}
                   onChange={(e) => setMaxDistance(Number(e.target.value))}
-                  className="w-48 accent-[#0056D2]"
+                  className="w-48 accent-indigo-600"
                 />
               </div>
             )}
@@ -376,7 +398,7 @@ const Recommendations = () => {
             <p className="text-slate-400 font-medium">No workers match the selected filters.</p>
             <button
               onClick={() => { setMinRating(0); setMaxDistance(100); setActiveCategory("All"); }}
-              className="mt-4 text-sm font-semibold text-[#0056D2] hover:underline"
+              className="mt-4 text-sm font-semibold text-indigo-600 hover:underline"
             >
               Clear filters
             </button>
@@ -409,7 +431,7 @@ const Recommendations = () => {
                     onClick={() => setPage(n)}
                     className={`h-9 w-9 rounded-lg border text-sm font-bold transition ${
                       page === n
-                        ? "border-[#0056D2] bg-[#0056D2] text-white"
+                        ? "border-indigo-600 bg-indigo-600 text-white"
                         : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                     }`}
                   >

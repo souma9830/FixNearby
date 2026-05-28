@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { fetchWorkers } from "../services/workerService";
 
@@ -148,6 +149,75 @@ const categories = [
   "Pest Control",
 ];
 
+const professionTranslationKeys = {
+  Electrician: "services.categories.electrician",
+  Plumber: "services.categories.plumber",
+  Carpenter: "services.categories.carpenter",
+  Painter: "services.categories.painter",
+  "AC Technician": "services.categories.acTechnician",
+  Cleaner: "services.categories.cleaner",
+  Mechanic: "services.categories.mechanic",
+  Gardener: "services.categories.gardener",
+  "Appliance Repair": "services.categories.applianceRepair",
+  "Pest Control": "services.categories.pestControl",
+};
+
+const translatedCategory = (t, category) => {
+  if (category === "All") return t("services.categories.all");
+  const key = professionTranslationKeys[category];
+  return key ? t(key) : category;
+};
+
+const availabilityTranslationKeys = {
+  "Available today": "services.availability.availableToday",
+  "Next slot this afternoon": "services.availability.nextSlotAfternoon",
+  "Available tomorrow morning": "services.availability.availableTomorrowMorning",
+  "Next slot tomorrow": "services.availability.nextSlotTomorrow",
+  "Emergency slots open": "services.availability.emergencySlotsOpen",
+  "Weekend availability": "services.availability.weekendAvailability",
+  "Available this evening": "services.availability.availableThisEvening",
+  "Morning slots open": "services.availability.morningSlotsOpen",
+  "Inspection slots open": "services.availability.inspectionSlotsOpen",
+};
+
+const responseTimeTranslationKeys = {
+  "Replies in 20 min": "services.responseTime.replies20",
+  "Replies in 15 min": "services.responseTime.replies15",
+  "Replies in 35 min": "services.responseTime.replies35",
+  "Replies in 25 min": "services.responseTime.replies25",
+  "Replies in 10 min": "services.responseTime.replies10",
+  "Replies in 30 min": "services.responseTime.replies30",
+  "Replies in 40 min": "services.responseTime.replies40",
+};
+
+const outcomeTranslationKeys = {
+  "Open the full profile to compare pricing, reviews, and booking slots.":
+    "services.outcomes.comparePricingReviews",
+  "See availability first, then confirm a plumbing booking in one flow.":
+    "services.outcomes.confirmPlumbingFlow",
+  "Review past work and request a carpentry visit from the profile page.":
+    "services.outcomes.requestCarpentryVisit",
+  "Check service details and move straight into booking when ready.":
+    "services.outcomes.checkDetailsBook",
+  "View service scope, urgency fit, and book an AC repair visit quickly.":
+    "services.outcomes.acRepairVisit",
+  "Open the profile to compare rates and schedule a cleaning appointment.":
+    "services.outcomes.cleaningAppointment",
+  "See diagnostic pricing and book a mechanic visit with clearer expectations.":
+    "services.outcomes.mechanicVisit",
+  "Review service options and book a gardener for regular or one-time visits.":
+    "services.outcomes.gardenerVisit",
+  "Open the profile to check appliance support and request a repair appointment.":
+    "services.outcomes.applianceRepair",
+  "View treatment details and book an inspection without leaving the flow.":
+    "services.outcomes.treatmentInspection",
+};
+
+const translatedWorkerMeta = (t, value, keyMap) => {
+  const key = keyMap[value];
+  return key ? t(key) : value;
+};
+
 const iconMap = {
   Electrician: "⚡",
   Plumber: "🚰",
@@ -179,6 +249,7 @@ const formatDistance = (distance) => {
 };
 
 const Services = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchQuery, setSearchQuery] = useState(
@@ -307,14 +378,14 @@ const Services = () => {
       {/* HEADER */}
       <div className="mb-10 text-center">
         <h1 className="text-4xl font-bold text-gray-900">
-          Find Reliable Services Near You
+          {t("services.header.title")}
         </h1>
         <p className="mt-2 text-gray-500">
           {locationStatus === "success"
-            ? "Showing nearby professionals"
+            ? t("services.locationStatus.success")
             : locationStatus === "loading"
-              ? "Detecting your location..."
-              : "Enable location for better distance results"}
+              ? t("services.locationStatus.loading")
+              : t("services.locationStatus.default")}
         </p>
       </div>
 
@@ -325,7 +396,7 @@ const Services = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search services..."
+            placeholder={t("services.searchPlaceholder")}
             className="w-full flex-1 rounded-xl border border-gray-300 px-4 py-3 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           />
           <select
@@ -333,9 +404,9 @@ const Services = () => {
             onChange={(e) => setSortBy(e.target.value)}
             className="rounded-xl border border-gray-300 px-4 py-3 shadow-sm transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
           >
-            <option value="distance">📍 Nearest</option>
-            <option value="rating">⭐ Top Rated</option>
-            <option value="price">💰 Lowest Price</option>
+            <option value="distance">📍 {t("services.sort.nearest")}</option>
+            <option value="rating">⭐ {t("services.sort.topRated")}</option>
+            <option value="price">💰 {t("services.sort.lowestPrice")}</option>
           </select>
         </div>
 
@@ -354,7 +425,7 @@ const Services = () => {
               {cat !== "All" && iconMap[cat] && (
                 <span className="mr-2">{iconMap[cat]}</span>
               )}
-              {cat}
+              {translatedCategory(t, cat)}
             </button>
           ))}
         </div>
@@ -366,7 +437,7 @@ const Services = () => {
           <div className="mb-6 flex items-center gap-2">
             <span className="text-2xl">⭐</span>
             <h2 className="text-2xl font-bold text-gray-900">
-              Recently Viewed Professionals
+              {t("services.recentlyViewed")}
             </h2>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -382,7 +453,7 @@ const Services = () => {
                   {worker.name}
                 </h3>
                 <p className="mb-3 font-medium text-blue-600">
-                  {worker.profession}
+                  {translatedCategory(t, worker.profession)}
                 </p>
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span>⭐ {worker.rating}</span>
@@ -399,9 +470,9 @@ const Services = () => {
         <LoadingSpinner />
       ) : filteredWorkers.length === 0 ? (
         <div className="rounded-3xl border-2 border-dashed border-gray-200 bg-gray-50 py-20 text-center">
-          <h3 className="text-2xl font-bold text-gray-900">No services found</h3>
+          <h3 className="text-2xl font-bold text-gray-900">{t("services.emptyState.title")}</h3>
           <p className="mx-auto mt-2 max-w-md text-gray-500">
-            Try a broader search or reset the selected category.
+            {t("services.emptyState.description")}
           </p>
           <button
             type="button"
@@ -412,13 +483,13 @@ const Services = () => {
             }}
             className="mt-6 rounded-xl bg-blue-600 px-8 py-3 font-bold text-white transition hover:bg-blue-700"
           >
-            Reset Filters
+            {t("services.emptyState.resetFilters")}
           </button>
         </div>
       ) : (
         <>
           <p className="mb-6 text-sm font-medium text-gray-500">
-            Showing {filteredWorkers.length} services
+            {t("services.showingCount", { count: filteredWorkers.length })}
           </p>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {filteredWorkers.map((worker) => (
@@ -433,7 +504,7 @@ const Services = () => {
                     </div>
                     {worker.verified && (
                       <span className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700">
-                        Verified
+                        {t("services.verified")}
                       </span>
                     )}
                   </div>
@@ -442,21 +513,21 @@ const Services = () => {
                     {worker.name}
                   </h3>
                   <p className="mb-4 font-bold text-blue-600">
-                    {worker.profession}
+                    {translatedCategory(t, worker.profession)}
                   </p>
 
                   <div className="mb-4 flex flex-wrap gap-2 text-xs font-semibold text-slate-700">
                     <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
-                      {worker.availability}
+                      {translatedWorkerMeta(t, worker.availability, availabilityTranslationKeys)}
                     </span>
                     <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
-                      {worker.responseTime}
+                      {translatedWorkerMeta(t, worker.responseTime, responseTimeTranslationKeys)}
                     </span>
                   </div>
 
                   <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
                     <span className="font-bold text-gray-900">
-                      Rating {worker.rating}
+                      {t("services.ratingLabel", { rating: worker.rating })}
                     </span>
                     <span className="font-bold text-gray-900">
                       ${worker.price}/hr
@@ -469,19 +540,19 @@ const Services = () => {
                   </div>
 
                   <p className="text-sm leading-6 text-slate-600">
-                    {worker.outcomeText}
+                    {translatedWorkerMeta(t, worker.outcomeText, outcomeTranslationKeys)}
                   </p>
                 </div>
 
                 <div className="p-8 pt-0 space-y-3">
                     <a
-                      title="Get Directions"
+                      title={t("services.getDirections")}
                     href={`https://www.google.com/maps?q=${worker.mockOffset.lat},${worker.mockOffset.lon}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block w-full rounded-xl border border-blue-600 bg-white py-4 text-center font-bold text-blue-600 transition hover:bg-blue-50"
                     >
-                      📍 Open in Google Maps
+                      📍 {t("services.openInGoogleMaps")}
                     </a>
 
                     <Link
@@ -489,7 +560,7 @@ const Services = () => {
                       onClick={() => handleRecentlyViewed(worker)}
                       className="block w-full rounded-xl bg-slate-900 py-4 text-center font-bold text-white transition hover:bg-blue-600"
                     >
-                      View Profile and Book
+                      {t("services.viewProfileAndBook")}
                     </Link>
                   </div>
               </div>

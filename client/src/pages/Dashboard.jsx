@@ -44,7 +44,7 @@ const Dashboard = () => {
           </div>
           <Link
             to="/services"
-            className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-[#0056D2] hover:bg-[#0047AF] text-white font-semibold shadow-md shadow-blue-200 transition-all duration-200 self-start md:self-auto"
+            className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-primary hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-100 transition-all duration-200 self-start md:self-auto"
           >
             Book New Service
           </Link>
@@ -119,7 +119,7 @@ const Dashboard = () => {
               ))}
               {bookings.length > 5 && (
                 <div className="text-center pt-2">
-                  <Link to="/bookings" className="text-sm font-semibold text-[#0056D2] hover:underline">
+                  <Link to="/bookings" className="text-sm font-semibold text-primary hover:underline">
                     View all bookings ({bookings.length})
                   </Link>
                 </div>

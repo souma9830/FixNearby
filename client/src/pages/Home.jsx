@@ -59,6 +59,25 @@ const workerIconMap = {
 
 const CATEGORIES = ["All", ...new Set(ALL_WORKERS.map((w) => w.profession))];
 
+const categoryTranslationKeys = {
+  Electrician: "services.categories.electrician",
+  Plumber: "services.categories.plumber",
+  Carpenter: "services.categories.carpenter",
+  Painter: "services.categories.painter",
+  "AC Technician": "services.categories.acTechnician",
+  Cleaner: "services.categories.cleaner",
+  Mechanic: "services.categories.mechanic",
+  Gardener: "services.categories.gardener",
+  "Appliance Repair": "services.categories.applianceRepair",
+  "Pest Control": "services.categories.pestControl",
+};
+
+const translateCategory = (t, category) => {
+  if (category === "All") return t("services.categories.all");
+  const key = categoryTranslationKeys[category];
+  return key ? t(key) : category;
+};
+
 // ─── Recommendation Score Engine ─────────────────────────────────────────────
 const calcRecommendationScore = (worker, distanceKm) => {
   // Rating  : 0–30 pts
@@ -96,6 +115,13 @@ const SkeletonCard = () => (
 );
 
 const ScoreBadge = ({ score }) => {
+  const { i18n } = useTranslation();
+  const localizeDigits = (value) => {
+    const text = String(value);
+    if (i18n.language !== "hi") return text;
+    const devanagariDigits = ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"];
+    return text.replace(/\d/g, (d) => devanagariDigits[Number(d)]);
+  };
   const color =
     score >= 70 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
     : score >= 55 ? "bg-blue-50 text-blue-700 border-blue-200"
@@ -104,31 +130,38 @@ const ScoreBadge = ({ score }) => {
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-bold ${color}`}>
       <IconSparkle className="h-3 w-3" />
-      {score} pts
+      {localizeDigits(score)} pts
     </span>
   );
 };
 
 const RecommendedWorkerCard = ({ worker, rank }) => {
+  const { t, i18n } = useTranslation();
+  const localizeDigits = (value) => {
+    const text = String(value);
+    if (i18n.language !== "hi") return text;
+    const devanagariDigits = ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"];
+    return text.replace(/\d/g, (d) => devanagariDigits[Number(d)]);
+  };
   const WorkerIcon = workerIconMap[worker.profession] || IconBolt;
 
   return (
-    <div className="card-hover group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style={{ boxShadow: 'var(--card-shadow)' }}>
+    <div className="card-hover group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm transition-all duration-300" style={{ boxShadow: 'var(--card-shadow)' }}>
       {/* Rank ribbon */}
       {rank <= 3 && (
-        <div className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-amber-400 text-xs font-extrabold text-white shadow-sm">
-          #{rank}
+        <div className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-400 text-xs font-bold text-white shadow-md shadow-orange-100">
+          #{localizeDigits(rank)}
         </div>
       )}
 
       {/* Header */}
       <div className="mb-4 flex items-start gap-3">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-          <WorkerIcon className="h-7 w-7 text-slate-800" />
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 text-slate-800 shadow-sm">
+          <WorkerIcon className="h-7 w-7" />
         </div>
         <div className="min-w-0">
           <h3 className="truncate font-bold text-slate-900">{worker.name}</h3>
-          <p className="text-sm font-semibold text-[#0056D2]">{worker.profession}</p>
+          <p className="text-sm font-semibold text-indigo-600">{worker.profession}</p>
         </div>
       </div>
 
@@ -138,7 +171,7 @@ const RecommendedWorkerCard = ({ worker, rank }) => {
         {worker.distanceKm != null && (
           <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
             <IconMapPin className="h-3 w-3" />
-            {formatDistance(worker.distanceKm)}
+            {localizeDigits(formatDistance(worker.distanceKm))}
           </span>
         )}
       </div>
@@ -146,7 +179,7 @@ const RecommendedWorkerCard = ({ worker, rank }) => {
       {/* Stats row */}
       <div className="mb-3 flex flex-wrap gap-2 text-xs font-semibold">
         <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-blue-700">
-          <IconClock className="h-3 w-3" />{worker.responseTime}
+          <IconClock className="h-3 w-3" />{localizeDigits(worker.responseTime)}
         </span>
         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
           {worker.availability}
@@ -157,14 +190,14 @@ const RecommendedWorkerCard = ({ worker, rank }) => {
       <div className="mb-4 flex items-center gap-3 text-sm text-slate-600">
         <span className="flex items-center gap-1 font-semibold text-amber-500">
           <IconStar className="h-4 w-4" filled />
-          {worker.rating}
+          {localizeDigits(worker.rating)}
         </span>
-        <span className="h-4 w-px bg-slate-300" />
-        <span className="font-semibold text-slate-800">{worker.price}</span>
-        <span className="h-4 w-px bg-slate-300" />
+        <span className="h-4 w-px bg-slate-200" />
+        <span className="font-semibold text-slate-800">{localizeDigits(worker.price)}</span>
+        <span className="h-4 w-px bg-slate-200" />
         <span className="flex items-center gap-1">
           <IconTrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-          {worker.totalBookings} jobs
+          {localizeDigits(worker.totalBookings)} {t("home.jobs")}
         </span>
       </div>
 
@@ -174,9 +207,9 @@ const RecommendedWorkerCard = ({ worker, rank }) => {
 
       <Link
         to={`/worker/${worker.id}`}
-        className="mt-auto block w-full rounded-xl bg-slate-900 py-3 text-center text-sm font-bold text-white transition hover:bg-[#0056D2]"
+        className="mt-auto block w-full rounded-xl bg-slate-900 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-indigo-600 hover:shadow-lg"
       >
-        View Profile & Book
+        {t("home.viewProfileAndBook")}
       </Link>
     </div>
   );
@@ -185,7 +218,13 @@ const RecommendedWorkerCard = ({ worker, rank }) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Home = () => {
   const { coords, loading: geoLoading, error: geoError } = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const localizeDigits = (value) => {
+    const text = String(value);
+    if (i18n.language !== "hi") return text;
+    const devanagariDigits = ["०", "१", "२", "३", "४", "५", "६", "७", "८", "९"];
+    return text.replace(/\d/g, (d) => devanagariDigits[Number(d)]);
+  };
 
   // Recommendation state
   const [recLoading, setRecLoading]         = useState(true);
@@ -256,11 +295,11 @@ const Home = () => {
     <div className="bg-white">
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-white">
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/40 via-indigo-50/20 to-white">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-100 blur-3xl opacity-60" />
-          <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-violet-100 blur-3xl opacity-50" />
+          <div className="absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-gradient-to-tr from-indigo-100/40 to-blue-50/30 blur-[120px] opacity-60" />
+          <div className="absolute top-20 right-0 h-[500px] w-[500px] rounded-full bg-gradient-to-bl from-violet-100/30 to-indigo-50/20 blur-[100px] opacity-50" />
         </div>
 
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
@@ -270,14 +309,16 @@ const Home = () => {
             <div className="max-w-2xl">
 
               {/* Trust badge */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
-                <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                Trusted by 10,000+ homeowners
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50/60 px-4 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm uppercase tracking-wider">
+                <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                {t("home.trustBadge", { count: localizeDigits("10,000+") })}
               </div>
 
               {/* Main heading */}
-              <h1 className="mt-6 text-5xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
-                {t("hero.headline")}
+              <h1 className="mt-6 text-5xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
+                <span className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 bg-clip-text text-transparent pb-1 inline-block">
+                  {t("hero.headline")}
+                </span>
               </h1>
 
               {/* Subtitle */}
@@ -289,14 +330,14 @@ const Home = () => {
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
                   to="/services"
-                  className="inline-flex items-center justify-center rounded-xl bg-[#0056D2] px-8 py-4 text-base font-bold text-white shadow-lg shadow-blue-200 transition-all duration-300 hover:-translate-y-1 hover:bg-[#0047AF]"
+                  className="btn-cta btn-cta-pulse text-base px-8 py-4 shrink-0 text-center"
                 >
                   {t("hero.findPro") || "Find a Pro"}
                 </Link>
 
                 <Link
                   to="/worker/register"
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-8 py-4 text-base font-bold text-slate-800 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 hover:bg-slate-50"
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-8 py-4 text-base font-bold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:bg-slate-50/60 hover:shadow-md shrink-0 text-center"
                 >
                   {t("hero.becomePro") || "Become a Pro"}
                 </Link>
@@ -312,12 +353,12 @@ const Home = () => {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm backdrop-blur"
+                    className="rounded-2xl border border-slate-200/60 bg-slate-50/40 p-4 shadow-sm backdrop-blur transition-all duration-300 hover:bg-white hover:shadow-md hover:border-slate-200"
                   >
-                    <div className="text-2xl font-extrabold text-slate-900">
-                      {item.number}
+                    <div className="text-2xl font-bold tracking-tight text-slate-900">
+                      {localizeDigits(item.number)}
                     </div>
-                    <p className="mt-1 text-sm font-medium text-slate-500">
+                    <p className="mt-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       {item.label}
                     </p>
                   </div>
@@ -339,28 +380,28 @@ const Home = () => {
               </div>
 
               {/* Floating rating card — top-left, outside the frame */}
-              <div className="absolute -top-5 -left-4 rounded-2xl border border-white/50 bg-white/95 p-4 shadow-xl backdrop-blur-md z-20 animate-float">
+              <div className="absolute -top-5 -left-4 rounded-2xl border border-white/60 bg-white/75 p-4 shadow-xl backdrop-blur-xl z-20 animate-float">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 flex-shrink-0">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100/80 flex-shrink-0">
                     <IconStar className="h-5 w-5 text-amber-500" filled />
                   </div>
                   <div>
-                    <div className="text-base font-extrabold text-slate-900">4.9/5 Rating</div>
-                    <p className="text-xs text-slate-500">Based on reviews</p>
+                    <div className="text-sm font-extrabold text-slate-900">{t("home.ratingCard.title", { rating: localizeDigits("4.9"), total: localizeDigits("5") })}</div>
+                    <p className="text-[11px] font-medium text-slate-500">{t("home.ratingCard.basedOnReviews")}</p>
                   </div>
                 </div>
               </div>
 
               {/* Floating quick booking card — bottom-right, outside the frame */}
-              <div className="absolute -bottom-5 -right-4 rounded-2xl border border-white/50 bg-white/95 p-4 shadow-xl backdrop-blur-md z-20 max-w-[220px] animate-float-b">
+              <div className="absolute -bottom-5 -right-4 rounded-2xl border border-white/60 bg-white/75 p-4 shadow-xl backdrop-blur-xl z-20 max-w-[220px] animate-float-b">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 flex-shrink-0">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100/80 flex-shrink-0">
                     <IconBolt className="h-5 w-5 text-emerald-600" />
                   </div>
                   <div>
-                    <div className="text-base font-extrabold text-slate-900">Quick Booking</div>
-                    <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                      Connect with trusted professionals in minutes.
+                    <div className="text-sm font-extrabold text-slate-900">{t("home.quickBooking.title")}</div>
+                    <p className="mt-0.5 text-[11px] font-medium leading-relaxed text-slate-500">
+                      {t("home.quickBooking.subtitle")}
                     </p>
                   </div>
                 </div>
@@ -379,14 +420,18 @@ const Home = () => {
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-1.5 text-sm font-semibold text-emerald-700">
                   <span className={`h-2 w-2 rounded-full bg-emerald-500 ${coords ? "animate-pulse" : ""}`} />
-                  {coords ? "Live location" : geoLoading ? "Detecting location..." : "Location unavailable"}
+                  {coords
+                    ? t("home.nearby.status.liveLocation")
+                    : geoLoading
+                      ? t("home.nearby.status.detectingLocation")
+                      : t("home.nearby.status.locationUnavailable")}
                 </div>
                 <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">
-                  Closest to you
+                  {t("home.nearby.title")}
                 </h2>
               </div>
-              <Link to="/services" className="font-semibold text-[#0056D2] hover:underline">
-                Browse all pros
+              <Link to="/services" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
+                {t("home.nearby.browseAllPros")}
               </Link>
             </div>
 
@@ -405,29 +450,32 @@ const Home = () => {
                 {nearbyWorkers.map((worker) => {
                   const WorkerIcon = workerIconMap[worker.profession] || IconBolt;
                   return (
-                    <div key={worker.id} className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-all hover:shadow-lg">
+                    <div key={worker.id} className="card-hover group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-7 shadow-sm transition-all">
                       <div className="mb-5 flex items-start justify-between">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
-                          <WorkerIcon className="h-8 w-8 text-slate-900" />
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 shadow-sm text-slate-800">
+                          <WorkerIcon className="h-7 w-7" />
                         </div>
-                        <div className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                          Near you: {formatDistance(worker.distanceKm)}
+                        <div className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                          {t("home.nearby.distanceLabel", { distance: localizeDigits(formatDistance(worker.distanceKm)) })}
                         </div>
                       </div>
-                      <h3 className="mb-0.5 text-xl font-bold text-slate-900">{worker.name}</h3>
-                      <p className="mb-4 text-sm font-semibold text-[#0056D2]">{worker.profession}</p>
+                      <h3 className="mb-0.5 text-lg font-bold text-slate-900">{worker.name}</h3>
+                      <p className="mb-4 text-sm font-semibold text-indigo-600">{worker.profession}</p>
                       <div className="mb-4 flex flex-wrap gap-2 text-xs font-semibold">
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">{worker.availability}</span>
                         <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">{worker.responseTime}</span>
                       </div>
-                      <div className="mb-6 flex items-center gap-3 text-sm text-slate-600">
-                        <span>Rating {worker.rating}</span>
-                        <div className="h-4 w-px bg-slate-300" />
-                        <span>{worker.price}</span>
+                      <div className="mb-5 flex items-center gap-3 text-sm text-slate-600">
+                        <span className="flex items-center gap-1 font-semibold text-amber-500">
+                          <IconStar className="h-4 w-4" filled />
+                          {localizeDigits(worker.rating)}
+                        </span>
+                        <div className="h-4 w-px bg-slate-200" />
+                        <span className="font-semibold text-slate-800">{localizeDigits(worker.price)}</span>
                       </div>
-                      <p className="mb-6 text-sm leading-6 text-slate-600">{worker.outcomeText}</p>
-                      <Link to={`/worker/${worker.id}`} className="block w-full rounded-xl bg-slate-900 py-3.5 text-center font-bold text-white transition hover:bg-[#0056D2]">
-                        View Profile and Book
+                      <p className="mb-6 text-sm leading-relaxed text-slate-500">{worker.outcomeText}</p>
+                      <Link to={`/worker/${worker.id}`} className="mt-auto block w-full rounded-xl bg-slate-900 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-indigo-600 hover:shadow-lg">
+                        {t("home.viewProfileAndBook")}
                       </Link>
                     </div>
                   );
@@ -447,24 +495,24 @@ const Home = () => {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-sm font-semibold text-violet-700">
                 <IconSparkle className="h-3.5 w-3.5" />
-                AI-Powered Recommendations
+                {t("home.recommendations.aiPowered")}
               </div>
               <h2 className="mt-4 text-3xl font-extrabold text-slate-900 sm:text-4xl">
-                Recommended For You
+                {t("home.recommendations.title")}
               </h2>
               <p className="mt-2 text-slate-500 text-sm">
-                Ranked by rating, proximity, response speed, and booking history.
+                {t("home.recommendations.subtitle")}
               </p>
             </div>
-            <Link to="/services" className="font-semibold text-[#0056D2] hover:underline shrink-0">
-              See all workers
+            <Link to="/services" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline shrink-0">
+              {t("home.recommendations.seeAllWorkers")}
             </Link>
           </div>
 
           {/* Filters */}
           <div className="mb-8 flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500">
-              <IconFilter className="h-4 w-4" /> Filter:
+              <IconFilter className="h-4 w-4" /> {t("home.recommendations.filter")}
             </span>
 
             {/* Category chips */}
@@ -475,11 +523,11 @@ const Home = () => {
                   onClick={() => { setActiveCategory(cat); setShowAll(false); }}
                   className={`rounded-full border px-3.5 py-1.5 text-xs font-bold transition ${
                     activeCategory === cat
-                      ? "border-[#0056D2] bg-[#0056D2] text-white shadow-sm"
+                      ? "border-indigo-600 bg-indigo-600 text-white shadow-sm"
                       : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
-                  {cat}
+                  {translateCategory(t, cat)}
                 </button>
               ))}
             </div>
@@ -497,7 +545,7 @@ const Home = () => {
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  {r === 0 ? "Any" : `${r}+`}
+                  {r === 0 ? t("home.recommendations.any") : `${localizeDigits(r)}+`}
                 </button>
               ))}
             </div>
@@ -507,10 +555,8 @@ const Home = () => {
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-violet-100 bg-violet-50/60 px-5 py-4 text-sm text-violet-800">
             <IconSparkle className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
             <p>
-              <span className="font-bold">How scoring works: </span>
-              Each worker is scored up to <strong>100 pts</strong> based on
-              rating (30), proximity (25), booking volume (20), response time (15),
-              and repeat customers (10). Higher score = better match for you.
+              <span className="font-bold">{t("home.recommendations.howScoringWorksTitle")} </span>
+              {t("home.recommendations.howScoringWorksDescription")}
             </p>
           </div>
 
@@ -547,8 +593,8 @@ const Home = () => {
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
                 {showAll
-                  ? "Show less"
-                  : `Show all ${totalFiltered} workers`}
+                  ? t("home.recommendations.showLess")
+                  : t("home.recommendations.showAllWorkers", { count: localizeDigits(totalFiltered) })}
               </button>
             </div>
           )}
@@ -579,15 +625,15 @@ const Home = () => {
       </section>
 
       {/* ── CTA ─────────────────────────────────────────────────────────────── */}
-      <section className="bg-[#0056D2] py-20 text-center text-white">
+      <section className="cta-section py-20 text-center text-white">
         <div className="mx-auto max-w-3xl px-4">
           <h2 className="mb-4 text-4xl font-extrabold">{t("cta.title")}</h2>
           <p className="mb-8 text-lg text-white/80">{t("cta.subtext")}</p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <Link to="/services" className="rounded-xl bg-white px-8 py-3 font-semibold text-[#0056D2] shadow-sm transition hover:bg-slate-100">
-              {t("cta.findPro")}
+            <Link to="/services" className="btn-cta btn-primary-lg btn-cta-pulse mr-0 sm:mr-4">
+              <span className="relative z-10">{t("cta.findPro")}</span>
             </Link>
-            <Link to="/worker/register" className="rounded-xl border border-white/40 px-8 py-3 font-semibold text-white transition hover:bg-white/10">
+            <Link to="/worker/register" className="btn-cta-ghost btn-primary-lg">
               {t("cta.becomePro")}
             </Link>
           </div>
