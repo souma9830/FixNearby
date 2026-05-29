@@ -1,169 +1,260 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { loginUser } from '../services/authService';
-import useToast from '../hooks/useToast';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { loginUser } from "../services/authService";
+import useToast from "../hooks/useToast";
+import {
+  FaEye,
+  FaEyeSlash,
+  FaEnvelope,
+  FaLock,
+  FaSpinner,
+} from "react-icons/fa";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const {showToast} = useToast();
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [interacted, setInteracted] = useState({});
+  const { showToast } = useToast();
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
   const [errors, setErrors] = useState({});
-  const [apiError, setApiError]=useState(null);
+  const [interacted, setInteracted] = useState({});
+  const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // ---------------- VALIDATION ----------------
+
+  const validateFields = (name, value) => {
+    const emailRegex =
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    switch (name) {
   
     const validateFields=(name,value)=>{
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     switch(name){
       case "email":
-        if(!value || !emailRegex.test(value)) return "Invalid email address"
+        if (!value.trim()) return "Email is required";
+        if (!emailRegex.test(value))
+          return "Please enter a valid email";
         break;
+
       case "password":
-        if(value.length < 6) return "Password must be atleast 6 characters"
+        if (!value.trim()) return "Password is required";
+        if (value.length < 6)
+          return "Password must be at least 6 characters";
         break;
+
       default:
         return "";
-        
     }
+
     return "";
-  }
+  };
+
+  // ---------------- HANDLE CHANGE ----------------
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
     if (interacted[name]) {
-      const errorMsgs = validateFields(name, value);
-
-      setErrors((prev) => ({ ...prev, [name]: errorMsgs }));
+      setErrors((prev) => ({
+        ...prev,
+        [name]: validateFields(name, value),
+      }));
     }
-    if(apiError) setApiError(null);
+
+    if (apiError) setApiError("");
   };
+
+  // ---------------- HANDLE BLUR ----------------
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
 
-    setInteracted((prev) => ({ ...prev, [name]: true }));
+    setInteracted((prev) => ({
+      ...prev,
+      [name]: true,
+    }));
 
-    //validate when user leaves input
-    const errorMsgs = validateFields(name, value);
-
-    setErrors((prev) => ({ ...prev, [name]: errorMsgs }));
+    setErrors((prev) => ({
+      ...prev,
+      [name]: validateFields(name, value),
+    }));
   };
+
+  // ---------------- HANDLE SUBMIT ----------------
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const newErrors = {};
-    const allInteracted = {};
+    const touchedFields = {};
 
-    // validate all fields on submit
     Object.keys(formData).forEach((key) => {
-      const errorMsg = validateFields(key, formData[key]);
-      if (errorMsg) newErrors[key] = errorMsg;
+      touchedFields[key] = true;
+
+      const error = validateFields(key, formData[key]);
+
+      if (error) {
+        newErrors[key] = error;
+      }
     });
 
-    // mark all fields as interacted on submit
-    Object.keys(formData).forEach((key) => {
-      allInteracted[key] = true;
-    });
-    setInteracted(allInteracted);
+    setInteracted(touchedFields);
+    setErrors(newErrors);
 
-    //stop submit if errors occur
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    if (Object.keys(newErrors).length > 0) return;
 
-    setErrors({});
-    setApiError(null);
     setLoading(true);
+    setApiError("");
 
     try {
       const userData = await loginUser(formData);
 
-      // Persist user + token via AuthContext
       login(userData);
-      showToast("Logged in successfully")
-      navigate("/dashboard");
-      setFormData({ email : "", password :""})
 
-    } catch(error) {
-      setApiError(error.message || "Login Failed , Try again");
+      showToast("Logged in successfully");
+
+      setFormData({
+        email: "",
+        password: "",
+      });
+
+      navigate("/dashboard");
+    } catch (error) {
+      setApiError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Login failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-    // ---------------- INPUT STYLE ----------------
+  // ---------------- INPUT STYLES ----------------
 
   const inputStyles = (field) =>
-    `appearance-none relative block w-full px-4 py-3 border rounded-xl 
-    focus:outline-none transition duration-200 bg-gray-50
+    `w-full rounded-xl border bg-gray-50 px-12 py-3 text-sm text-gray-800
+    transition-all duration-200 outline-none
+    placeholder:text-gray-400
     ${
       interacted[field] && errors[field]
-        ? "border-red-500 focus:ring-2 focus:ring-red-200 focus:border-red-500"
-        : "border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
+        ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-100"
+        : "border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
     }`;
 
   return (
-    <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-md">
-        <h2 className="text-center text-3xl font-bold text-gray-900">
-          Sign In
-        </h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl border border-gray-100">
+        {/* Logo / Heading */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white text-2xl font-bold shadow-lg">
+            F
+          </div>
 
+          <h2 className="text-3xl font-bold text-gray-900">
+            Welcome Back
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-500">
+            Sign in to continue to your account
+          </p>
+        </div>
+
+        {/* API Error */}
         {apiError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {apiError}
           </div>
         )}
 
-        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email */}
           <div>
-            <input
-              name="email"
-              type="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              placeholder="Email address"
-              className={inputStyles("email")}
-            />
-            <div className="min-h-[22px] mt-1 text-sm">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Email Address
+            </label>
+
+            <div className="relative">
+              <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                placeholder="Enter your email"
+                className={inputStyles("email")}
+              />
+            </div>
+
+            <div className="min-h-[22px] pt-1 text-sm">
               {interacted.email && errors.email && (
-                <span className="text-red-600">{errors.email}</span>
+                <span className="text-red-600">
+                  {errors.email}
+                </span>
               )}
             </div>
           </div>
 
           {/* Password */}
           <div>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Forgot Password?
+              </Link>
+            </div>
+
             <div className="relative">
+              <FaLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+
               <input
+                type={showPassword ? "text" : "password"}
                 name="password"
-                type={showPassword ? 'text' : 'password'}
-                required
                 value={formData.password}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                placeholder="Password"
+                placeholder="Enter your password"
                 className={`${inputStyles("password")} pr-12`}
               />
+
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-700"
+                onClick={() =>
+                  setShowPassword((prev) => !prev)
+                }
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                {showPassword ? (
+                  <FaEyeSlash />
+                ) : (
+                  <FaEye />
+                )}
               </button>
             </div>
-            {/* Reserved error space */}
-            <div className="min-h-[22px] mt-1 text-sm">
+
+            <div className="min-h-[22px] pt-1 text-sm">
               {interacted.password && errors.password && (
                 <span className="text-red-600">
                   {errors.password}
@@ -171,22 +262,32 @@ const Login = () => {
               )}
             </div>
           </div>
+
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition-all duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? 'Signing you in…' : 'Sign In'}
+            {loading ? (
+              <>
+                <FaSpinner className="animate-spin" />
+                Signing In...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600">
-          Don&apos;t have an account?{' '}
+        {/* Register */}
+        <p className="mt-6 text-center text-sm text-gray-600">
+          Don&apos;t have an account?{" "}
           <Link
             to="/register"
-            className="text-blue-600 hover:underline font-semibold"
+            className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"
           >
-            Register
+            Create Account
           </Link>
         </p>
       </div>

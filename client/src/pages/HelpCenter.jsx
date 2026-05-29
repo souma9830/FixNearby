@@ -90,6 +90,7 @@ const supportStats = [
 const HelpCenter = () => {
   const [search, setSearch] = useState("");
   const [activeFAQ, setActiveFAQ] = useState(null);
+  const [expandedSupport, setExpandedSupport] = useState(null);
 
   const filteredFaqs = useMemo(() => {
     return faqs.filter(
@@ -103,9 +104,13 @@ const HelpCenter = () => {
     setActiveFAQ(activeFAQ === id ? null : id);
   };
 
+  const toggleSupport = (idx) => {
+    setExpandedSupport(expandedSupport === idx ? null : idx);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 text-gray-800 overflow-hidden">
-
+      
       {/* HERO */}
       <header className="relative bg-gray-950 text-white py-20 px-6">
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_#3b82f6,_transparent_40%)]"></div>
@@ -126,40 +131,122 @@ const HelpCenter = () => {
           <div className="max-w-2xl mx-auto mt-10">
             <div className="bg-white/10 border border-white/20 backdrop-blur-lg rounded-2xl flex items-center px-5 py-4">
               <FaSearch className="text-gray-300 mr-3" />
+
               <input
                 type="text"
                 placeholder="Search FAQs..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-transparent outline-none text-white"
+                className="w-full bg-transparent outline-none text-white placeholder:text-gray-300"
               />
             </div>
           </div>
         </div>
       </header>
 
-      {/* STATS */}
+      {/* EXPANDABLE SUPPORT SECTION */}
       <section className="max-w-6xl mx-auto px-6 -mt-10 relative z-10">
         <div className="grid md:grid-cols-3 gap-5">
-          {supportStats.map((item, idx) => (
-            <div
+          {supportStats.map((item, idx) => {
+            const isOpen = expandedSupport === idx;
+
+            return (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl border shadow-lg overflow-hidden transition-all duration-300"
+              >
+                <button
+                  onClick={() => toggleSupport(idx)}
+                  className="w-full flex items-center justify-between p-6 text-left"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                      {item.icon}
+                    </div>
+
+                    <div>
+                      <h3 className="font-semibold text-lg">{item.title}</h3>
+                      <p className="text-sm text-gray-500">{item.desc}</p>
+                    </div>
+                  </div>
+
+                  {isOpen ? (
+                    <FaChevronUp className="text-gray-500" />
+                  ) : (
+                    <FaChevronDown className="text-gray-500" />
+                  )}
+                </button>
+
+                <div
+                  className={`transition-all duration-300 overflow-hidden ${
+                    isOpen
+                      ? "max-h-60 opacity-100"
+                      : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <div className="px-6 pb-6 text-gray-600 border-t">
+                    <p className="pt-4">
+                      {idx === 0 &&
+                        "Our support team is available anytime to help with account issues, bookings, and technical assistance."}
+
+                      {idx === 1 &&
+                        "Most customer queries are answered within a few minutes for faster service resolution."}
+
+                      {idx === 2 &&
+                        "All services are protected with secure transactions, verified workers, and reliable customer support."}
+                    </p>
+
+                    <Link
+                      to="/contact"
+                      className="inline-flex items-center gap-2 mt-4 text-blue-600 font-medium hover:gap-3 transition-all"
+                    >
+                      Learn More
+                      <FaArrowRight />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* HELP CARDS */}
+      <section className="max-w-6xl mx-auto px-6 py-20">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {helpCards.map((card, idx) => (
+            <Link
               key={idx}
-              className="bg-white rounded-2xl p-6 shadow-lg border flex items-center gap-4"
+              to={card.link}
+              className="group bg-white rounded-3xl p-6 border shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
             >
-              <div className="w-14 h-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                {item.icon}
+              <div className="mb-5">{card.icon}</div>
+
+              <h3 className="text-xl font-bold">{card.title}</h3>
+
+              <p className="mt-3 text-gray-500 text-sm leading-relaxed">
+                {card.desc}
+              </p>
+
+              <div className="mt-6 flex items-center text-blue-600 font-medium gap-2 group-hover:gap-3 transition-all">
+                Explore
+                <FaArrowRight />
               </div>
-              <div>
-                <h3 className="font-semibold">{item.title}</h3>
-                <p className="text-sm text-gray-500">{item.desc}</p>
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="max-w-5xl mx-auto px-6 py-24">
+      <section className="max-w-5xl mx-auto px-6 py-10">
+        <div className="text-center mb-14">
+          <h2 className="text-4xl font-bold">Frequently Asked Questions</h2>
+
+          <p className="mt-4 text-gray-500">
+            Quick answers to common customer questions.
+          </p>
+        </div>
+
         <div className="space-y-5">
           {filteredFaqs.length ? (
             filteredFaqs.map((item) => {
@@ -168,22 +255,33 @@ const HelpCenter = () => {
               return (
                 <div
                   key={item.id}
-                  className="bg-white border rounded-2xl shadow-sm"
+                  className="bg-white border rounded-2xl shadow-sm overflow-hidden"
                 >
                   <button
                     onClick={() => toggleFAQ(item.id)}
-                    className="w-full flex justify-between p-6 text-left"
+                    className="w-full flex justify-between items-center p-6 text-left"
                   >
-                    <span className="font-semibold">{item.q}</span>
-                    {isOpen ? <FaChevronUp /> : <FaChevronDown />}
+                    <span className="font-semibold text-lg">
+                      {item.q}
+                    </span>
+
+                    {isOpen ? (
+                      <FaChevronUp className="text-blue-600" />
+                    ) : (
+                      <FaChevronDown className="text-gray-500" />
+                    )}
                   </button>
 
                   <div
-                    className={`overflow-hidden transition-all ${
-                      isOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+                    className={`transition-all duration-300 overflow-hidden ${
+                      isOpen
+                        ? "max-h-40 opacity-100"
+                        : "max-h-0 opacity-0"
                     }`}
                   >
-                    <p className="px-6 pb-6 text-gray-600">{item.a}</p>
+                    <p className="px-6 pb-6 text-gray-600 leading-relaxed">
+                      {item.a}
+                    </p>
                   </div>
                 </div>
               );
@@ -197,23 +295,24 @@ const HelpCenter = () => {
       </section>
 
       {/* CTA */}
-      <section className="bg-blue-600 text-white text-center py-20">
+      <section className="bg-blue-600 text-white text-center py-20 mt-20">
         <h3 className="text-3xl font-bold">Still need help?</h3>
+
         <p className="mt-4 text-blue-100">
           Contact our support team anytime.
         </p>
 
-        <div className="mt-8 flex justify-center gap-4">
+        <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Link
             to="/contact"
-            className="px-6 py-3 bg-white text-blue-700 rounded-xl font-semibold"
+            className="px-6 py-3 bg-white text-blue-700 rounded-xl font-semibold hover:bg-slate-100 transition"
           >
             Contact Support
           </Link>
 
           <Link
             to="/faq"
-            className="px-6 py-3 border border-white rounded-xl"
+            className="px-6 py-3 border border-white rounded-xl hover:bg-white/10 transition"
           >
             Browse FAQs
           </Link>

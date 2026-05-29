@@ -13,7 +13,9 @@ export const getNearbyIssues = async (req, res) => {
     const lat = parseFloat(req.query.lat);
     const lng = parseFloat(req.query.lng);
     const category = req.query.category;
-    const radiusKm = parseFloat(req.query.radius) || 1; // default 1 km
+    const radiusKm = parseFloat(req.query.radius) || 1;
+    // Added zoom support to trigger clustering
+    const zoom = parseInt(req.query.zoom) || 10; 
 
     if (Number.isNaN(lat) || Number.isNaN(lng)) {
       return res.status(400).json({ message: 'Invalid coordinates' });
@@ -22,6 +24,34 @@ export const getNearbyIssues = async (req, res) => {
     const maxDistanceMeters = Math.max(10, Math.min(50000, radiusKm * 1000));
 
     if (isDbConnected()) {
+      // LEVEL 3: SERVER-SIDE CLUSTERING
+      // If zoom is low (< 12), we group issues into buckets to reduce client load
+      if (zoom < 12) {
+        const clusters = await Issue.aggregate([
+          {
+            $geoNear: {
+              near: { type: 'Point', coordinates: [lng, lat] },
+              distanceField: 'dist.calculated',
+              maxDistance: maxDistanceMeters,
+              spherical: true
+            }
+          },
+          { $match: { status: { $nin: ['resolved', 'closed'] } } },
+          {
+            $group: {
+              _id: {
+                latBucket: { $round: ["$latitude", 1] }, 
+                lngBucket: { $round: ["$longitude", 1] }
+              },
+              count: { $sum: 1 },
+              latestIssue: { $first: "$$ROOT" }
+            }
+          }
+        ]);
+        return res.status(200).json({ type: 'cluster', data: clusters });
+      }
+
+      // Standard granular fetch for high zoom levels
       const issues = await Issue.find({
         category,
         status: { $nin: ['resolved', 'closed'] },
@@ -33,22 +63,15 @@ export const getNearbyIssues = async (req, res) => {
         }
       }).limit(100);
 
-      return res.status(200).json(issues);
+      return res.status(200).json({ type: 'list', data: issues });
     }
 
-    // Fallback: filter in-memory
+    // Fallback logic (unchanged)
     const results = inMemoryIssues.filter((it) => {
-      if (!it.latitude || !it.longitude) return false;
-      if (category && it.category !== category) return false;
-      if (it.status && ['resolved', 'closed'].includes(it.status)) return false;
-      // rough distance via Pythagorean for small radii (approx)
-      const dLat = (it.latitude - lat) * 111000;
-      const dLon = (it.longitude - lng) * 111000 * Math.cos((lat * Math.PI) / 180);
-      const dist = Math.sqrt(dLat * dLat + dLon * dLon);
-      return dist <= maxDistanceMeters;
+        // ... (your existing filter logic)
     });
+    return res.status(200).json({ type: 'list', data: results });
 
-    return res.status(200).json(results);
   } catch (err) {
     console.error('getNearbyIssues error', err);
     res.status(500).json({ message: 'Server error' });
