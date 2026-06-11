@@ -1,9 +1,15 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
   title: FixNearby API Documentation
-  description: API endpoints specification for local service discovery, booking, and workers.
   version: 1.0.0
+  description: API endpoints schema spec for hyperlocal worker discovery.
 paths:
+  /api/health:
+    get:
+      summary: Get Server Health Status
+      responses:
+        '200':
+          description: Server running status
   /api/auth/login:
     post:
       summary: User Login
@@ -20,4 +26,4 @@ paths:
                   type: string
       responses:
         '200':
-          description: Successful Authentication
+          description: Success token return
