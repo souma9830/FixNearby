@@ -1,0 +1,42 @@
+name: Security Vulnerability Scan
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  audit-client:
+    name: Audit Client Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Audit Client
+        run: |
+          cd client
+          npm audit --audit-level=high
+
+  audit-server:
+    name: Audit Server Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Audit Server
+        run: |
+          cd server
+          npm audit --audit-level=high
