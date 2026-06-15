@@ -24,7 +24,12 @@ jobs:
       - name: Install Client Dependencies
         run: |
           cd client
-          npm ci
+          npm ci --prefer-offline --no-audit
+
+      - name: Verify Client Lockfile
+        run: |
+          cd client
+          git diff --exit-code package-lock.json
 
       - name: Lint Client
         run: |
@@ -53,7 +58,12 @@ jobs:
       - name: Install Server Dependencies
         run: |
           cd server
-          npm ci
+          npm ci --prefer-offline --no-audit
+
+      - name: Verify Server Lockfile
+        run: |
+          cd server
+          git diff --exit-code package-lock.json
 
       - name: Verify Server Syntax
         run: |
