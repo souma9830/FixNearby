@@ -22,14 +22,22 @@ export const validateEnv = () => {
 
   if (missing.length > 0) {
     console.error('========================================================================');
-    console.error('FATAL ERROR: Missing Required Environment Variables:');
+    console.error('FATAL SYSTEM STARTUP ERROR: Missing Required Environment Configuration');
+    console.error('========================================================================');
     for (const name of missing) {
-      console.error(`  - ${name}`);
+      console.error(`  [MISSING]: ${name} is not defined in the environment.`);
     }
-    console.error('Please configure them in your .env file before starting the application.');
+    console.error('------------------------------------------------------------------------');
+    console.error('Solution: Create a '.env' file in your server directory and set the values.');
+    console.error('Refer to '.env.example' for configuration templates.');
     console.error('========================================================================');
     process.exit(1);
   } else {
-    console.log('✔ Environment variables validation passed.');
+    // Basic verification of MONGODB_URI format
+    const uri = process.env.MONGODB_URI;
+    if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) {
+      console.warn('⚠️  Warning: MONGODB_URI does not appear to be a valid MongoDB connection string format.');
+    }
+    console.log('✔ Server configuration variables validated successfully.');
   }
 };
