@@ -1,0 +1,33 @@
+name: Welcome PR Contributors
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add Welcome Comment on PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issueNumber = context.payload.pull_request.number;
+            const message = `👋 Thanks for submitting a pull request to FixNearby! 
+            
+            Before our maintainers review this, please make sure you've:
+            1. Verified all local build and unit test checks run successfully.
+            2. Run formatting and lint validations.
+            3. Checked responsiveness and accessibility standards.
+            
+            We appreciate your help!`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: message
+            });
