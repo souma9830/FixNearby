@@ -1,0 +1,36 @@
+name: Label PR by Branch Name
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto Label by Branch
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const branchName = context.payload.pull_request.head.ref;
+            const issueNumber = context.payload.pull_request.number;
+            const labels = [];
+            
+            if (branchName.startsWith('feat/')) labels.push('enhancement');
+            if (branchName.startsWith('fix/')) labels.push('bug');
+            if (branchName.startsWith('docs/')) labels.push('documentation');
+            if (branchName.startsWith('security/')) labels.push('security');
+            if (branchName.startsWith('ci/')) labels.push('ci/cd');
+            if (branchName.startsWith('accessibility/')) labels.push('accessibility');
+            
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: labels
+              });
+            }
