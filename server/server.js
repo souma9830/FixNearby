@@ -1,3 +1,11 @@
+// Catch BullMQ Redis version & connection errors gracefully (they fire as unhandled rejections)
+process.on('unhandledRejection', (err) => {
+  if (err?.message?.includes('Redis version') || err?.message?.includes('ECONNREFUSED') || err?.message?.includes('Connection is closed')) {
+    return; // Suppress — Redis unavailable or incompatible version
+  }
+  console.error('Unhandled Rejection:', err);
+});
+
 import healthRoutes from './routes/healthRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import express from 'express';
@@ -27,10 +35,12 @@ import { startBookingExpiryScheduler } from './workers/bookingExpiryWorker.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import { initKarmaScheduler } from './utils/karmaScheduler.js';
 import { startWorker } from './workers/notificationWorker.js';
-import { startBookingReminderScheduler } from './workers/bookingReminderWorker.js';
+import { checkUpcomingBookings } from './workers/bookingReminderWorker.js';
 import favoriteRoutes from './routes/favoriteRoutes.js';
 import estimateRoutes from './routes/estimateRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
+import availabilityRoutes from './routes/availabilityRoutes.js';
+import auditLogRoutes from './routes/auditLogRoutes.js';
 
 dotenv.config();
 
@@ -133,6 +143,10 @@ initKarmaScheduler();
 // Start Background Notification Worker
 startWorker();
 // Start Booking Reminder Scheduler
+const startBookingReminderScheduler = () => {
+  checkUpcomingBookings();
+  setInterval(checkUpcomingBookings, 60 * 60 * 1000);
+};
 startBookingReminderScheduler();
 
 // Protected test route

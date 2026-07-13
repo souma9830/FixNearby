@@ -180,6 +180,7 @@ const VerificationPage = () => {
       }
     } catch (err) {
       console.error('Failed to load verification status:', err);
+      setStatus('not_submitted');
     } finally {
       setLoading(false);
     }

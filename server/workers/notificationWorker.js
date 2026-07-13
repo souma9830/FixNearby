@@ -13,19 +13,7 @@ dotenv.config();
 
 const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
-// Setup worker connection
 let connection = null;
-try {
-  connection = new IORedis(redisUrl, {
-    maxRetriesPerRequest: null,
-    enableReadyCheck: false
-  });
-  connection.on('error', (err) => {
-    console.warn(`[Worker Redis Connection Warning] Redis unreachable: ${err.message}`);
-  });
-} catch (err) {
-  console.warn(`[Worker Redis Initialization Warning] Failed: ${err.message}`);
-}
 
 const processJob = async (job) => {
   const { name, data } = job;
@@ -313,15 +301,29 @@ const processJob = async (job) => {
 let worker = null;
 
 export const startWorker = () => {
-  if (!connection) {
+  try {
+    connection = new IORedis(redisUrl, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      retryStrategy: () => null,
+    });
+    connection.on('error', () => {});
+  } catch (err) {
     console.warn('[Worker] Gracefully skipping worker start: Redis is offline.');
     return null;
   }
 
-  worker = new Worker('notification-queue', processJob, {
-    connection,
-    concurrency: 5
-  });
+  try {
+    worker = new Worker('notification-queue', processJob, {
+      connection,
+      concurrency: 5
+    });
+  } catch (err) {
+    console.warn('[Worker] Gracefully skipping worker start: Redis unavailable.');
+    connection.disconnect();
+    connection = null;
+    return null;
+  }
 
   worker.on('completed', (job) => {
     console.log(`[Worker] Job completed: ${job.id}`);

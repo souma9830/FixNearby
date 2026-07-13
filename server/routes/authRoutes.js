@@ -55,7 +55,6 @@ router.get('/csrf-token', (req, res) => {
 {/* USER AUTH ROUTES */}
 
 router.post('/register', userRegisterLimiter, validateRegistration, registerUser);
-router.post('/register', userRegisterLimiter, validateRegistrationPayload, validateRegistration, registerUser);
 router.post('/login', userLoginLimiter, validateLogin, loginUser);
 router.get('/profile', protect, getUserProfile);
 router.put('/profile', protect, profileUpdateLimiter, updateUserProfile);

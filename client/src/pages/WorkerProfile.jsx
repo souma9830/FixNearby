@@ -354,7 +354,7 @@ const WorkerProfile = () => {
         // Fetch from backend
         try {
           const res = await api.get(`/workers/${id}`);
-          const backendWorker = res.data;
+          const backendWorker = res.data.worker || res.data;
           
           setWorker({
             id: backendWorker._id || backendWorker.id,
@@ -363,7 +363,7 @@ const WorkerProfile = () => {
             price: backendWorker.price ? (backendWorker.price.toString().startsWith('$') ? backendWorker.price : `$${backendWorker.price}/hr`) : "$30/hr",
             rating: backendWorker.rating || 4.5,
             experience: backendWorker.experience ? (backendWorker.experience.toString().toLowerCase().includes("year") ? backendWorker.experience : `${backendWorker.experience} Years`) : "3 Years",
-            location: backendWorker.location || "Local Area",
+            location: "Local Area",
             completedJobs: backendWorker.completedJobs || 12,
             bio: backendWorker.bio || `Licensed professional ${backendWorker.category?.toLowerCase() || 'service'} specialist ready to help.`,
             portfolio: backendWorker.portfolio || [

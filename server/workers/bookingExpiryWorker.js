@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Worker } from 'bullmq';
 import IORedis from 'ioredis';
 import Booking from '../models/Booking.js';
@@ -7,14 +8,22 @@ dotenv.config();
 
 const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 
+const isDbConnected = () => mongoose.connection.readyState === 1;
+
 export const startBookingExpiryScheduler = () => {
   console.log('[BullMQ Expiry Worker]: Initializing booking expiry check worker...');
+
+  if (!isDbConnected()) {
+    console.warn('[BullMQ Expiry Worker]: MongoDB not connected — skipping worker initialization');
+    return;
+  }
 
   let connection = null;
   try {
     connection = new IORedis(redisUrl, {
       maxRetriesPerRequest: null,
-      enableReadyCheck: false
+      enableReadyCheck: false,
+      retryStrategy: () => null
     });
     connection.on('error', (err) => {
       console.warn(`[Expiry Worker Redis Warning] Redis unreachable: ${err.message}`);
@@ -24,22 +33,24 @@ export const startBookingExpiryScheduler = () => {
   }
 
   const performExpiryCheck = async () => {
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
-    const result = await Booking.updateMany(
-      {
-        status: 'Pending',
-        createdAt: { $lt: fifteenMinutesAgo }
-      },
-      {
-        $set: { status: 'Expired' }
+    if (!isDbConnected()) return;
+    try {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      const result = await Booking.updateMany(
+        {
+          status: 'Pending',
+          createdAt: { $lt: fifteenMinutesAgo }
+        },
+        { $set: { status: 'Expired' } }
+      );
+      if (result.modifiedCount > 0) {
+        console.log(`[BullMQ Expiry Worker]: Transitioned ${result.modifiedCount} stale pending bookings to Expired`);
       }
-    );
-    if (result.modifiedCount > 0) {
-      console.log(`[BullMQ Expiry Worker]: Transitioned ${result.modifiedCount} stale pending bookings to Expired`);
+    } catch (err) {
+      console.error('[Expiry Scheduler Error]:', err.message);
     }
   };
 
-  // If Redis is online, use BullMQ Worker. Otherwise fallback to setInterval.
   if (connection) {
     const expiryWorker = new Worker(
       'booking-expiry-queue',

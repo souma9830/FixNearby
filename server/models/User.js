@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema({
     push: { type: Boolean, default: true }
   },
   role: { type: String, enum: ['customer', 'worker', 'support'], default: 'customer' },
+  isAdmin: { type: Boolean, default: false },
 }, {
   timestamps: true
 });
