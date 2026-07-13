@@ -29,6 +29,7 @@ api.interceptors.response.use(
   (response) => {
     if (response.headers["x-csrf-token"]) {
       sessionStorage.setItem("csrf_token", response.headers["x-csrf-token"]);
+    }
     const startTime = response.config?.metadata?.startTime;
     if (startTime) {
       const duration = performance.now() - startTime;

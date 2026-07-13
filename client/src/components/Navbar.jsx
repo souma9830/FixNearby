@@ -28,6 +28,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  const authenticated = authLoading ? false : isAuthenticated;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -123,8 +124,6 @@ const Navbar = () => {
     logout();
     navigate('/');
   };
-
-  const authenticated = authLoading ? false : isAuthenticated;
 
   return (
     <>

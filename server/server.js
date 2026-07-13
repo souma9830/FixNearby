@@ -27,10 +27,12 @@ import { startBookingExpiryScheduler } from './workers/bookingExpiryWorker.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import { initKarmaScheduler } from './utils/karmaScheduler.js';
 import { startWorker } from './workers/notificationWorker.js';
-import { startBookingReminderScheduler } from './workers/bookingReminderWorker.js';
+import { checkUpcomingBookings } from './workers/bookingReminderWorker.js';
 import favoriteRoutes from './routes/favoriteRoutes.js';
 import estimateRoutes from './routes/estimateRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import availabilityRoutes from './routes/availabilityRoutes.js';
+import auditLogRoutes from './routes/auditLogRoutes.js';
 
 dotenv.config();
 
@@ -132,8 +134,10 @@ startBookingExpiryScheduler();
 initKarmaScheduler();
 // Start Background Notification Worker
 startWorker();
-// Start Booking Reminder Scheduler
-startBookingReminderScheduler();
+// Start Booking Reminder Scheduler (Hourly check fallback)
+setInterval(() => {
+  checkUpcomingBookings().catch(err => console.error('Booking reminder check failed:', err));
+}, 60 * 60 * 1000);
 
 // Protected test route
 app.get('/api/protected', authMiddleware, (req, res) => {
