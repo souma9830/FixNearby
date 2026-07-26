@@ -28,6 +28,8 @@ import favoriteRoutes from './routes/favoriteRoutes.js';
 import estimateRoutes from './routes/estimateRoutes.js';
 import availabilityRoutes from './routes/availabilityRoutes.js';
 import auditLogRoutes from './routes/auditLogRoutes.js';
+const telemetryRoutes = require('./routes/telemetryRoutes');
+app.use('/api/telemetry', telemetryRoutes);
 
 dotenv.config();
 
