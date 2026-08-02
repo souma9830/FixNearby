@@ -94,4 +94,9 @@ uploads/
 
 # Local database files and screenshots
 db/
-screenshots/
+screenshots/
+
+# Python cache
+__pycache__/
+*.pyc
+

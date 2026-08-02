@@ -9,7 +9,7 @@
     "dev": "nodemon server.js",
     "lint": "eslint . --ext js --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext js --fix",
-    "test": "node tests/verifyFeedback.js && node tests/verifyNotifications.js && node tests/verifyQueryProjection.js && node tests/verifySocketSetup.js && node tests/verifySocketAuth.js && node tests/verifyMessageSchema.js && node tests/verifyPresenceAndTyping.js && node tests/verifyTokenBlacklist.js && node tests/verifyCsrfProtection.js && node tests/verifyConnectionLifecycle.js",
+    "test": "node tests/verifyFeedback.js && node tests/verifyNotifications.js && node tests/verifyQueryProjection.js && node tests/verifySocketSetup.js && node tests/verifySocketAuth.js && node tests/verifyMessageSchema.js && node tests/verifyPresenceAndTyping.js && node tests/verifyTokenBlacklist.js && node tests/verifyCsrfProtection.js && node tests/verifyConnectionLifecycle.js && node tests/verifyFastAPIInstantiation.js",
     "test:new": "node tests/verifyHealthCheck.js && node tests/verifyBookingExpiry.js && node tests/verifyBookingReminders.js && node tests/verifyFavoritesService.js && node tests/verifyAuditLogActivity.js && node tests/verifyRateLimiting.js && node tests/verifyReviewResponses.js && node tests/verifyValidationSchemas.js && node tests/verifyPasswordPolicy.js"
   },
   "dependencies": {
