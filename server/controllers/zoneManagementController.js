@@ -48,3 +48,29 @@ export const checkCoverage = async (req, res) => {
     });
   }
 };
+
+export const auditWorkerZoneCoverage = async (req, res) => {
+  try {
+    const workerId = req.params.workerId || (req.user && req.user._id);
+    const zones = await ZoneMatchingService.getWorkerZones(workerId);
+    
+    const auditSummary = {
+      totalZones: zones.length,
+      activeZones: zones.filter(z => z.isActive !== false).length,
+      hasOverlapRisk: zones.length > 3,
+      coverageHealthScore: Math.min(100, zones.length * 25)
+    };
+
+    return res.status(200).json({
+      success: true,
+      workerId,
+      audit: auditSummary,
+      zones
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
