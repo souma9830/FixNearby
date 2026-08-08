@@ -92,3 +92,7 @@ export const deleteSearchPreset = async (req, res) => {
     });
   }
 };
+
+export const createPreset = saveSearchPreset;
+export const getPresets = getUserSearchPresets;
+export const deletePreset = deleteSearchPreset;
