@@ -65,15 +65,18 @@ export const searchWorkers = async (req, res) => {
     // - location.coordinates: GeoJSON Point => [longitude, latitude]
 
     const reqLon = req.query.lon || req.query.lng;
-    const reqRadius = req.query.maxDistance || req.query.radius;
+    const reqRadius = req.query.maxDistance || req.query.radius || req.query.radiusKm;
+    const unitStr = (req.query.unit || req.query.distanceUnit || 'km').toLowerCase();
+    const isMiles = unitStr === 'miles' || unitStr === 'mile' || unitStr === 'mi';
 
     const hasGeo = lat !== undefined && reqLon !== undefined && lat !== '' && reqLon !== '';
     const latNum = hasGeo ? Number(lat) : null;
     const lonNum = hasGeo ? Number(reqLon) : null;
 
-    // Normalize numeric filters
+    // Normalize numeric filters (convert miles to km if requested in miles)
     const minRatingNum = minRating !== undefined && minRating !== '' ? Number(minRating) : 0;
-    const maxDistanceKm = reqRadius !== undefined && reqRadius !== '' ? Number(reqRadius) : null;
+    const rawMaxDistance = reqRadius !== undefined && reqRadius !== '' ? Number(reqRadius) : null;
+    const maxDistanceKm = rawMaxDistance !== null ? (isMiles ? rawMaxDistance * 1.609344 : rawMaxDistance) : null;
 
     // Build base workers list
     let workers = [];
@@ -142,12 +145,15 @@ export const searchWorkers = async (req, res) => {
       const workerLat = Array.isArray(coords) && coords.length === 2 ? coords[1] : null;
       const workerLon = Array.isArray(coords) && coords.length === 2 ? coords[0] : null;
 
+      // Preserve distanceKm calculated by $geoNear if present; otherwise compute via Haversine
       let calculatedDist = w.distanceKm;
-      if (hasGeo && workerLat !== null && workerLon !== null) {
-        calculatedDist = calculateDistance(latNum, lonNum, workerLat, workerLon);
+      if (calculatedDist === undefined || calculatedDist === null) {
+        if (hasGeo && workerLat !== null && workerLon !== null) {
+          calculatedDist = calculateDistance(latNum, lonNum, workerLat, workerLon);
+        }
       }
 
-      const distFixed = calculatedDist !== undefined && calculatedDist !== null ? Number(calculatedDist.toFixed(1)) : undefined;
+      const distFixed = calculatedDist !== undefined && calculatedDist !== null && !isNaN(calculatedDist) ? Number(calculatedDist.toFixed(1)) : undefined;
 
       return {
         ...w,
@@ -163,7 +169,7 @@ export const searchWorkers = async (req, res) => {
 
     // Geofenced Radius Filter (ensure strict distance cut-off)
     if (hasGeo && maxDistanceKm && maxDistanceKm > 0) {
-      workers = workers.filter(w => w.distanceKm !== undefined && w.distanceKm <= maxDistanceKm);
+      workers = workers.filter(w => w.distanceKm !== undefined && !isNaN(w.distanceKm) && w.distanceKm <= maxDistanceKm);
     }
 
     // Availability sort post-processing (since aggregation order-by via enum is not added above)
@@ -308,8 +314,8 @@ export const getPopularSearches = async (req, res) => {
  * @param {number} lon2 - Longitude of point 2
  * @returns {number} Distance in kilometers
  */
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth's radius in km
+function calculateDistance(lat1, lon1, lat2, lon2, unit = 'km') {
+  const R = (unit === 'miles' || unit === 'mi' || unit === 'mile') ? 3958.8 : 6371; // Earth's radius in miles or km
   const dLat = toRadians(lat2 - lat1);
   const dLon = toRadians(lon2 - lon1);
   
@@ -320,7 +326,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  // Guard against domain errors (floating point inaccuracies where a > 1 or a < 0)
+  const clampedA = Math.min(1, Math.max(0, a));
+  const c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
   return R * c;
 }
 

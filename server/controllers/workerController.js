@@ -584,7 +584,14 @@ export const getNearbyWorkers = async (req, res) => {
       matchQuery.availabilityStatus = availabilityStatus;
     }
 
-    const maxDistMeters = maxDistance ? parseFloat(maxDistance) : 10000; // default 10km
+    const unitStr = (req.query.unit || req.query.distanceUnit || '').toLowerCase();
+    const isMiles = unitStr === 'miles' || unitStr === 'mile' || unitStr === 'mi';
+
+    const rawDist = maxDistance ? parseFloat(maxDistance) : 10000;
+    let maxDistMeters = rawDist;
+    if (isMiles) {
+      maxDistMeters = rawDist * 1609.344;
+    }
 
     const pipeline = [
       {
