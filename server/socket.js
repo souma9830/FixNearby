@@ -10,6 +10,7 @@ import { initSocketLifecycle } from './utils/socketLifecycle.js';
 import { messageRetryService } from './services/messageRetryService.js';
 import { handleSendMessage, handleTyping, handleJoinConversation, handleLeaveConversation, handleMessageRead, handlePingCheck } from './socketHandlers/chatHandler.js';
 import { handlePresenceUpdate } from './socketHandlers/presenceHandler.js';
+import { handleEmergencySosBroadcast } from './socketHandlers/emergencyHandler.js';
 import { registerBookingHandlers } from './socketHandlers/bookingHandler.js';
 import { handleSocketStateMachine } from './socketHandlers/socketStateMachine.js';
 
@@ -84,6 +85,8 @@ export const initSocket = (server) => {
     socket.on('mark_read', handleMessageRead(io, socket, userId));
 
     socket.on('ping_check', handlePingCheck(io, socket));
+
+    socket.on('emergency_sos_broadcast', handleEmergencySosBroadcast(io, socket, userId));
 
     socket.on('stop_typing', (data) => {
       const { receiverId } = data;
