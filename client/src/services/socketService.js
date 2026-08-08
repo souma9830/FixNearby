@@ -78,6 +78,15 @@ export const getSocket = () => socket;
 
 export const isConnected = () => socket?.connected || false;
 
+export const measureSocketLatency = (callback) => {
+  if (!socket?.connected) return;
+  const start = Date.now();
+  socket.emit('ping_check', { clientTimestamp: start }, (res) => {
+    const rtt = Date.now() - start;
+    if (typeof callback === 'function') callback(rtt);
+  });
+};
+
 export const sendMessage = (data) => {
   if (!socket?.connected) {
     console.warn('[Socket] Disconnected: Queueing message for reconnect send');
@@ -183,6 +192,7 @@ export default {
   disconnectSocket,
   getSocket,
   isConnected,
+  measureSocketLatency,
   sendMessage,
   joinConversation,
   leaveConversation,

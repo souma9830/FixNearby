@@ -117,3 +117,17 @@ export const handleMessageRead = (io, socket, userId) => async (data) => {
     console.error('Error handling message read event:', err);
   }
 };
+
+export const handlePingCheck = (io, socket) => (data, callback) => {
+  const clientTimestamp = data?.clientTimestamp || Date.now();
+  const serverTimestamp = Date.now();
+  const payload = {
+    status: 'ok',
+    clientTimestamp,
+    serverTimestamp,
+    latencyMs: Math.max(0, serverTimestamp - clientTimestamp)
+  };
+
+  socket.emit('pong_reply', payload);
+  if (typeof callback === 'function') callback(payload);
+};

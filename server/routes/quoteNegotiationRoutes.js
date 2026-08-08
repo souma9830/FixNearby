@@ -7,5 +7,6 @@ const router = express.Router();
 router.post('/', validateQuotePayload, quoteController.createQuote);
 router.patch('/:quoteId/respond', quoteController.respondQuote);
 router.get('/chat/:chatId', quoteController.getQuotes);
+router.post('/expire/:chatId', quoteController.expirePendingQuotes);
 
 export default router;

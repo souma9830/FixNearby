@@ -52,3 +52,33 @@ export const getQuotes = async (req, res) => {
     });
   }
 };
+
+export const expirePendingQuotes = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const quotes = await QuoteNegotiationService.getActiveQuotes(chatId);
+    let expiredCount = 0;
+
+    for (const q of quotes) {
+      if (q.status === 'proposed' || q.status === 'countered') {
+        const hoursPassed = (Date.now() - new Date(q.createdAt).getTime()) / (1000 * 60 * 60);
+        if (hoursPassed > 24) {
+          await QuoteNegotiationService.respondToQuote(q._id || q.id, 'system', 'reject');
+          expiredCount++;
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      chatId,
+      expiredCount,
+      message: `Expired ${expiredCount} stale quote counter-offers.`
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
