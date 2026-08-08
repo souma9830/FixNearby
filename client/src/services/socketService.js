@@ -32,6 +32,13 @@ export const connectSocket = (token) => {
     flushOfflineQueue();
   });
 
+  socket.io.on('reconnect', (attempt) => {
+    console.debug('[Socket] Reconnected after', attempt, 'attempts');
+    if (socket?.connected) {
+      socket.emit('socket_reconnected', { timestamp: new Date().toISOString() });
+    }
+  });
+
   socket.on('disconnect', (reason) => {
     console.debug('[Socket] Disconnected:', reason);
   });

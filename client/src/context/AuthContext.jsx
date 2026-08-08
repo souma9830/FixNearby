@@ -7,6 +7,8 @@ import api from '../services/apiClient';
  */
 const AuthContext = createContext(null);
 
+const STORAGE_KEY = 'fixnearby_user';
+
 const DEMO_USER_DEFAULT = {
   _id: "650000000000000000000001",
   name: "Demo Customer",

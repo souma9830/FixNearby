@@ -257,3 +257,35 @@ export const getUnreadCount = async (req, res) => {
   }
 };
 
+/**
+ * Marks all incoming messages from a specific partner as read.
+ * PATCH /api/chat/read
+ */
+export const markMessagesAsRead = async (req, res) => {
+  try {
+    const { partnerId } = req.body;
+    const currentUserId = req.user._id;
+
+    if (!partnerId) {
+      return res.status(400).json({ success: false, message: 'Partner ID is required' });
+    }
+
+    const result = await Message.updateMany(
+      { senderId: partnerId, receiverId: currentUserId, status: { $ne: 'read' } },
+      { $set: { status: 'read', readAt: new Date() } }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Messages marked as read',
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error marking messages as read',
+      error: error.message
+    });
+  }
+};
+

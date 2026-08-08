@@ -68,3 +68,22 @@ export const expirePendingBookings = async (thresholdHours = 24) => {
 
   return expiredCount;
 };
+
+export const checkAndExpireBooking = async (bookingId, thresholdHours = 24) => {
+  if (!bookingId) return false;
+  const booking = await Booking.findById(bookingId);
+  if (!booking || booking.status !== 'Pending') return false;
+
+  const cutoff = new Date(Date.now() - thresholdHours * 60 * 60 * 1000);
+  if (booking.createdAt <= cutoff) {
+    booking.status = 'Expired';
+    booking.statusHistory.push({
+      status: 'Expired',
+      note: `Single check timeout: Exceeded ${thresholdHours}h limit`,
+      changedAt: new Date()
+    });
+    await booking.save();
+    return true;
+  }
+  return false;
+};

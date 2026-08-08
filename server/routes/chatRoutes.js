@@ -1,5 +1,5 @@
 import express from 'express';
-import { getChatHistory, getConversations, markMessagesAsRead } from '../controllers/chatController.js';
+import { getChatHistory, getConversations, getUnreadCount, markMessagesAsRead } from '../controllers/chatController.js';
 import protect from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -14,6 +14,6 @@ router.get('/history/:partnerId', protect, getChatHistory);
 router.get('/unread-count', protect, getUnreadCount);
 
 // Mark all unread messages from a specific partner as read
-router.patch('/read/:partnerId', protect, markAsRead);
+router.patch('/read', protect, markMessagesAsRead);
 
 export default router;
