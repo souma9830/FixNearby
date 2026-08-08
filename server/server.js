@@ -69,6 +69,7 @@ import referralRoutes from './routes/referralRoutes.js';
 import pricingRoutes from './routes/pricingRoutes.js';
 import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import zoneManagementRoutes from './routes/zoneManagementRoutes.js';
+import searchPresetRoutes from './routes/searchPresetRoutes.js';
 
 dotenv.config();
 
@@ -187,6 +188,7 @@ app.use('/api/warranties/claims', warrantyClaimRoutes);
 app.use('/api/bookings/parts-inventory', partsBillingRoutes);
 app.use('/api/earnings', earningRoutes);
 app.use('/api/chat/quote-negotiation', quoteNegotiationRoutes);
+app.use('/api/search/presets', searchPresetRoutes);
 app.use('/api/workers/service-zones', zoneManagementRoutes);
 app.use('/api/admin/moderation', moderationRoutes);
 app.use('/api/schedule', scheduleRoutes);
