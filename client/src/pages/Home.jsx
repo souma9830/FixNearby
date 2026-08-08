@@ -125,11 +125,11 @@ const RecommendedWorkerCard = ({ worker, rank }) => {
 
       {/* Header */}
       <div className="mb-4 flex items-start gap-3">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 shadow-sm">
-          <WorkerIcon className="h-7 w-7 text-slate-800" />
+<div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <WorkerIcon className="h-7 w-7 text-slate-800" />
         </div>
         <div className="min-w-0">
-          <h3 className="truncate font-bold text-slate-900">{worker.name}</h3>
+<h3 className="truncate font-bold text-slate-900 dark:text-white">{worker.name}</h3>
           <p className="text-sm font-semibold text-[#0056D2]">{worker.profession}</p>
         </div>
       </div>
@@ -170,8 +170,8 @@ const RecommendedWorkerCard = ({ worker, rank }) => {
         </span>
       </div>
 
-      <p className="mb-5 line-clamp-2 text-sm leading-relaxed text-slate-500">
-        {worker.outcomeText}
+<p className="mb-5 line-clamp-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          {worker.outcomeText}
       </p>
 
       <Link
@@ -271,11 +271,10 @@ const Home = () => {
   }, [activeCategory, minRating]);
 
   return (
-    <div className="bg-white">
+<div className="bg-white dark:bg-slate-950">
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-white">
-        {/* Background decoration */}
+<section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-white dark:from-slate-900 dark:via-slate-950 dark:to-slate-950">        {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-blue-100 blur-3xl opacity-60" />
           <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-violet-100 blur-3xl opacity-50" />
@@ -294,13 +293,11 @@ const Home = () => {
               </div>
 
               {/* Main heading */}
-              <h1 className="mt-6 text-5xl font-extrabold leading-[1.05] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
-                {t("hero.headline")}
+<h1 className="mt-6 text-5xl font-extrabold leading-[1.05] tracking-tight text-slate-900 dark:text-white sm:text-6xl lg:text-7xl">                {t("hero.headline")}
               </h1>
 
               {/* Subtitle */}
-              <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600 sm:text-xl">
-                {t("hero.subtext")}
+<p className="mt-6 max-w-xl text-lg leading-8 text-slate-600 dark:text-slate-400 sm:text-xl">                {t("hero.subtext")}
               </p>
 
               {/* CTA buttons */}
@@ -314,8 +311,7 @@ const Home = () => {
 
                 <Link
                   to="/worker/register"
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-8 py-4 text-base font-bold text-slate-800 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 hover:bg-slate-50"
-                >
+className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-8 py-4 text-base font-bold text-slate-800 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"                >
                   {t("hero.becomePro") || "Become a Pro"}
                 </Link>
               </div>
@@ -330,13 +326,10 @@ const Home = () => {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm backdrop-blur"
-                  >
-                    <div className="text-2xl font-extrabold text-slate-900">
-                      {item.number}
+className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-800"                  >
+<div className="text-2xl font-extrabold text-slate-900 dark:text-white">                      {item.number}
                     </div>
-                    <p className="mt-1 text-sm font-medium text-slate-500">
-                      {item.label}
+<p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">                      {item.label}
                     </p>
                   </div>
                 ))}
@@ -357,27 +350,23 @@ const Home = () => {
               </div>
 
               {/* Floating rating card — top-left, outside the frame */}
-              <div className="absolute -top-5 -left-4 rounded-2xl border border-white/50 bg-white/95 p-4 shadow-xl backdrop-blur-md z-20 animate-float">
-                <div className="flex items-center gap-3">
+<div className="absolute -top-5 -left-4 rounded-2xl border border-white/50 bg-white/95 dark:border-slate-700/50 dark:bg-slate-800/95 p-4 shadow-xl backdrop-blur-md z-20 animate-float">                <div className="flex items-center gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 flex-shrink-0">
                     <IconStar className="h-5 w-5 text-amber-500" filled />
                   </div>
                   <div>
-                    <div className="text-base font-extrabold text-slate-900">4.9/5 Rating</div>
-                    <p className="text-xs text-slate-500">Based on reviews</p>
+<div className="text-base font-extrabold text-slate-900 dark:text-white">4.9/5 Rating</div>                   <p className="text-xs text-slate-500 dark:text-slate-400">Based on reviews</p>
                   </div>
                 </div>
               </div>
 
               {/* Floating quick booking card — bottom-right, outside the frame */}
-              <div className="absolute -bottom-5 -right-4 rounded-2xl border border-white/50 bg-white/95 p-4 shadow-xl backdrop-blur-md z-20 max-w-[220px] animate-float-b">
-                <div className="flex items-start gap-3">
+<div className="absolute -bottom-5 -right-4 rounded-2xl border border-white/50 bg-white/95 dark:border-slate-700/50 dark:bg-slate-800/95 p-4 shadow-xl backdrop-blur-md z-20 max-w-[220px] animate-float-b">                <div className="flex items-start gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 flex-shrink-0">
                     <IconBolt className="h-5 w-5 text-emerald-600" />
                   </div>
                   <div>
-                    <div className="text-base font-extrabold text-slate-900">Quick Booking</div>
-                    <p className="mt-0.5 text-xs leading-5 text-slate-500">
+<div className="text-base font-extrabold text-slate-900 dark:text-white">Quick Booking</div>                    <p className="mt-0.5 text-xs leading-5 text-slate-500">
                       Connect with trusted professionals in minutes.
                     </p>
                   </div>
@@ -391,8 +380,7 @@ const Home = () => {
 
       {/* ── CLOSEST WORKERS ─────────────────────────────────────────────────── */}
       {(geoLoading || coords || geoError) && (
-        <section className="bg-white py-16 sm:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<section className="bg-white dark:bg-slate-950 py-16 sm:py-20">          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-1.5 text-sm font-semibold text-emerald-700">
