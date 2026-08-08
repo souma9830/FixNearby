@@ -69,15 +69,6 @@ export const twoFactorChallengeLimiter = rateLimit({
   ),
 });
 
-export const twoFactorChallengeLimiter = rateLimit({
-  ...TIER_STRICT,
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  handler: createRateLimitHandler(
-    "Too many 2FA verification attempts. Please try again after 15 minutes.", 900
-  ),
-});
-
 export const profileUpdateLimiter = rateLimit({
   ...TIER_STANDARD,
   handler: createRateLimitHandler(

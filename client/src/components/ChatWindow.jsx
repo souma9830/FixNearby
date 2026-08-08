@@ -1,13 +1,35 @@
 import { useEffect, useRef, useState } from 'react';
-import { Send, Phone, Video, MoreVertical, Paperclip, Image as ImageIcon, Check, CheckCheck, Download, Maximize2, X, ExternalLink } from 'lucide-react';
+import {
+  Send,
+  Phone,
+  Video,
+  MoreVertical,
+  Paperclip,
+  Image as ImageIcon,
+  Check,
+  CheckCheck,
+  BadgeCheck,
+  ShieldCheck,
+  MapPin,
+  Search,
+  X,
+  Download,
+  Maximize2,
+  UploadCloud,
+} from 'lucide-react';
 import ChatAttachmentModal from './chat/ChatAttachmentModal';
-import ChatFeedbackModal from './chat/ChatFeedbackModal';
 
 const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
   const [input, setInput] = useState('');
   const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
   const [modalFileType, setModalFileType] = useState('all');
   const [activeLightboxImage, setActiveLightboxImage] = useState(null);
+  const [isDragOverWindow, setIsDragOverWindow] = useState(false);
+  const [showVerifiedTooltip, setShowVerifiedTooltip] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -18,6 +40,28 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
   useEffect(() => {
     inputRef.current?.focus();
   }, [conversation?.id]);
+
+  const handleWindowDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverWindow(true);
+  };
+
+  const handleWindowDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverWindow(false);
+  };
+
+  const handleWindowDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverWindow(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setModalFileType('image');
+      setIsAttachmentModalOpen(true);
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -40,10 +84,19 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
     }
   };
 
-  const handleFeedbackSubmit = (feedbackData) => {
-    // Send feedback text over real-time chat socket stream as visible feedback
-    if (onSendMessage) {
-      onSendMessage(`⭐ Left a ${feedbackData.rating}-star review: "${feedbackData.comment}"`);
+  const handleShareLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const locText = `📍 Shared Location: https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
+          onSendMessage(locText);
+        },
+        () => {
+          onSendMessage('📍 Shared Location: Local Service Area');
+        }
+      );
+    } else {
+      onSendMessage('📍 Shared Location: Local Service Area');
     }
   };
 
@@ -74,12 +127,27 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
   };
 
   const filteredMessages = searchQuery
-    ? messages.filter((m) => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? messages.filter((m) => m.text && m.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : messages;
 
   return (
-    <div className="flex flex-1 flex-col relative">
-      <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3">
+    <div
+      onDragOver={handleWindowDragOver}
+      onDragLeave={handleWindowDragLeave}
+      onDrop={handleWindowDrop}
+      className="relative flex flex-1 flex-col"
+    >
+      {/* Drag & Drop Visual Overlay Zone */}
+      {isDragOverWindow && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-blue-600/90 text-white backdrop-blur-xs border-4 border-dashed border-white rounded-xl transition-all animate-in fade-in duration-200">
+          <UploadCloud className="w-16 h-16 mb-2 animate-bounce" />
+          <h3 className="text-xl font-bold">Drop Image to Upload</h3>
+          <p className="text-sm opacity-90">Release file anywhere in the chat window</p>
+        </div>
+      )}
+
+      {/* Active Conversation Header */}
+      <div className="flex items-center justify-between border-b border-slate-200 px-6 py-3 bg-white z-10">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600">
@@ -89,10 +157,10 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
               <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
             )}
           </div>
-          <div className="relative">
-            <div className="flex items-center gap-2">
+          <div>
+            <div className="flex items-center gap-2 relative">
               <h3 className="text-sm font-semibold text-slate-900">{conversation.participant}</h3>
-              
+
               {/* Verified Badge Checkmark with Interactive Security Card Popover */}
               {conversation.isVerified && (
                 <div className="relative flex items-center">
@@ -131,71 +199,40 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
               <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600 border border-blue-200">
                 {conversation.serviceCategory || 'AC Repair Service'}
               </span>
-              <button
-                type="button"
-                id="rating-pill-button"
-                onClick={() => setIsReputationCardOpen(!isReputationCardOpen)}
-                className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200 hover:bg-amber-100 transition cursor-pointer"
-              >
-                <span>⭐</span>
-                <span>4.8 (12)</span>
-              </button>
             </div>
             <p className="text-xs text-slate-500">{conversation.role}</p>
-
-            {isReputationCardOpen && (
-              <div id="reputation-card-popover" className="absolute left-0 top-12 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 text-left">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
-                  <h4 className="text-xs font-bold text-slate-900">Worker Reputation</h4>
-                  <button
-                    onClick={() => setIsReputationCardOpen(false)}
-                    className="text-slate-400 hover:text-slate-600 text-xs"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="text-2xl font-black text-amber-500">4.8</div>
-                  <div>
-                    <div className="flex text-amber-400 text-xs">★★★★★</div>
-                    <div className="text-[10px] text-slate-500">Based on 12 reviews</div>
-                  </div>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Completion Rate</span>
-                    <span className="font-semibold text-slate-800">98%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '98%' }}></div>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Responsiveness</span>
-                    <span className="font-semibold text-slate-800">Replies in 20 min</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Reliability Score</span>
-                    <span className="font-semibold text-blue-600">96 / 100</span>
-                  </div>
-                </div>
-                <div className="mt-3 pt-2 border-t border-slate-100 flex gap-1 flex-wrap">
-                  <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-medium text-blue-600">Top Pro</span>
-                  <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-medium text-emerald-600">Verified Identity</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            id="leave-feedback-button"
-            onClick={() => setIsFeedbackModalOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-xs font-semibold transition shadow-sm"
-          >
-            Leave Feedback
-          </button>
-          <button type="button" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600" title="Call">
+
+        {/* Action Controls */}
+        <div className="flex items-center gap-1">
+          {showSearch ? (
+            <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-1">
+              <Search size={14} className="text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search chat..."
+                className="w-32 bg-transparent text-xs outline-none text-slate-700"
+                autoFocus
+              />
+              <button onClick={() => { setSearchQuery(''); setShowSearch(false); }} className="text-slate-400 hover:text-slate-600">
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowSearch(true)}
+              className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
+              title="Search in conversation"
+            >
+              <Search size={18} />
+            </button>
+          )}
+
+          <button type="button" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" title="Call Provider">
             <Phone size={18} />
           </button>
           <button type="button" className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition" title="Video Call">
@@ -235,7 +272,7 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
           </div>
         )}
         <div className="space-y-3">
-          {messages.map((msg) => {
+          {filteredMessages.map((msg) => {
             const hasImageAttachment =
               msg.attachment &&
               (msg.attachment.fileType?.startsWith('image/') ||
@@ -247,10 +284,10 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
                 className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
+                  className={`max-w-[70%] rounded-2xl px-4 py-2.5 shadow-sm ${
                     msg.isOwn
                       ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 text-slate-800'
+                      : 'bg-white text-slate-800 border border-slate-200/80'
                   }`}
                 >
                   {/* Image Attachment Rendering */}
@@ -346,7 +383,7 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
           <button
             type="button"
             onClick={() => { setModalFileType('all'); setIsAttachmentModalOpen(true); }}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
             title="Attach file"
           >
             <Paperclip size={18} />
@@ -354,7 +391,7 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
           <button
             type="button"
             onClick={() => { setModalFileType('image'); setIsAttachmentModalOpen(true); }}
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-indigo-600"
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-indigo-600 transition"
             title="Send image"
           >
             <ImageIcon size={18} />
@@ -424,4 +461,3 @@ const ChatWindow = ({ conversation, messages, onSendMessage, isTyping }) => {
 };
 
 export default ChatWindow;
-

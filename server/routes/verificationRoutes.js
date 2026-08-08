@@ -1,3 +1,4 @@
+import express from 'express';
 import { protect, protectWorker, adminOnly, requireRole } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
 import {

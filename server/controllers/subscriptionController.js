@@ -1,6 +1,8 @@
 import Subscription from '../models/Subscription.js';
 import Wallet from '../models/Wallet.js';
 import crypto from 'crypto';
+import SubscriptionSchedulerService from '../services/subscriptionSchedulerService.js';
+import ServiceSubscription from '../models/ServiceSubscription.js';
 
 // @desc    Get active subscription details and tier perks
 // @route   GET /api/subscriptions/active
@@ -119,8 +121,8 @@ export const getSubscriptionAnalytics = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
-import SubscriptionSchedulerService from '../services/subscriptionSchedulerService.js';
-import ServiceSubscription from '../models/ServiceSubscription.js';
+  }
+};
 
 export const createSubscription = async (req, res) => {
   try {

@@ -43,14 +43,6 @@ export const createDispute = async (req, res, next) => {
       message: 'Dispute submitted successfully to arbitration queue',
       dispute
     });
-      disputedBy: req.user._id || req.user.id,
-      againstUser,
-      reason,
-      claimAmount,
-      evidenceUrls: processedEvidence.validUrls
-    });
-
-    res.status(201).json({ success: true, data: dispute, metadata: { sanitizationSummary: processedEvidence } });
   } catch (error) {
     next(error);
   }

@@ -18,3 +18,8 @@ export const sanitizeChatMessagePayload = (content = '') => {
   if (typeof content !== 'string') return '';
   return content.replace(/[<>{}]/g, '').trim().slice(0, 1000);
 };
+
+export const messageRetryService = {
+  calculateMessageRetryDelay,
+  sanitizeChatMessagePayload
+};
