@@ -13,7 +13,12 @@ const WarrantyBadge = ({ daysLeft = 30, status = 'ACTIVE' }) => {
           <p className="text-xs text-slate-500 dark:text-slate-400">Covers free re-servicing for labor defects</p>
         </div>
       </div>
-      <div className="text-right">
+      <div className="text-right flex items-center gap-2">
+        {!isExpired && (
+          <button className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+            File Claim
+          </button>
+        )}
         <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${isExpired ? 'bg-slate-200 text-slate-600' : 'bg-emerald-500 text-white'}`}>
           {isExpired ? 'Expired' : `${daysLeft} Days Active`}
         </span>
@@ -23,3 +28,4 @@ const WarrantyBadge = ({ daysLeft = 30, status = 'ACTIVE' }) => {
 };
 
 export default WarrantyBadge;
+
