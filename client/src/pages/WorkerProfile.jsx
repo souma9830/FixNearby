@@ -29,6 +29,7 @@ import {
 
 import SkeletonLoader from "../components/SkeletonLoader";
 import BookingConfirmationModal from "../components/BookingConfirmationModal";
+import WorkerVerificationBadge from "../components/WorkerVerificationBadge";
 import SmartEstimator from "../components/SmartEstimator";
 import EstimateWizard from "../components/EstimateWizard";
 import ImageGallery from "../components/ImageGallery";

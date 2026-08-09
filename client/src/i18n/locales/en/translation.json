@@ -143,18 +143,17 @@
     "submit": "Submit"
   },
   "footer": {
-    "description": "Your trusted platform for finding local service professionals.",
-    "quickLinks": "Quick Links",
-    "services": "Services",
-    "about": "About Us",
-    "contact": "Contact",
-    "faq": "FAQ",
-    "support": "Help Center",
-    "legal": "Legal",
-    "privacy": "Privacy Policy",
-    "terms": "Terms of Service",
-    "community": "Community",
-    "rights": "All rights reserved."
+    "tagline": "Book trusted local professionals for repairs, maintenance, cleaning, and home services with confidence — verified experts, fast response times, and seamless booking.",
+"availableArea": "Available in your local area",
+"support247": "24/7 Customer Support",
+"verifiedTrusted": "Verified & Trusted Professionals",
+"navigation": "Navigation",
+"feedback": "Feedback",
+"stayUpdated": "Stay Updated",
+"newsletterDesc": "Get updates on new services, discounts, and platform features delivered directly to your inbox.",
+"searchPlaceholder": "Search services...",
+"emailPlaceholder": "Enter your email",
+"subscribe": "Subscribe"
   },
   "errors": {
     "pageNotFound": "Page Not Found",
