@@ -9,6 +9,7 @@ import { getPrincipal } from '../middleware/bookingMiddleware.js';
 import { getIo } from '../socket.js';
 import { emitBookingStatusUpdate } from '../socketHandlers/bookingHandler.js';
 import { acquireLock, releaseLock } from '../utils/lockManager.js';
+import { calculateSurgeEstimate } from '../services/surgePricingEngine.js';
 
 // @desc    Create a new booking with concurrency control, transactions, and standalone DB fallback
 // @route   POST /api/bookings
