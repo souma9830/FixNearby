@@ -14,6 +14,8 @@ import { dbSupervisor } from './config/dbPoolSupervisor.js';
 import { validateEnv } from './config/envValidate.js';
 
 import authRoutes from './routes/authRoutes.js';
+import workerSkillCertRoutes from './routes/workerSkillCertRoutes.js';
+import multiLocationGeofenceRoutes from './routes/multiLocationGeofenceRoutes.js';
 import workerRoutes from './routes/workerRoutes.js';
 import issueRoutes from './routes/issueRoutes.js';
 import searchRoutes from './routes/searchRoutes.js';
@@ -211,7 +213,8 @@ app.use('/api/pricing', pricingRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
-app.use('/api/workers/skills-certifications', skillCertificationRoutes);
+app.use('/api/workers/skills-certifications', workerSkillCertRoutes);
+app.use('/api/workers/multi-geofence', multiLocationGeofenceRoutes);
 
 // Start background workers after DB connection is established
 (async () => {
