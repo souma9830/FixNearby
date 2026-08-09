@@ -1,5 +1,7 @@
 import healthRoutes from './routes/healthRoutes.js';
 import complianceRoutes from './routes/complianceRoutes.js';
+import customerTipBonusRoutes from './routes/customerTipBonusRoutes.js';
+import workerSkillCertRoutes from './routes/workerSkillCertRoutes.js';
 import gratuityBonusRoutes from './routes/gratuityBonusRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import express from 'express';
@@ -236,6 +238,7 @@ app.use('/api/pricing', pricingRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/workers/skills-certifications', workerSkillCertRoutes);
 app.use('/api/workers/skills-certifications', skillCertificationRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/analytics', analyticsRoutes);
