@@ -43,6 +43,8 @@ import ReviewBadge from "../components/ReviewBadge";
 import { shareWorkerProfile } from "../utils/shareWorkerProfile";
 import { getWorkerServices } from "../services/workerService";
 import { downloadWorkerVCard } from "../utils/workerVCard";
+import MultiLocationGeofenceCard from "../components/MultiLocationGeofenceCard";
+
 
 /* ✅ Move data outside component */
 const WORKERS = {
