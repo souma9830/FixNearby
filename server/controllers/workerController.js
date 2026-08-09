@@ -6,6 +6,7 @@ import { validatePassword } from "../utils/validatePassword.js";
 import Booking from "../models/Booking.js";
 import Review from "../models/Review.js";
 import { computeSpatialWorkerClusters } from "../services/spatialClusterService.js";
+import { auditWorkerCompliance } from "../services/workerComplianceAuditor.js";
 
 
 const WORKER_AVAILABILITY_STATUSES = ["available", "busy", "offline"];
