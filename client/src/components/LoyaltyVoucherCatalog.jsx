@@ -17,10 +17,16 @@ const LoyaltyVoucherCatalog = ({ pointsBalance = 450, onRedeem }) => {
           </h2>
           <p className="text-sm text-slate-400 mt-1">Convert earned loyalty points into instant service discount vouchers</p>
         </div>
-        <div className="px-4 py-2 bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-xl font-bold text-lg flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-amber-400" /> {pointsBalance} Points
+        <div className="flex items-center gap-3">
+          <span className="text-xs px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold uppercase">
+            GOLD TIER
+          </span>
+          <div className="px-4 py-2 bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-xl font-bold text-lg flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-400" /> {pointsBalance} Points
+          </div>
         </div>
       </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {tiers.map((tier, idx) => {
