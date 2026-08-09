@@ -71,6 +71,11 @@ import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import zoneManagementRoutes from './routes/zoneManagementRoutes.js';
 import searchPresetRoutes from './routes/searchPresetRoutes.js';
 import applianceRoutes from './routes/applianceRoutes.js';
+import webhookRoutes from './routes/webhookRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
+import notificationPreferencesRoutes from './routes/notificationPreferencesRoutes.js';
+import { serviceHealthRouter } from './middleware/serviceHealthMiddleware.js';
+import { mongoInjectionGuard } from './middleware/mongoInjectionGuard.js';
 
 dotenv.config();
 
@@ -150,6 +155,7 @@ app.use(
 
 app.use(express.json({ limit: '10mb' }));
 app.use(sanitizeInput);
+app.use(mongoInjectionGuard);
 app.use(csrfProtection);
 
 // Serve uploaded images
@@ -212,6 +218,10 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/workers/skills-certifications', skillCertificationRoutes);
+app.use('/api/webhooks', webhookRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/notification-preferences', notificationPreferencesRoutes);
+app.use('/api/health', serviceHealthRouter);
 
 // Start background workers after DB connection is established
 (async () => {
