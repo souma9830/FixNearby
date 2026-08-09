@@ -37,7 +37,10 @@ Content-Type: application/json
 * `POST /api/payouts/stripe-connect` — Generate Stripe Express onboarding link.
 * `POST /api/payouts/request` — Trigger instant bank payout.
 
-### 4. Emergency Dispatch (`/api/emergency`)
+### 4. Dynamic Pricing & Surge Matrix (`/api/estimates`)
+* `POST /api/estimates/surge` — Calculate dynamic surge estimate based on hour, distance, worker density, and emergency flags.
+
+### 5. Emergency Dispatch (`/api/emergency`)
 * `POST /api/emergency/broadcast` — Broadcast urgent service request to nearby workers.
 * `GET  /api/emergency/active` — Fetch live active emergency alerts.
 * `POST /api/emergency/accept/:alertId` — Accept urgent emergency dispatch.

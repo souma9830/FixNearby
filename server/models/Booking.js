@@ -38,6 +38,18 @@ const bookingSchema = new mongoose.Schema({
     enum: STATUS_ENUM,
     default: 'Pending'
   },
+  surgeMultiplier: {
+    type: Number,
+    default: 1.0
+  },
+  surgeAmount: {
+    type: Number,
+    default: 0
+  },
+  distanceFee: {
+    type: Number,
+    default: 0
+  },
   address: {
     type: String,
     required: true
