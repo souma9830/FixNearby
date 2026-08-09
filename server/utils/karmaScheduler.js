@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Worker from '../models/Worker.js';
 import Booking from '../models/Booking.js';
 import { writeAuditLog } from '../models/AuditLog.js';
+import { evaluateExpiredBookings } from '../services/bookingWatchdogService.js';
 
 // Calculate and update Karma/Reliability Score for all workers
 export const calculateKarmaScores = async () => {
