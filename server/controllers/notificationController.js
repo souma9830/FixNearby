@@ -1,6 +1,16 @@
 import Notification from '../models/Notification.js';
 import mongoose from 'mongoose';
 import { getIo } from '../socket.js';
+import { notificationQueueEngine } from '../services/notificationQueueEngine.js';
+
+export const getQueueStatus = async (req, res) => {
+  try {
+    const stats = notificationQueueEngine.getQueueStats();
+    res.status(200).json({ success: true, stats });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 // @desc    Get paginated notifications for the authenticated user/worker
 // @route   GET /api/notifications

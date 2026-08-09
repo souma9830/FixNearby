@@ -292,6 +292,17 @@ const workerIconMap = {
 
 const CATEGORIES = ['All', ...new Set(ALL_WORKERS.map((w) => w.profession))];
 
+const POPULAR_CATEGORIES = [
+  { name: 'Electrician', icon: IconBolt, description: 'Wiring, switches & electrical repairs', count: '120+ Pros' },
+  { name: 'Plumber', icon: IconPipe, description: 'Pipe leaks, drainage & bathroom fittings', count: '95+ Pros' },
+  { name: 'Carpenter', icon: IconSaw, description: 'Furniture repair, custom woodwork & locks', count: '80+ Pros' },
+  { name: 'Painter', icon: IconBrush, description: 'Interior wall painting, touchups & coating', count: '110+ Pros' },
+  { name: 'AC Technician', icon: IconSnowflake, description: 'AC servicing, gas refilling & repair', count: '75+ Pros' },
+  { name: 'Cleaner', icon: IconBroom, description: 'Deep home cleaning, sofa & carpet care', count: '140+ Pros' },
+  { name: 'Pest Control', icon: IconBug, description: 'Termite, cockroach & pest treatment', count: '60+ Pros' },
+  { name: 'Appliance Repair', icon: IconBolt, description: 'Washing machine, fridge & oven repair', count: '85+ Pros' },
+];
+
 // ─── Recommendation Score Engine ─────────────────────────────────────────────
 const calcRecommendationScore = (worker, distanceKm) => {
   // Rating  : 0–30 pts
@@ -853,8 +864,48 @@ const Home = () => {
         </div>
       </section>
 
+      {/* ── POPULAR CATEGORIES ────────────────────────────────────────────── */}
+      <section className="bg-white dark:bg-slate-950 py-16 sm:py-20 border-t border-slate-100 dark:border-slate-800">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white sm:text-4xl">
+              Popular Service Categories
+            </h2>
+            <p className="mt-3 text-slate-500 dark:text-slate-400 text-base max-w-2xl mx-auto">
+              Explore our top-rated local home services and verified professionals near you.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-4">
+            {POPULAR_CATEGORIES.map(({ name, icon: CategoryIcon, description, count }) => (
+              <Link
+                key={name}
+                to={`/services?category=${encodeURIComponent(name)}`}
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500 hover:bg-white hover:shadow-xl dark:hover:bg-slate-800"
+              >
+                <div>
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950/80 dark:text-blue-400 group-hover:bg-[#0056D2] group-hover:text-white transition-colors duration-300">
+                    <CategoryIcon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-[#0056D2] dark:group-hover:text-blue-400 transition-colors">
+                    {name}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                    {description}
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center justify-between text-xs font-semibold text-slate-400 dark:text-slate-500 group-hover:text-blue-600">
+                  <span>{count}</span>
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── HOW IT WORKS ────────────────────────────────────────────────────── */}
-      <section id="how-it-works" className="bg-white dark:bg-slate-800 py-24">
+      <section id="how-it-works" className="bg-slate-50 dark:bg-slate-900/60 py-20 sm:py-24 border-t border-slate-100 dark:border-slate-800">
         <div className="mx-auto max-w-7xl px-4 text-center">
           <h2 className="mb-4 text-5xl font-extrabold text-slate-900 dark:text-white">
             {t('howItWorks.title')}
