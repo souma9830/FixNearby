@@ -1,4 +1,5 @@
 import Worker from '../models/Worker.js';
+import { buildGeoSearchPipeline } from '../services/geoSearchOptimizer.js';
 
 /**
  * Calculate Haversine distance in kilometers between two coordinates
