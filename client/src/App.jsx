@@ -54,6 +54,7 @@ const ForgotPasswordUser = lazy(()=>import('./pages/ForgotPasswordUser'));
 const ResetPasswordUser = lazy(()=>import('./pages/ResetPasswordUser'));
 const ForgotPasswordWorker = lazy(()=>import('./pages/ForgotPasswordWorker'));
 const ResetPasswordWorker = lazy(()=>import('./pages/ResetPasswordWorker'));
+const NotificationPreferences = lazy(() => import('./pages/user/NotificationPreferences'));
 
 
 // ─── Route Definitions ────────────────────────────────────────────────────────
@@ -128,6 +129,14 @@ const ROUTES = [
   { path: "/contact", element: <Contact /> },
   { path: "/community", element: <Community /> },
   { path: "/feedback", element: <Feedback /> },
+  {
+    path: "/notification-preferences",
+    element: (
+      <RequireAuth>
+        <NotificationPreferences />
+      </RequireAuth>
+    ),
+  },
 
   // Fallback
   { path: "*", element: <NotFound /> },
