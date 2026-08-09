@@ -2,6 +2,7 @@ import Review from '../models/Review.js';
 import Booking from '../models/Booking.js';
 import mongoose from 'mongoose';
 import { analyzeToxicity } from '../utils/sentiment.js';
+import { calculateWorkerQualityMetrics } from '../services/qualityAnalyticsService.js';
 
 // @desc    Create a new review
 // @route   POST /api/reviews
