@@ -75,6 +75,13 @@ export const searchWorkers = async (req, res) => {
       searchQuery.availabilityStatus = availability;
     }
 
+    // Price range filter
+    const minPriceNum = minPrice !== undefined && minPrice !== '' ? Number(minPrice) : 0;
+    const maxPriceNum = maxPrice !== undefined && maxPrice !== '' ? Number(maxPrice) : 1000;
+    if (minPriceNum > 0 || maxPriceNum < 1000) {
+      searchQuery.hourlyRate = { $gte: minPriceNum, $lte: maxPriceNum };
+    }
+
     // Execute query (real filtering/sorting based on stored fields)
     // Worker schema fields used:
     // - category: string
@@ -188,6 +195,19 @@ export const searchWorkers = async (req, res) => {
     // Geofenced Radius Filter (ensure strict distance cut-off)
     if (hasGeo && maxDistanceKm && maxDistanceKm > 0) {
       workers = workers.filter(w => w.distanceKm !== undefined && !isNaN(w.distanceKm) && w.distanceKm <= maxDistanceKm);
+    }
+
+    // Rating filter post-processing
+    if (minRatingNum > 0) {
+      workers = workers.filter(w => (Number(w.averageRating || w.rating || 0)) >= minRatingNum);
+    }
+
+    // Price range filter post-processing
+    if (minPriceNum > 0 || maxPriceNum < 1000) {
+      workers = workers.filter(w => {
+        const rate = Number(w.hourlyRate || 0);
+        return rate >= minPriceNum && rate <= maxPriceNum;
+      });
     }
 
     // Availability sort post-processing (since aggregation order-by via enum is not added above)
