@@ -26,6 +26,8 @@ import csrfProtection from './middleware/csrfMiddleware.js';
 import { compressionMiddleware } from './middleware/compression.js';
 import securityHeaders from './middleware/securityHeaders.js';
 import { sanitizeInput } from './middleware/securitySanitize.js';
+import { ipReputationShield } from './middleware/ipReputationShield.js';
+import { authRateLimiter } from './middleware/rateLimiter.js';
 import allowedOrigins from './config/corsOrigins.js';
 import { initSocket } from './socket.js';
 import bookingRoutes from './routes/bookingRoutes.js';
@@ -97,6 +99,8 @@ const app = express();
 app.use(compressionMiddleware);
 app.use(cookieParser());
 app.use(securityHeaders);
+app.use(ipReputationShield());
+app.use('/api/v1/auth', authRateLimiter);
 
 // Security Middleware: Strict CSP headers and cross-origin resource protection
 app.use(
