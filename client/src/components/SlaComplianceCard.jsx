@@ -15,10 +15,14 @@ const SlaComplianceCard = ({ complianceRate = 98.5, totalJobs = 45, violations =
           <ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           <h3 className="font-semibold text-slate-800 dark:text-slate-100">SLA Guarantee Status</h3>
         </div>
-        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${getBadgeColor(complianceRate)}`}>
-          {complianceRate}% Compliant
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 font-mono">2026-08</span>
+          <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${getBadgeColor(complianceRate)}`}>
+            {complianceRate}% Compliant
+          </span>
+        </div>
       </div>
+
 
       <div className="grid grid-cols-3 gap-3 pt-2">
         <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-center">
