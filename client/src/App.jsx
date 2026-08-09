@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useLocation,
+  Navigate,
 } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import { lazyWithRetry } from "./utils/performance";
@@ -72,7 +73,7 @@ function RequireAuth({ children }) {
     );
   }
 
-  return isAuthenticated ? children : <Login />;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
 const ROUTES = [
