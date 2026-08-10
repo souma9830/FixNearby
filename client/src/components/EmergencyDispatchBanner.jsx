@@ -26,7 +26,7 @@ const EmergencyDispatchBanner = ({ activeTicket, onTriggerSOS }) => {
           {activeTicket ? (
             <div className="px-4 py-2 bg-slate-900/80 border border-rose-500/40 rounded-xl text-xs flex items-center gap-2">
               <Radio className="w-4 h-4 text-emerald-400 animate-spin" />
-              <span>Broadcast Active: <b>{activeTicket.dispatchStatus}</b></span>
+              <span>Dispatch Active: <b>{activeTicket.dispatchStatus}</b> (ETA: {activeTicket.etaMinutes || 15}m)</span>
             </div>
           ) : (
             <button
@@ -43,3 +43,4 @@ const EmergencyDispatchBanner = ({ activeTicket, onTriggerSOS }) => {
 };
 
 export default EmergencyDispatchBanner;
+
