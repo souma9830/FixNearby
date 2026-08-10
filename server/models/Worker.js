@@ -35,6 +35,25 @@ const workerSchema = new mongoose.Schema(
       trim: true,
     },
 
+    serviceRadiusKm: {
+      type: Number,
+      default: 10,
+    },
+
+    complianceStatus: {
+      type: String,
+      enum: ['UNVERIFIED', 'PARTIALLY_COMPLIANT', 'FULLY_COMPLIANT'],
+      default: 'UNVERIFIED',
+    },
+    backgroundCheckDate: {
+      type: Date,
+      default: null,
+    },
+    insuranceExpiryDate: {
+      type: Date,
+      default: null,
+    },
+
     location: {
       type: {
         type: String,
@@ -74,6 +93,11 @@ const workerSchema = new mongoose.Schema(
       default: "offline",
     },
 
+    isAvailableNow: {
+      type: Boolean,
+      default: false,
+    },
+
     lastActive: {
       type: Date,
       default: Date.now,
@@ -97,6 +121,34 @@ const workerSchema = new mongoose.Schema(
     karmaScore: {
       type: Number,
       default: 100,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+    verificationBadge: {
+      type: String,
+      default: '',
+    },
+    walletBalance: {
+      type: Number,
+      default: 0,
+    },
+    referralCode: {
+      type: String,
+      sparse: true,
+    },
+    monthlyCompletedJobs: {
+      type: Number,
+      default: 0,
+    },
+    topPerformerBadge: {
+      type: Boolean,
+      default: false,
     },
     notificationPreferences: {
       email: { type: Boolean, default: true },
@@ -137,6 +189,101 @@ const workerSchema = new mongoose.Schema(
     refundPolicy: {
       type: String,
       default: 'Full refund guaranteed if response SLA is missed.'
+    },
+    recurringAvailability: [{
+      dayOfWeek: {
+        type: Number,
+        min: 0,
+        max: 6
+      },
+      startTime: {
+        type: String
+      },
+      endTime: {
+        type: String
+      }
+    }],
+    // Service catalog with per-service pricing
+    services: [
+      {
+        name: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        description: {
+          type: String,
+          default: '',
+          trim: true,
+        },
+        price: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+        duration: {
+          type: Number, // duration in minutes
+          default: 60,
+          min: 0,
+        },
+        isActive: {
+          type: Boolean,
+          default: true,
+        },
+      },
+    ],
+
+    // Flat hourly rate for quick filtering and fallback pricing
+    hourlyRate: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    blockedSlots: [{
+      date: {
+        type: Date
+      },
+      startTime: {
+        type: String
+      },
+      endTime: {
+        type: String
+      },
+      reason: {
+        type: String,
+        default: ''
+      }
+    }],
+    payoutMethods: [{
+      type: {
+        type: String,
+        enum: ['bank_account', 'upi', 'stripe_connect'],
+        required: true
+      },
+      isDefault: {
+        type: Boolean,
+        default: false
+      },
+      details: {
+        accountNumber: { type: String, default: '' },
+        ifscCode: { type: String, default: '' },
+        bankName: { type: String, default: '' },
+        accountHolderName: { type: String, default: '' },
+        upiId: { type: String, default: '' },
+        stripeAccountId: { type: String, default: '' }
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    }],
+    stripeConnectAccountId: {
+      type: String,
+      default: ''
+    },
+    passwordChangedAt: {
+      type: Date
     }
   },
   {
@@ -182,6 +329,7 @@ workerSchema.index({ location: 1, averageRating: -1 });
 workerSchema.index({ availabilityStatus: 1, averageRating: -1 });
 workerSchema.index({ email: 1 }, { unique: true });
 workerSchema.index({ karmaScore: -1 });
+workerSchema.index({ isAvailableNow: 1 });
 
 const Worker = mongoose.model(
   "Worker",

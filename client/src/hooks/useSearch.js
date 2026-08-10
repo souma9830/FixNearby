@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { fetchSearchPresets, saveSearchPreset, deleteSearchPreset } from '../services/searchService';
 
 const SEARCH_HISTORY_KEY = 'fixnearby_search_history';
 const FAVORITE_SEARCHES_KEY = 'fixnearby_favorite_searches';
@@ -9,7 +10,7 @@ const MAX_HISTORY_ITEMS = 10;
  * Custom hook for advanced search functionality with debouncing,
  * history tracking, and URL parameter synchronization
  */
-const useSearch = (initialFilters = {}) => {
+const useSearch = (initialFilters = {}, isAuthenticated = false) => {
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Search state
@@ -37,17 +38,39 @@ const useSearch = (initialFilters = {}) => {
   // Refs for debouncing
   const debounceTimerRef = useRef(null);
   
-  // Load search history and favorites from localStorage
+  // Load search history and favorites from localStorage / backend
   useEffect(() => {
     try {
       const history = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
-      const favorites = JSON.parse(localStorage.getItem(FAVORITE_SEARCHES_KEY)) || [];
       setSearchHistory(history);
-      setFavoriteSearches(favorites);
+      
+      if (isAuthenticated) {
+        const loadBackendPresets = async () => {
+          try {
+            const presets = await fetchSearchPresets();
+            const mapped = presets.map(p => ({
+              id: p._id,
+              name: p.name,
+              query: p.query,
+              filters: p.filters,
+              isBackend: true
+            }));
+            setFavoriteSearches(mapped);
+          } catch (err) {
+            console.error('Failed to load presets from backend, fallback to local', err);
+            const favorites = JSON.parse(localStorage.getItem(FAVORITE_SEARCHES_KEY)) || [];
+            setFavoriteSearches(favorites);
+          }
+        };
+        loadBackendPresets();
+      } else {
+        const favorites = JSON.parse(localStorage.getItem(FAVORITE_SEARCHES_KEY)) || [];
+        setFavoriteSearches(favorites);
+      }
     } catch (error) {
       console.error('Error loading search data:', error);
     }
-  }, []);
+  }, [isAuthenticated]);
   
   // Debounce search query
   useEffect(() => {
@@ -132,7 +155,7 @@ const useSearch = (initialFilters = {}) => {
   }, []);
   
   // Save favorite search
-  const saveFavoriteSearch = useCallback((name, query, appliedFilters) => {
+  const saveFavoriteSearch = useCallback(async (name, query, appliedFilters) => {
     const favorite = {
       id: Date.now().toString(),
       name: name || query,
@@ -140,6 +163,25 @@ const useSearch = (initialFilters = {}) => {
       filters: { ...appliedFilters },
       timestamp: new Date().toISOString(),
     };
+    
+    if (isAuthenticated) {
+      try {
+        const res = await saveSearchPreset(name || query, query, appliedFilters);
+        if (res.success) {
+          const newPreset = {
+            id: res.preset._id,
+            name: res.preset.name,
+            query: res.preset.query,
+            filters: res.preset.filters,
+            isBackend: true
+          };
+          setFavoriteSearches(prev => [newPreset, ...prev]);
+          return true;
+        }
+      } catch (error) {
+        console.error('Error saving search preset to backend:', error);
+      }
+    }
     
     try {
       let favorites = JSON.parse(localStorage.getItem(FAVORITE_SEARCHES_KEY)) || [];
@@ -151,10 +193,21 @@ const useSearch = (initialFilters = {}) => {
       console.error('Error saving favorite search:', error);
       return false;
     }
-  }, []);
+  }, [isAuthenticated]);
   
   // Remove favorite search
-  const removeFavoriteSearch = useCallback((id) => {
+  const removeFavoriteSearch = useCallback(async (id) => {
+    const item = favoriteSearches.find(f => f.id === id);
+    if (isAuthenticated && item?.isBackend) {
+      try {
+        await deleteSearchPreset(id);
+        setFavoriteSearches(prev => prev.filter(i => i.id !== id));
+        return;
+      } catch (error) {
+        console.error('Error deleting search preset from backend:', error);
+      }
+    }
+    
     try {
       let favorites = JSON.parse(localStorage.getItem(FAVORITE_SEARCHES_KEY)) || [];
       favorites = favorites.filter(item => item.id !== id);
@@ -163,7 +216,7 @@ const useSearch = (initialFilters = {}) => {
     } catch (error) {
       console.error('Error removing favorite search:', error);
     }
-  }, []);
+  }, [isAuthenticated, favoriteSearches]);
   
   // Load favorite search
   const loadFavoriteSearch = useCallback((favorite) => {

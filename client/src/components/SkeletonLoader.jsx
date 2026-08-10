@@ -90,21 +90,34 @@ const SkeletonBookingCard = () => (
 
 const SkeletonLoader = ({ type = 'card', count = 1 }) => {
   const items = Array(count).fill(0);
+  let content;
 
-  if (type === 'list') return <SkeletonList />;
-  if (type === 'dashboard') return <SkeletonDashboard />;
-  if (type === 'profile') return <SkeletonProfile />;
-  if (type === 'booking') {
-    return (
+  if (type === 'list') content = <SkeletonList />;
+  else if (type === 'dashboard') content = <SkeletonDashboard />;
+  else if (type === 'profile') content = <SkeletonProfile />;
+  else if (type === 'booking') {
+    content = (
       <div className="space-y-4">
         {items.map((_, i) => <SkeletonBookingCard key={i} />)}
+      </div>
+    );
+  } else {
+    content = (
+      <div className="space-y-4">
+        {items.map((_, i) => <SkeletonCard key={i} />)}
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {items.map((_, i) => <SkeletonCard key={i} />)}
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label={`Loading ${type}`}
+    >
+      {content}
+      <span className="sr-only">Loading content</span>
     </div>
   );
 };
