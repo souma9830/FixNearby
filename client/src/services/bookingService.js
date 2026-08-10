@@ -109,6 +109,15 @@ export const getBookingTimeline = async (bookingId) => {
   }
 };
 
+export const checkBookingExpiry = async () => {
+  try {
+    const response = await api.post("/bookings/watchdog/sweep");
+    return response.data;
+  } catch (error) {
+    throw normalizeError(error, "Failed to execute booking watchdog sweep");
+  }
+};
+
 /**
  * Map an axios error to the normalized service-layer error contract.
  * @param {import('axios').AxiosError} error
@@ -133,4 +142,5 @@ export default {
   cancelBooking,
   rescheduleBooking,
   getBookingTimeline,
+  checkBookingExpiry,
 };

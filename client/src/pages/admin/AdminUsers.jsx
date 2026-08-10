@@ -277,6 +277,7 @@ const AdminUsers = () => {
                           onClick={() => handleInspectBookings(item)}
                           className="p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-200 transition"
                           title="View Booking History"
+                          aria-label="View Booking History"
                         >
                           <Eye size={16} />
                         </button>
@@ -290,6 +291,7 @@ const AdminUsers = () => {
                               : 'bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:text-rose-400'
                           }`}
                           title={item.isBanned ? 'Unban Account' : 'Ban Account'}
+                          aria-label={item.isBanned ? 'Unban Account' : 'Ban Account'}
                         >
                           {item.isBanned ? <CheckCircle size={16} /> : <Ban size={16} />}
                         </button>

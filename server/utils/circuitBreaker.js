@@ -5,68 +5,130 @@
  */
 
 export class CircuitBreaker {
-  constructor(options = {}) {
-    this.failureThreshold = options.failureThreshold || 3;
-    this.successThreshold = options.successThreshold || 2;
-    this.timeout = options.timeout || 5000; // 5 seconds recovery timeout
+  static registry = new Map();
 
-    this.state = 'CLOSED';
-    this.failureCount = 0;
-    this.successCount = 0;
-    this.nextAttempt = Date.now();
+  /**
+   * Get a circuit breaker by name
+   * @param {string} name 
+   * @returns {CircuitBreaker}
+   */
+  static getBreaker(name) {
+    return CircuitBreaker.registry.get(name);
   }
 
-  async execute(requestFn, fallbackFn) {
+  /**
+   * Get metrics for all registered circuit breakers
+   * @returns {Object}
+   */
+  static getAllMetrics() {
+    const metrics = {};
+    for (const [name, breaker] of CircuitBreaker.registry.entries()) {
+      metrics[name] = breaker.getMetrics();
+    }
+    return metrics;
+  }
+
+  constructor(options = {}) {
+    this.name = options.name || 'default';
+    this.failureThreshold = options.failureThreshold || 5;
+    this.resetTimeoutMs = options.resetTimeoutMs || 30000;
+    this.halfOpenMaxAttempts = options.halfOpenMaxAttempts || 3;
+    this.monitorInterval = options.monitorInterval || 60000;
+
+    this.state = 'CLOSED'; // CLOSED, OPEN, HALF_OPEN
+    this.failures = 0;
+    this.successes = 0;
+    this.halfOpenAttempts = 0;
+    this.lastFailure = null;
+    this.lastSuccess = null;
+    this.totalRequests = 0;
+    this.openTime = null;
+
+    CircuitBreaker.registry.set(this.name, this);
+  }
+
+  /**
+   * Wraps an async function call in the circuit breaker
+   * @param {Function} fn 
+   * @returns {Promise<any>}
+   */
+  async execute(fn) {
+    this.totalRequests++;
+
     if (this.state === 'OPEN') {
-      if (Date.now() > this.nextAttempt) {
+      if (Date.now() - this.openTime >= this.resetTimeoutMs) {
         this.state = 'HALF_OPEN';
-        this.successCount = 0;
+        this.halfOpenAttempts = 0;
       } else {
-        if (typeof fallbackFn === 'function') {
-          return fallbackFn(new Error('Circuit breaker is OPEN'));
-        }
-        throw new Error('Circuit breaker is OPEN. Fast failing request.');
+        throw new Error(`Circuit breaker '${this.name}' is OPEN`);
       }
     }
 
-    try {
-      const response = await requestFn();
-      this.onSuccess();
-      return response;
-    } catch (err) {
-      this.onFailure();
-      if (typeof fallbackFn === 'function') {
-        return fallbackFn(err);
+    if (this.state === 'HALF_OPEN') {
+      if (this.halfOpenAttempts >= this.halfOpenMaxAttempts) {
+        throw new Error(`Circuit breaker '${this.name}' is HALF_OPEN (max attempts reached)`);
       }
+      this.halfOpenAttempts++;
+    }
+
+    try {
+      const result = await fn();
+      
+      this.successes++;
+      this.lastSuccess = new Date();
+      
+      if (this.state === 'HALF_OPEN') {
+        this.reset(); // Recovered successfully
+      } else {
+        this.failures = 0; // Reset consecutive failures on success
+      }
+      
+      return result;
+    } catch (err) {
+      this.failures++;
+      this.lastFailure = new Date();
+      
+      if (this.state === 'HALF_OPEN' || this.failures >= this.failureThreshold) {
+        this.state = 'OPEN';
+        this.openTime = Date.now();
+      }
+      
       throw err;
     }
   }
 
-  onSuccess() {
-    this.failureCount = 0;
-    if (this.state === 'HALF_OPEN') {
-      this.successCount += 1;
-      if (this.successCount >= this.successThreshold) {
-        this.state = 'CLOSED';
-        this.successCount = 0;
-      }
-    }
-  }
-
-  onFailure() {
-    this.failureCount += 1;
-    if (this.failureCount >= this.failureThreshold) {
-      this.state = 'OPEN';
-      this.nextAttempt = Date.now() + this.timeout;
-    }
-  }
-
+  /**
+   * Returns current state string
+   * @returns {string}
+   */
   getState() {
+    return this.state;
+  }
+
+  /**
+   * Returns circuit breaker metrics
+   * @returns {Object}
+   */
+  getMetrics() {
     return {
       state: this.state,
-      failureCount: this.failureCount,
-      successCount: this.successCount,
-      nextAttemptInMs: Math.max(0, this.nextAttempt - Date.now())
+      failures: this.failures,
+      successes: this.successes,
+      lastFailure: this.lastFailure,
+      lastSuccess: this.lastSuccess,
+      totalRequests: this.totalRequests
     };
   }
+
+  /**
+   * Force reset to CLOSED state
+   */
+  reset() {
+    this.state = 'CLOSED';
+    this.failures = 0;
+    this.halfOpenAttempts = 0;
+    this.openTime = null;
+  }
 }
+
+export default CircuitBreaker;

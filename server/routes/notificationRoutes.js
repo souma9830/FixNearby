@@ -5,7 +5,8 @@ import {
   markAsRead,
   markAllAsRead,
   getUnreadCount,
-  deleteNotification
+  deleteNotification,
+  getQueueStatus
 } from '../controllers/notificationController.js';
 import { sendNotification } from '../controllers/notificationController.js';
 
@@ -19,6 +20,9 @@ router.get('/', getNotifications);
 
 // Unread count
 router.get('/unread-count', getUnreadCount);
+
+// Queue metrics
+router.get('/queue/status', getQueueStatus);
 
 // Mark all as read — must come before /:id routes
 router.patch('/read-all', markAllAsRead);

@@ -7,7 +7,8 @@ import { getRedis } from '../utils/redis.js';
  * Calculate Haversine distance in kilometers between two geo coordinates
  */
 const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+  if (lat1 === undefined || lat1 === null || lon1 === undefined || lon1 === null ||
+      lat2 === undefined || lat2 === null || lon2 === undefined || lon2 === null) return null;
   const R = 6371; // Earth radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -17,7 +18,8 @@ const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
       Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const clampedA = Math.min(1, Math.max(0, a));
+  const c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
   return parseFloat((R * c).toFixed(1));
 };
 

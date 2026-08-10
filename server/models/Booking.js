@@ -38,6 +38,18 @@ const bookingSchema = new mongoose.Schema({
     enum: STATUS_ENUM,
     default: 'Pending'
   },
+  surgeMultiplier: {
+    type: Number,
+    default: 1.0
+  },
+  surgeAmount: {
+    type: Number,
+    default: 0
+  },
+  distanceFee: {
+    type: Number,
+    default: 0
+  },
   address: {
     type: String,
     required: true
@@ -88,6 +100,7 @@ const bookingSchema = new mongoose.Schema({
 bookingSchema.index({ userId: 1, createdAt: -1 });
 bookingSchema.index({ workerId: 1, createdAt: -1 });
 bookingSchema.index({ workerId: 1, status: 1 });
+bookingSchema.index({ workerId: 1, scheduledTime: 1, status: 1 });
 bookingSchema.index({ status: 1, scheduledTime: 1 });
 bookingSchema.index({ reminderSent: 1, status: 1, scheduledTime: 1 });
 

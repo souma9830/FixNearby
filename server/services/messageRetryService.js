@@ -1,69 +1,25 @@
-import Message from '../models/Message.js';
-
 /**
- * Simple in-memory message retry service.
- * For each socket, maintain a queue of pending messages with retry attempts.
- * Retries use exponential backoff up to a max attempts.
+ * Chat Message Retry Exponential Backoff Service
  */
-class MessageRetryService {
-  constructor() {
-    this.queues = new Map(); // socket.id => [{msgData, attempts, timer}]
-    this.maxAttempts = 5;
-    this.baseDelay = 500; // ms
-  }
+export const calculateMessageRetryDelay = (attemptNumber, baseDelayMs = 1000, maxDelayMs = 30000) => {
+  const attempt = Math.max(1, Number(attemptNumber) || 1);
+  const delay = Math.min(maxDelayMs, baseDelayMs * Math.pow(2, attempt - 1));
+  const jitter = Math.floor(Math.random() * 200);
 
-  _getQueue(socketId) {
-    if (!this.queues.has(socketId)) {
-      this.queues.set(socketId, []);
-    }
-    return this.queues.get(socketId);
-  }
+  return {
+    attempt,
+    delayMs: delay + jitter,
+    shouldRetry: attempt <= 5,
+    isFinalAttempt: attempt === 5
+  };
+};
 
-  enqueue(socket, msgData) {
-    const queue = this._getQueue(socket.id);
-    queue.push({ msgData, attempts: 0 });
-    this._processQueue(socket);
-  }
+export const sanitizeChatMessagePayload = (content = '') => {
+  if (typeof content !== 'string') return '';
+  return content.replace(/[<>{}]/g, '').trim().slice(0, 1000);
+};
 
-  _processQueue(socket) {
-    const queue = this._getQueue(socket.id);
-    if (queue.length === 0) return;
-    const item = queue[0];
-    const { msgData, attempts } = item;
-    try {
-      socket.emit('sendMessage', msgData, (ack) => {
-        if (ack && ack.success) {
-          queue.shift();
-          this._processQueue(socket);
-        } else {
-          this._scheduleRetry(socket, item);
-        }
-      });
-    } catch (err) {
-      this._scheduleRetry(socket, item);
-    }
-  }
-
-  _scheduleRetry(socket, item) {
-    item.attempts += 1;
-    if (item.attempts > this.maxAttempts) {
-      console.error('Message delivery failed after max retries', item.msgData);
-      const queue = this._getQueue(socket.id);
-      queue.shift();
-      return;
-    }
-    const delay = this.baseDelay * Math.pow(2, item.attempts - 1);
-    clearTimeout(item.timer);
-    item.timer = setTimeout(() => this._processQueue(socket), delay);
-  }
-
-  clearSocketQueue(socketId) {
-    if (this.queues.has(socketId)) {
-      const queue = this.queues.get(socketId);
-      queue.forEach(item => clearTimeout(item.timer));
-      this.queues.delete(socketId);
-    }
-  }
-}
-
-export const messageRetryService = new MessageRetryService();
+export const messageRetryService = {
+  calculateMessageRetryDelay,
+  sanitizeChatMessagePayload
+};
