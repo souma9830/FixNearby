@@ -1,4 +1,5 @@
 import Category from '../models/Category.js';
+import { clearCacheKey } from '../middleware/cacheMiddleware.js';
 
 export const getAllCategories = async (req, res) => {
   try {
@@ -20,6 +21,7 @@ export const createCategory = async (req, res) => {
 
     const category = new Category({ name, slug, icon, subcategories });
     await category.save();
+    clearCacheKey('/categories');
 
     res.status(201).json({ success: true, category });
   } catch (error) {
