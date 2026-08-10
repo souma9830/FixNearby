@@ -13,7 +13,7 @@ import { getIo } from '../socket.js';
 import { notificationQueueEngine } from '../services/notificationQueueEngine.js';
 
 
-dotenv.config();
+let connection = null;
 
 const processJob = async (job) => {
   const { name, data } = job;
@@ -449,20 +449,28 @@ const processJob = async (job) => {
 
 let worker = null;
 
-export const startWorker = async () => {
-  const conn = await getRedis();
-  if (!conn || conn.status !== 'ready') {
+export const startWorker = () => {
+  try {
+    connection = new IORedis(redisUrl, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      retryStrategy: () => null,
+    });
+    connection.on('error', () => {});
+  } catch (err) {
     console.warn('[Worker] Gracefully skipping worker start: Redis is offline.');
     return null;
   }
 
   try {
     worker = new Worker('notification-queue', processJob, {
-      connection: conn,
+      connection,
       concurrency: 5
     });
   } catch (err) {
-    console.warn('[Worker] Failed to create BullMQ Worker:', err.message);
+    console.warn('[Worker] Gracefully skipping worker start: Redis unavailable.');
+    connection.disconnect();
+    connection = null;
     return null;
   }
 

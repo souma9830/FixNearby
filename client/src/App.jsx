@@ -47,10 +47,10 @@ const ReportIssue         = lazy(() => import('./components/IssueSubmissionForm'
 const IssueDetail         = lazy(() => import('./pages/IssueDetail'));
 const NotFound            = lazy(() => import('./pages/NotFound'));
 const CompareWorkers      = lazy(() => import('./pages/CompareWorkers'));
+const VerificationPage    = lazy(() => lazyWithRetry(() => import('./pages/worker/VerificationPage')));
 
 const AdminDashboard      = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers          = lazy(() => import('./pages/admin/AdminUsers'));
-const ModerationPanel     = lazy(() => import('./pages/admin/ModerationPanel'));
 
 const ForgotPasswordUser = lazy(()=>import('./pages/ForgotPasswordUser'));
 const ResetPasswordUser = lazy(()=>import('./pages/ResetPasswordUser'));
@@ -96,6 +96,7 @@ const ROUTES = [
   { path: '/worker/register',   element: <WorkerRegister /> },
   { path: '/worker/login',      element: <WorkerLogin /> },
   { path: '/worker/dashboard',    element: <WorkerDashboard /> }, 
+  { path: '/worker/verification', element: <VerificationPage /> },
   { path: '/worker/:id',        element: <WorkerProfile /> },
   { path: '/saved-workers',     element: <SavedWorkers /> },
   { path: '/compare-workers',   element: <CompareWorkers /> },
