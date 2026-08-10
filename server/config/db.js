@@ -1,25 +1,26 @@
 import mongoose from 'mongoose';
 
+// Ensure Mongoose operations fail fast if DB connection is offline
 mongoose.set('bufferCommands', false);
 
 const connectDB = async () => {
   try {
     if (!process.env.MONGODB_URI) {
-      console.warn('MONGODB_URI not set — skipping MongoDB connection (running in fallback/in-memory mode)');
+      console.warn('[DB]: MONGODB_URI environment variable not configured — using graceful fallback');
       return;
     }
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 5000,
       connectTimeoutMS: 5000,
     });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`[DB]: MongoDB Connected successfully to host ${conn.connection.host}`);
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
-    console.warn('Running without DB — controllers will use in-memory fallback');
+    console.error(`[DB Error]: Initial MongoDB connection failed — ${error.message}`);
+    console.warn('[DB]: Proceeding with active request fallback handling');
   }
 };
 
 export default connectDB;
 
-// Export helper for health checker
+// Export status checker helper for diagnostic probes
 export const getDbStatusDetails = () => mongoose.connection.readyState;
