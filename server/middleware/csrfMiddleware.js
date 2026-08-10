@@ -1,47 +1,35 @@
 import crypto from 'crypto';
-import { generateCsrfToken } from '../utils/csrfHelper.js';
-
-const CSRF_COOKIE = 'csrf-token';
-const CSRF_HEADER = 'x-csrf-token';
 
 /**
- * Enhanced CSRF protection using double-submit cookie pattern.
- * - Generates a cryptographically random token on first visit.
- * - Sets it as an HttpOnly, SameSite=Strict cookie (not accessible to JS).
- * - Requires state-changing requests to echo the token in the x-csrf-token header.
- * - In production the cookie is also marked Secure.
+ * Double-Submit CSRF Token & SameSite Cookie Protection Middleware
  */
-export const csrfProtection = (req, res, next) => {
-  const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
 
-  let csrfToken = req.cookies?.[CSRF_COOKIE];
+export const csrfProtection = (req, res, next) => {
+  // Generate CSRF token cookie if missing
+  let csrfToken = req.cookies?.['XSRF-TOKEN'];
   if (!csrfToken) {
-    csrfToken = generateCsrfToken();
+    csrfToken = crypto.randomBytes(32).toString('hex');
+    res.cookie('XSRF-TOKEN', csrfToken, {
+      httpOnly: false, // Accessible by frontend JavaScript for request headers
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 86400000 // 24h
+    });
   }
 
-  const cookieOptions = {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    httpOnly: false,
-    path: '/',
-    maxAge: 24 * 60 * 60 * 1000,
-  };
-
-  res.cookie(CSRF_COOKIE, csrfToken, cookieOptions);
-
-  if (safeMethods.includes(req.method)) {
+  // Exempt safe HTTP methods
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     return next();
   }
 
-  const headerToken = req.headers[CSRF_HEADER];
-  if (!headerToken || !crypto.timingSafeEqual(Buffer.from(headerToken), Buffer.from(csrfToken))) {
+  // Validate header against cookie
+  const clientHeaderToken = req.headers['x-csrf-token'] || req.headers['x-xsrf-token'];
+  if (!clientHeaderToken || clientHeaderToken !== csrfToken) {
     return res.status(403).json({
       success: false,
-      message: 'CSRF token validation failed',
+      message: 'CSRF Validation Failed: Invalid or missing X-CSRF-Token header.'
     });
   }
 
   next();
 };
-
-export default csrfProtection;

@@ -85,6 +85,7 @@ import estimatorRoutes from './routes/estimatorRoutes.js';
 import referralRoutes from './routes/referralRoutes.js';
 import serviceRequestRoutes from './routes/serviceRequestRoutes.js';
 import recommendationRoutes from './routes/recommendationRoutes.js';
+import earningRoutes from './routes/earningRoutes.js';
 import pricingRoutes from './routes/pricingRoutes.js';
 import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import zoneManagementRoutes from './routes/zoneManagementRoutes.js';
@@ -250,6 +251,7 @@ app.use('/api/pricing', pricingRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/earnings', earningRoutes);
 app.use('/api/workers/skills-certifications', workerSkillCertRoutes);
 app.use('/api/workers/multi-geofence', multiLocationGeofenceRoutes);
 
