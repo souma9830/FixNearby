@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Briefcase,
   Clock,
-  MapMarker,
+  MapPin,
   CheckCircle,
   Filter,
   Search,
@@ -187,7 +187,7 @@ const JobsFeed = () => {
               )}
               {job.location && (
                 <span className="flex items-center gap-1">
-                  <MapMarker className="h-3.5 w-3.5" /> {job.location}
+                  <MapPin className="h-3.5 w-3.5" /> {job.location}
                 </span>
               )}
               {job.customerName && (

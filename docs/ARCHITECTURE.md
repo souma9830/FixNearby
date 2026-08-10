@@ -7,6 +7,11 @@ For detailed REST endpoints and Socket.IO contracts, see:
 - [Real-Time Socket Protocols](./REALTIME_SOCKET_PROTOCOLS.md)
 - [System Deployment Guide](./SYSTEM_DEPLOYMENT_GUIDE.md)
 
+### 🛡️ Application Resilience & Error Handling Layer
+- **Client Fallback UI** (`client/src/components/FallbackUI.jsx`): Isolated render error recovery.
+- **Global Error Boundary** (`client/src/components/ErrorBoundary.jsx`): Telemetry & retry management.
+- **Server Error Obfuscation** (`server/middleware/errorHandler.js`): Correlation IDs and safe stack trace suppression in production.
+
 ---
 
 ## 🏗️ System Overview

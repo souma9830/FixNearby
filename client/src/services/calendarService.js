@@ -22,9 +22,15 @@ export const checkSlotAvailability = async (workerId, date, time) => {
   return response.data;
 };
 
+export const updateCalendarSettings = async (settings) => {
+  const response = await apiClient.put('/calendar/settings', settings);
+  return response.data;
+};
+
 export default {
   getWorkerAvailability,
   addAvailabilitySlot,
   removeAvailabilitySlot,
-  checkSlotAvailability
+  checkSlotAvailability,
+  updateCalendarSettings
 };

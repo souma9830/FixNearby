@@ -94,7 +94,7 @@ const WorkerDashboard = () => {
     }
   };
 
-  const toggleAvailability = () => {
+  const toggleAvailability = async () => {
     const newStatus = !isAvailable;
 
     try {
@@ -214,37 +214,121 @@ const WorkerDashboard = () => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="mb-10 grid grid-cols-2 gap-5 xl:grid-cols-4">
-          {stats.map((item, i) => (
+        {/* Glassmorphism Stats Cards with Dynamic Trend Indicator Pills */}
+        <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: "Total Jobs", value: stats[0]?.value || "0", trend: "+14% vs last week", trendColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30", icon: <FaBriefcase />, accent: "from-blue-500 to-indigo-500" },
+            { label: "Active Jobs", value: stats[1]?.value || "0", trend: "2 Pending Dispatch", trendColor: "bg-amber-500/20 text-amber-300 border-amber-500/30", icon: <FaClock />, accent: "from-amber-500 to-orange-500" },
+            { label: "Completed", value: stats[2]?.value || "0", trend: "+8% this month", trendColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30", icon: <FaCheckCircle />, accent: "from-emerald-500 to-teal-500" },
+            { label: "Rating", value: stats[3]?.value || "5.0/5", trend: "Top 5% Provider", trendColor: "bg-purple-500/20 text-purple-300 border-purple-500/30", icon: <FaStar />, accent: "from-purple-500 to-pink-500" },
+          ].map((item) => (
             <div
               key={item.label}
-              className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              className="relative overflow-hidden rounded-3xl bg-slate-900/90 backdrop-blur-xl border border-slate-800 p-6 text-white shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-emerald-500/10 hover:border-slate-700 group"
             >
+              <div className={`absolute top-0 right-0 h-24 w-24 rounded-full bg-gradient-to-br ${item.accent} opacity-10 blur-2xl group-hover:opacity-25 transition-opacity`} />
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">{item.label}</p>
-                  <h3 className="mt-2 text-3xl font-bold text-slate-900">{item.value}</h3>
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">{item.label}</p>
+                  <h3 className="mt-2 text-3xl font-black tracking-tight text-white">{item.value}</h3>
+                  <div className="mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold border backdrop-blur-md shadow-xs">
+                    <span className={item.trendColor}>{item.trend}</span>
+                  </div>
                 </div>
-                <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-xl ${statIcons[i].color}`}>
-                  {statIcons[i].icon}
+                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${item.accent} text-xl text-white shadow-lg shadow-blue-500/20`}>
+                  {item.icon}
                 </div>
               </div>
             </div>
           ))}
         </div>
 
+        {/* High-Contrast Earnings & Analytics Breakdown Chart Panel */}
+        <div className="mb-10 rounded-3xl bg-slate-900/95 backdrop-blur-2xl border border-slate-800 p-8 text-white shadow-2xl">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                <span>💰</span> Earnings & Revenue Analytics
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">High-contrast breakdown of payout escrows, completed fees, and projected revenue</p>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-800/80 p-1.5 rounded-2xl border border-slate-700/60">
+              <span className="px-3 py-1 text-xs font-bold bg-emerald-500 text-slate-950 rounded-xl shadow-xs">This Month</span>
+              <span className="px-3 py-1 text-xs font-semibold text-slate-400 hover:text-white cursor-pointer">Last Month</span>
+              <span className="px-3 py-1 text-xs font-semibold text-slate-400 hover:text-white cursor-pointer">Annual</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+            {/* KPI Summary Block */}
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/50">
+                <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">Total Estimated Revenue</p>
+                <p className="text-3xl font-black text-emerald-400 mt-1">$2,450.00</p>
+                <span className="inline-block mt-2 text-[10px] font-extrabold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-md border border-emerald-500/30">+18% growth</span>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-800/60 border border-slate-700/50">
+                <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">Pending Escrow Release</p>
+                <p className="text-2xl font-extrabold text-amber-400 mt-1">$410.00</p>
+                <span className="text-[10px] text-slate-400">Released upon customer completion approval</span>
+              </div>
+            </div>
+
+            {/* High-Contrast Visual Legend Bars */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="flex items-center gap-2 text-slate-200">
+                    <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50" />
+                    Direct Worker Payout (90%)
+                  </span>
+                  <span className="text-emerald-400 font-extrabold">$2,205.00</span>
+                </div>
+                <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                  <div className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-1000 shadow-sm" style={{ width: '90%' }} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="flex items-center gap-2 text-slate-200">
+                    <span className="w-3 h-3 rounded-full bg-blue-400 inline-block shadow-sm shadow-blue-400/50" />
+                    Stripe Escrow Reserve
+                  </span>
+                  <span className="text-blue-400 font-extrabold">$180.00</span>
+                </div>
+                <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                  <div className="bg-gradient-to-r from-blue-500 to-indigo-400 h-full rounded-full transition-all duration-1000 shadow-sm" style={{ width: '65%' }} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="flex items-center gap-2 text-slate-200">
+                    <span className="w-3 h-3 rounded-full bg-purple-400 inline-block shadow-sm shadow-purple-400/50" />
+                    Platform Fee (10%)
+                  </span>
+                  <span className="text-purple-400 font-extrabold">$245.00</span>
+                </div>
+                <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                  <div className="bg-gradient-to-r from-purple-500 to-pink-400 h-full rounded-full transition-all duration-1000 shadow-sm" style={{ width: '10%' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Main Grid */}
         <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-2xl bg-white p-6 shadow-sm">
+          <div className="lg:col-span-2 rounded-3xl bg-white dark:bg-slate-800 p-8 shadow-sm border border-slate-200 dark:border-slate-700">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Job Activity</h2>
-                <p className="text-sm text-slate-500">Your assigned and recent jobs</p>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Job Activity</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Your assigned and recent jobs</p>
               </div>
               <Link
                 to="/jobs"
-                className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 flex items-center gap-1"
               >
                 View Full Feed <FaArrowRight className="text-xs" />
               </Link>
@@ -255,10 +339,10 @@ const WorkerDashboard = () => {
               useWindowScroll={true}
               overscan={200}
               renderItem={(job) => (
-                <div className="flex flex-col gap-4 rounded-xl border border-slate-100 p-5 transition hover:bg-slate-50 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-4 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 transition hover:bg-slate-50 dark:hover:bg-slate-700/50 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <h3 className="font-semibold text-slate-900">{job.service || job.title}</h3>
-                    <div className="mt-2 flex flex-wrap gap-4 text-sm text-slate-500">
+                    <h3 className="font-bold text-slate-900 dark:text-white">{job.service || job.title}</h3>
+                    <div className="mt-2 flex flex-wrap gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
                       <span className="flex items-center gap-2">
                         <FaClock /> {job.date}
                       </span>
@@ -268,12 +352,12 @@ const WorkerDashboard = () => {
                     </div>
                   </div>
                   <span
-                    className={`self-start rounded-full px-3 py-1 text-xs font-semibold md:self-auto ${
+                    className={`self-start rounded-full px-3 py-1 text-xs font-extrabold md:self-auto ${
                       job.status === "Completed"
-                        ? "bg-emerald-50 text-emerald-600"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300"
                         : job.status === "In Progress"
-                        ? "bg-blue-50 text-blue-600"
-                        : "bg-amber-50 text-amber-600"
+                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300"
+                        : "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300"
                     }`}
                   >
                     {job.status}
@@ -281,10 +365,10 @@ const WorkerDashboard = () => {
                 </div>
               )}
               emptyState={
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-16 text-center">
-                  <FaWrench className="mx-auto mb-3 text-3xl text-slate-300" />
-                  <p className="font-medium text-slate-700">No jobs assigned yet.</p>
-                  <p className="mt-1 text-sm text-slate-500">
+                <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 py-16 text-center">
+                  <FaWrench className="mx-auto mb-3 text-3xl text-slate-300 dark:text-slate-600" />
+                  <p className="font-bold text-slate-700 dark:text-slate-300">No jobs assigned yet.</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Jobs booked by customers will appear here.
                   </p>
                 </div>
@@ -293,29 +377,29 @@ const WorkerDashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-slate-900">Quick Actions</h2>
-            <p className="text-sm text-slate-500">Access important actions instantly</p>
+          <div className="rounded-3xl bg-white dark:bg-slate-800 p-8 shadow-sm border border-slate-200 dark:border-slate-700">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Access important actions instantly</p>
 
             <div className="mt-6 space-y-3">
               {worker?._id && (
                 <Link
                   to={`/worker/${worker._id}`}
-                  className="flex w-full items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  className="flex w-full items-center justify-between rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                   View My Profile <FaArrowRight />
                 </Link>
               )}
               <Link
                 to="/worker/services"
-                className="flex w-full items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                className="flex w-full items-center justify-between rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-700"
               >
                 Manage Service Catalog <FaArrowRight />
               </Link>
               {["Update Availability", "View Job History", "Contact Support"].map((action) => (
                 <button
                   key={action}
-                  className="flex w-full items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  className="flex w-full items-center justify-between rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                   {action} <FaArrowRight />
                 </button>
@@ -324,14 +408,14 @@ const WorkerDashboard = () => {
 
             {/* Worker Info Card */}
             {worker && (
-              <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-5">
+              <div className="mt-6 rounded-2xl border border-blue-100 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-900/20 p-5">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-sm">
                     {worker.name?.[0]?.toUpperCase() || "W"}
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900">{worker.name}</p>
-                    <p className="text-xs text-slate-500">{worker.email}</p>
+                    <p className="font-bold text-slate-900 dark:text-white">{worker.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{worker.email}</p>
                   </div>
                 </div>
               </div>

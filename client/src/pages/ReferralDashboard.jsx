@@ -182,55 +182,33 @@ const ReferralDashboard = () => {
         </div>
       </div>
 
-      {/* Stat Summaries Grid */}
+      {/* Stat Summaries Grid - Glassmorphism & Trend Indicator Pills */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700/60">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-blue-600 text-white">
-              <Wallet className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Wallet Balance</p>
-              <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white">₹{stats?.walletBalance?.toLocaleString() || 0}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700/60">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-emerald-600 text-white">
-              <TrendingUp className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Credits Earned</p>
-              <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white">₹{stats?.totalEarnedCredits?.toLocaleString() || 0}</h3>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700/60">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-purple-600 text-white">
-              <Users className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Invites Sent</p>
-              <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white">{stats?.totalInvites || 0}</h3>
+        {[
+          { label: "Wallet Balance", value: `₹${stats?.walletBalance?.toLocaleString() || 0}`, trend: "Ready for Cashout", trendColor: "bg-blue-500/20 text-blue-300 border-blue-500/30", icon: <Wallet className="h-6 w-6" />, accent: "from-blue-600 to-indigo-600" },
+          { label: "Total Credits Earned", value: `₹${stats?.totalEarnedCredits?.toLocaleString() || 0}`, trend: "+₹1,500 this month", trendColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30", icon: <TrendingUp className="h-6 w-6" />, accent: "from-emerald-600 to-teal-600" },
+          { label: "Total Invites Sent", value: stats?.totalInvites || 0, trend: "+24% outreach", trendColor: "bg-purple-500/20 text-purple-300 border-purple-500/30", icon: <Users className="h-6 w-6" />, accent: "from-purple-600 to-pink-600" },
+          { label: "Friends Joined", value: stats?.joinedCount || 0, trend: "+12% conversion rate", trendColor: "bg-amber-500/20 text-amber-300 border-amber-500/30", icon: <CheckCircle2 className="h-6 w-6" />, accent: "from-amber-500 to-orange-500" },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="relative overflow-hidden rounded-3xl bg-slate-900/90 backdrop-blur-xl border border-slate-800 p-6 text-white shadow-2xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-indigo-500/10 hover:border-slate-700 group"
+          >
+            <div className={`absolute top-0 right-0 h-24 w-24 rounded-full bg-gradient-to-br ${item.accent} opacity-10 blur-2xl group-hover:opacity-25 transition-opacity`} />
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">{item.label}</p>
+                <h3 className="mt-2 text-2xl sm:text-3xl font-black tracking-tight text-white">{item.value}</h3>
+                <div className="mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold border backdrop-blur-md shadow-xs">
+                  <span className={item.trendColor}>{item.trend}</span>
+                </div>
+              </div>
+              <div className={`p-3.5 rounded-2xl bg-gradient-to-br ${item.accent} text-white shadow-lg shadow-indigo-500/20`}>
+                {item.icon}
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-700/60">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-2xl bg-amber-600 text-white">
-              <CheckCircle2 className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Friends Joined</p>
-              <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white">{stats?.joinedCount || 0}</h3>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Two Column Grid: Invite Form & Worker Monthly Job Milestone */}

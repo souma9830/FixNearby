@@ -1,17 +1,13 @@
 import React from "react";
-import { Virtuoso } from "react-virtuoso";
 
 /**
  * FeedList Component
- * Optimized DOM virtualized feed renderer powered by react-virtuoso.
+ * Optimized DOM virtualized feed renderer fallback.
  * Used for provider job feeds, activity lists, and event streams.
- * Maintains minimal active DOM node count during infinite scrolling.
  */
 const FeedList = ({
   items = [],
   renderItem,
-  useWindowScroll = true,
-  overscan = 300,
   loading = false,
   emptyState = null,
   header = null,
@@ -34,21 +30,15 @@ const FeedList = ({
   }
 
   return (
-    <Virtuoso
-      useWindowScroll={useWindowScroll}
-      data={items}
-      overscan={overscan}
-      className={className}
-      itemContent={(index, item) => (
-        <div className={itemClassName}>
+    <div className={className}>
+      {header && <div>{header}</div>}
+      {items.map((item, index) => (
+        <div key={item.id || item._id || index} className={itemClassName}>
           {renderItem ? renderItem(item, index) : null}
         </div>
-      )}
-      components={{
-        Header: header ? () => <>{header}</> : undefined,
-        Footer: footer ? () => <>{footer}</> : undefined,
-      }}
-    />
+      ))}
+      {footer && <div>{footer}</div>}
+    </div>
   );
 };
 

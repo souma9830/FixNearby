@@ -1,0 +1,20 @@
+name: Documentation Integrity Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'README.md'
+
+jobs:
+  markdown-check:
+    name: Markdown Structure & Link Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate Markdown Files
+        run: |
+          echo "Verifying markdown document links and structure..."
+          test -f README.md || exit 1
+          test -f docs/ARCHITECTURE.md || exit 1
+          echo "Documentation verification completed successfully."

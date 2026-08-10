@@ -2,6 +2,7 @@ import { io } from 'socket.io-client';
 
 let socket = null;
 let listeners = new Map();
+let offlineQueue = [];
 
 const getSocketUrl = () => {
   if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
@@ -20,7 +21,7 @@ export const connectSocket = (token) => {
     auth: { token },
     transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: 10,
+    reconnectionAttempts: 15,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 10000,
     timeout: 20000,
@@ -28,6 +29,14 @@ export const connectSocket = (token) => {
 
   socket.on('connect', () => {
     console.debug('[Socket] Connected:', socket.id);
+    flushOfflineQueue();
+  });
+
+  socket.io.on('reconnect', (attempt) => {
+    console.debug('[Socket] Reconnected after', attempt, 'attempts');
+    if (socket?.connected) {
+      socket.emit('socket_reconnected', { timestamp: new Date().toISOString() });
+    }
   });
 
   socket.on('disconnect', (reason) => {
@@ -45,6 +54,15 @@ export const connectSocket = (token) => {
   return socket;
 };
 
+const flushOfflineQueue = () => {
+  if (!socket?.connected || offlineQueue.length === 0) return;
+  console.debug(`[Socket] Flushing ${offlineQueue.length} queued offline messages...`);
+  while (offlineQueue.length > 0) {
+    const item = offlineQueue.shift();
+    socket.emit(item.event, item.data);
+  }
+};
+
 export const disconnectSocket = () => {
   if (socket) {
     listeners.forEach((handler, event) => {
@@ -60,9 +78,19 @@ export const getSocket = () => socket;
 
 export const isConnected = () => socket?.connected || false;
 
+export const measureSocketLatency = (callback) => {
+  if (!socket?.connected) return;
+  const start = Date.now();
+  socket.emit('ping_check', { clientTimestamp: start }, (res) => {
+    const rtt = Date.now() - start;
+    if (typeof callback === 'function') callback(rtt);
+  });
+};
+
 export const sendMessage = (data) => {
   if (!socket?.connected) {
-    console.warn('[Socket] Cannot send message: not connected');
+    console.warn('[Socket] Disconnected: Queueing message for reconnect send');
+    offlineQueue.push({ event: 'send_message', data });
     return false;
   }
   socket.emit('send_message', data);
@@ -164,6 +192,7 @@ export default {
   disconnectSocket,
   getSocket,
   isConnected,
+  measureSocketLatency,
   sendMessage,
   joinConversation,
   leaveConversation,

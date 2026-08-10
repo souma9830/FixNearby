@@ -1,4 +1,23 @@
 import Worker from '../models/Worker.js';
+import { buildGeoSearchPipeline } from '../services/geoSearchOptimizer.js';
+
+/**
+ * Calculate Haversine distance in kilometers between two coordinates
+ */
+export const calculateDistanceKm = (lat1, lon1, lat2, lon2) => {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return 5;
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Number((R * c).toFixed(1));
+};
 
 /**
  * Advanced search controller with filtering, sorting, and text search
@@ -57,6 +76,13 @@ export const searchWorkers = async (req, res) => {
       searchQuery.availabilityStatus = availability;
     }
 
+    // Price range filter
+    const minPriceNum = minPrice !== undefined && minPrice !== '' ? Number(minPrice) : 0;
+    const maxPriceNum = maxPrice !== undefined && maxPrice !== '' ? Number(maxPrice) : 1000;
+    if (minPriceNum > 0 || maxPriceNum < 1000) {
+      searchQuery.hourlyRate = { $gte: minPriceNum, $lte: maxPriceNum };
+    }
+
     // Execute query (real filtering/sorting based on stored fields)
     // Worker schema fields used:
     // - category: string
@@ -64,120 +90,126 @@ export const searchWorkers = async (req, res) => {
     // - averageRating: number
     // - location.coordinates: GeoJSON Point => [longitude, latitude]
 
-    const hasGeo = lat !== undefined && lon !== undefined && lat !== '' && lon !== '';
+    const reqLon = req.query.lon || req.query.lng;
+    const reqRadius = req.query.maxDistance || req.query.radius || req.query.radiusKm;
+    const unitStr = (req.query.unit || req.query.distanceUnit || 'km').toLowerCase();
+    const isMiles = unitStr === 'miles' || unitStr === 'mile' || unitStr === 'mi';
+
+    const hasGeo = lat !== undefined && reqLon !== undefined && lat !== '' && reqLon !== '';
     const latNum = hasGeo ? Number(lat) : null;
-    const lonNum = hasGeo ? Number(lon) : null;
+    const lonNum = hasGeo ? Number(reqLon) : null;
 
-    // Normalize numeric filters
+    // Normalize numeric filters (convert miles to km if requested in miles)
     const minRatingNum = minRating !== undefined && minRating !== '' ? Number(minRating) : 0;
-    const maxDistanceKm = maxDistance !== undefined && maxDistance !== '' ? Number(maxDistance) : null;
-
+    const rawMaxDistance = reqRadius !== undefined && reqRadius !== '' ? Number(reqRadius) : null;
+    const maxDistanceKm = rawMaxDistance !== null ? (isMiles ? rawMaxDistance * 1.609344 : rawMaxDistance) : null;
 
     // Build base workers list
     let workers = [];
 
     // Real distance using $geoNear when geo coords available
     if (hasGeo) {
-      const pipeline = [
-        {
-          $geoNear: {
-            near: { type: 'Point', coordinates: [lonNum, latNum] },
-            distanceField: 'distanceKm',
-            spherical: true,
-            query: searchQuery,
-            distanceMultiplier: 0.001, // meters -> km
-            ...(maxDistanceKm ? { maxDistance: maxDistanceKm * 1000 } : {}),
+      try {
+        const pipeline = [
+          {
+            $geoNear: {
+              near: { type: 'Point', coordinates: [lonNum, latNum] },
+              distanceField: 'distanceKm',
+              spherical: true,
+              query: searchQuery,
+              distanceMultiplier: 0.001, // meters -> km
+              ...(maxDistanceKm ? { maxDistance: maxDistanceKm * 1000 } : {}),
+            },
           },
-        },
-      ];
+        ];
 
-      // Sorting handled by pipeline when possible
-      if (sort === 'rating') {
-        pipeline.push({ $sort: { averageRating: -1 } });
-      } else if (sort === 'availability') {
-        // Convert enum to order via aggregation is possible, but keep simple for now.
-        // We'll do a post-sort below.
-      } else if (sort === 'distance') {
-        // $geoNear sorts by distance asc by default.
-      } else if (sort === 'price') {
-        pipeline.push({ $sort: { hourlyRate: 1 } });
+        if (sort === 'rating') {
+          pipeline.push({ $sort: { averageRating: -1 } });
+        } else if (sort === 'price') {
+          pipeline.push({ $sort: { hourlyRate: 1 } });
+        }
+
+        pipeline.push({
+          $project: {
+            name: 1,
+            category: 1,
+            availabilityStatus: 1,
+            bio: 1,
+            profilePicture: 1,
+            averageRating: 1,
+            slaResponseMins: 1,
+            serviceCoverage: 1,
+            cancellationPolicy: 1,
+            refundPolicy: 1,
+            verificationStatus: 1,
+            contact: 1,
+            responsiveness: 1,
+            karmaScore: 1,
+            experience: 1,
+            portfolio: 1,
+            certifications: 1,
+            faqs: 1,
+            location: 1,
+            distanceKm: 1,
+            hourlyRate: 1,
+            services: 1,
+          },
+        });
+
+        workers = await Worker.aggregate(pipeline);
+      } catch (geoErr) {
+        console.warn('GeoNear aggregation fallback to standard query:', geoErr.message);
+        workers = await Worker.find(searchQuery).lean();
       }
-
-      // Keep shape stable
-      pipeline.push({
-        $project: {
-          name: 1,
-          category: 1,
-          availabilityStatus: 1,
-          bio: 1,
-          profilePicture: 1,
-          averageRating: 1,
-          slaResponseMins: 1,
-          serviceCoverage: 1,
-          cancellationPolicy: 1,
-          refundPolicy: 1,
-          verificationStatus: 1,
-          contact: 1,
-          responsiveness: 1,
-          karmaScore: 1,
-          experience: 1,
-          portfolio: 1,
-          certifications: 1,
-          faqs: 1,
-          location: 1,
-          distanceKm: 1,
-          hourlyRate: 1,
-          services: 1,
-        },
-      });
-
-      workers = await Worker.aggregate(pipeline);
     } else {
       workers = await Worker.find(searchQuery).lean();
     }
 
-    // Rating filter (server-side)
-    if (minRatingNum && minRatingNum > 0) {
-      workers = workers.filter(w => Number(w.averageRating || 0) >= minRatingNum);
-    }
-
-    // Price filter using hourlyRate and services array
-    if (minPrice && Number(minPrice) > 0) {
-      workers = workers.filter(w => {
-        const hourly = Number(w.hourlyRate || 0);
-        // Check if any service price falls within the range
-        const hasServiceInRange = w.services && w.services.some(s =>
-          Number(s.price) >= Number(minPrice)
-        );
-        return hourly >= Number(minPrice) || hasServiceInRange;
-      });
-    }
-    if (maxPrice && Number(maxPrice) < 1000) {
-      workers = workers.filter(w => {
-        const hourly = Number(w.hourlyRate || 0);
-        const hasServiceInRange = w.services && w.services.some(s =>
-          Number(s.price) <= Number(maxPrice)
-        );
-        return (hourly > 0 && hourly <= Number(maxPrice)) || hasServiceInRange;
-      });
-    }
-
-    // Normalize output to match client expectations
+    // Dynamic distance calculation & geofence threshold filtering
     workers = workers.map(w => {
       const coords = w.location?.coordinates;
       const workerLat = Array.isArray(coords) && coords.length === 2 ? coords[1] : null;
       const workerLon = Array.isArray(coords) && coords.length === 2 ? coords[0] : null;
+
+      // Preserve distanceKm calculated by $geoNear if present; otherwise compute via Haversine
+      let calculatedDist = w.distanceKm;
+      if (calculatedDist === undefined || calculatedDist === null) {
+        if (hasGeo && workerLat !== null && workerLon !== null) {
+          calculatedDist = calculateDistance(latNum, lonNum, workerLat, workerLon);
+        }
+      }
+
+      const distFixed = calculatedDist !== undefined && calculatedDist !== null && !isNaN(calculatedDist) ? Number(calculatedDist.toFixed(1)) : undefined;
 
       return {
         ...w,
         id: w._id,
         profession: w.category,
         rating: Number(w.averageRating || 0) || 0,
-        distanceKm: w.distanceKm !== undefined ? Number(w.distanceKm) : undefined,
+        distanceKm: distFixed,
+        distanceText: distFixed !== undefined ? `${distFixed} km away` : 'Distance unknown',
         mockOffset: workerLat !== null && workerLon !== null ? { lat: workerLat, lon: workerLon } : null,
         coordinates: workerLat !== null && workerLon !== null ? { lat: workerLat, lon: workerLon } : undefined,
       };
     });
+
+    // Geofenced Radius Filter (ensure strict distance cut-off)
+    if (hasGeo && maxDistanceKm && maxDistanceKm > 0) {
+      workers = workers.filter(w => w.distanceKm !== undefined && !isNaN(w.distanceKm) && w.distanceKm <= maxDistanceKm);
+    }
+
+    // Rating filter post-processing
+    if (minRatingNum > 0) {
+      workers = workers.filter(w => (Number(w.averageRating || w.rating || 0)) >= minRatingNum);
+    }
+
+    // Price range filter post-processing
+    if (minPriceNum > 0 || maxPriceNum < 1000) {
+      workers = workers.filter(w => {
+        const rate = Number(w.hourlyRate || 0);
+        return rate >= minPriceNum && rate <= maxPriceNum;
+      });
+    }
 
     // Availability sort post-processing (since aggregation order-by via enum is not added above)
     if (sort === 'availability') {
@@ -321,8 +353,8 @@ export const getPopularSearches = async (req, res) => {
  * @param {number} lon2 - Longitude of point 2
  * @returns {number} Distance in kilometers
  */
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth's radius in km
+function calculateDistance(lat1, lon1, lat2, lon2, unit = 'km') {
+  const R = (unit === 'miles' || unit === 'mi' || unit === 'mile') ? 3958.8 : 6371; // Earth's radius in miles or km
   const dLat = toRadians(lat2 - lat1);
   const dLon = toRadians(lon2 - lon1);
   
@@ -333,7 +365,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  // Guard against domain errors (floating point inaccuracies where a > 1 or a < 0)
+  const clampedA = Math.min(1, Math.max(0, a));
+  const c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
   return R * c;
 }
 

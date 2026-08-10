@@ -10,6 +10,7 @@ import { getRedis } from '../utils/redis.js';
 import dotenv from 'dotenv';
 import Notification from '../models/Notification.js';
 import { getIo } from '../socket.js';
+import { notificationQueueEngine } from '../services/notificationQueueEngine.js';
 
 
 dotenv.config();

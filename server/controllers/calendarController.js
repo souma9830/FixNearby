@@ -79,9 +79,28 @@ export const checkSlotAvailability = async (req, res) => {
   }
 };
 
+export const updateCalendarSettings = async (req, res) => {
+  try {
+    const { maxBookingsPerDay, bufferMinutes } = req.body;
+    const worker = await Worker.findOne({ user: req.user.id });
+    if (!worker) return res.status(404).json({ message: 'Worker not found' });
+
+    const availability = await Availability.findOneAndUpdate(
+      { workerId: worker._id },
+      { maxBookingsPerDay, bufferMinutes },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ success: true, availability });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 export default {
   getWorkerAvailability,
   addAvailabilitySlot,
   removeAvailabilitySlot,
-  checkSlotAvailability
+  checkSlotAvailability,
+  updateCalendarSettings
 };
