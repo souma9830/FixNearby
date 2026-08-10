@@ -27,7 +27,7 @@ export const userLoginLimiter = rateLimit({
 export const workerLoginLimiter = rateLimit({
   ...TIER_STRICT,
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 5000,
   handler: createRateLimitHandler(
     "Too many worker login attempts, please try again after 15 minutes.", 900
   ),

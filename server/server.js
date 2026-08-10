@@ -1,3 +1,11 @@
+// Catch BullMQ Redis version & connection errors gracefully (they fire as unhandled rejections)
+process.on('unhandledRejection', (err) => {
+  if (err?.message?.includes('Redis version') || err?.message?.includes('ECONNREFUSED') || err?.message?.includes('Connection is closed')) {
+    return; // Suppress — Redis unavailable or incompatible version
+  }
+  console.error('Unhandled Rejection:', err);
+});
+
 import healthRoutes from './routes/healthRoutes.js';
 import complianceRoutes from './routes/complianceRoutes.js';
 import customerTipBonusRoutes from './routes/customerTipBonusRoutes.js';

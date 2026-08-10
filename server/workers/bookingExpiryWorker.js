@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Worker } from 'bullmq';
 import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
@@ -10,43 +11,60 @@ dotenv.config();
 
 const isDbConnected = () => mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2;
 
-export const startBookingExpiryScheduler = async () => {
+const isDbConnected = () => mongoose.connection.readyState === 1;
+
+export const startBookingExpiryScheduler = () => {
   console.log('[BullMQ Expiry Worker]: Initializing booking expiry check worker...');
 
   if (!isDbConnected()) {
-    console.warn('[Expiry Worker] MongoDB not connected — skipping BullMQ expiry worker initialization.');
+    console.warn('[BullMQ Expiry Worker]: MongoDB not connected — skipping worker initialization');
     return;
   }
 
-  const performExpiryCheck = async () => {
-    try {
-      if (!isDbConnected()) {
-        console.warn('[Expiry Worker] MongoDB unavailable — skipping expiry check.');
-        return;
-      }
+  let connection = null;
+  try {
+    connection = new IORedis(redisUrl, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      retryStrategy: () => null
+    });
+    connection.on('error', (err) => {
+      console.warn(`[Expiry Worker Redis Warning] Redis unreachable: ${err.message}`);
+    });
+  } catch (err) {
+    console.warn(`[Expiry Worker Redis Warning] Failed: ${err.message}`);
+  }
 
-      const expiredCount = await expirePendingBookings(24);
-      if (expiredCount > 0) {
-        console.log(`[BullMQ Expiry Worker]: Successfully auto-expired and refunded ${expiredCount} stale pending service bookings.`);
+  const performExpiryCheck = async () => {
+    if (!isDbConnected()) return;
+    try {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+      const result = await Booking.updateMany(
+        {
+          status: 'Pending',
+          createdAt: { $lt: fifteenMinutesAgo }
+        },
+        { $set: { status: 'Expired' } }
+      );
+      if (result.modifiedCount > 0) {
+        console.log(`[BullMQ Expiry Worker]: Transitioned ${result.modifiedCount} stale pending bookings to Expired`);
       }
     } catch (err) {
-      console.error('[Expiry Worker] performExpiryCheck error:', err.message);
+      console.error('[Expiry Scheduler Error]:', err.message);
     }
   };
 
-  const conn = await getRedis();
-  if (conn && conn.status === 'ready') {
-    try {
-      const expiryWorker = new Worker(
-        'booking-expiry-queue',
-        async (job) => {
-          if (job.name === 'check_expiry') {
-            console.log('[BullMQ Expiry Worker]: Executing scheduled expiry scan...');
-            await performExpiryCheck();
-          }
-        },
-        { connection: conn }
-      );
+  if (connection) {
+    const expiryWorker = new Worker(
+      'booking-expiry-queue',
+      async (job) => {
+        if (job.name === 'check_expiry') {
+          console.log('[BullMQ Expiry Worker]: Executing scheduled expiry scan...');
+          await performExpiryCheck();
+        }
+      },
+      { connection }
+    );
 
       expiryWorker.on('completed', (job) => {
         console.log(`[BullMQ Expiry Worker]: Job completed successfully: ${job.id}`);
