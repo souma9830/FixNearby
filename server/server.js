@@ -7,6 +7,10 @@ process.on('unhandledRejection', (err) => {
 });
 
 import healthRoutes from './routes/healthRoutes.js';
+import complianceRoutes from './routes/complianceRoutes.js';
+import customerTipBonusRoutes from './routes/customerTipBonusRoutes.js';
+import workerSkillCertRoutes from './routes/workerSkillCertRoutes.js';
+import gratuityBonusRoutes from './routes/gratuityBonusRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import express from 'express';
 import cors from 'cors';
@@ -16,11 +20,17 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import connectDB from './config/db.js';
+import { dbSupervisor } from './config/dbPoolSupervisor.js';
 import { validateEnv } from './config/envValidate.js';
+
 import authRoutes from './routes/authRoutes.js';
+import workerSkillCertRoutes from './routes/workerSkillCertRoutes.js';
+import multiLocationGeofenceRoutes from './routes/multiLocationGeofenceRoutes.js';
 import workerRoutes from './routes/workerRoutes.js';
 import issueRoutes from './routes/issueRoutes.js';
 import searchRoutes from './routes/searchRoutes.js';
+import slaRoutes from './routes/slaRoutes.js';
+import voucherRedemptionRoutes from './routes/voucherRedemptionRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import authMiddleware from './middleware/authMiddleware.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -28,9 +38,13 @@ import csrfProtection from './middleware/csrfMiddleware.js';
 import { compressionMiddleware } from './middleware/compression.js';
 import securityHeaders from './middleware/securityHeaders.js';
 import { sanitizeInput } from './middleware/securitySanitize.js';
+import { ipReputationShield } from './middleware/ipReputationShield.js';
+import { authRateLimiter } from './middleware/rateLimiter.js';
 import allowedOrigins from './config/corsOrigins.js';
 import { initSocket } from './socket.js';
 import bookingRoutes from './routes/bookingRoutes.js';
+import { initializeTaskWorkers } from './workers/taskQueueWorker.js';
+
 import { startBookingExpiryScheduler } from './workers/bookingExpiryWorker.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import { initKarmaScheduler } from './utils/karmaScheduler.js';
@@ -38,6 +52,19 @@ import { startWorker } from './workers/notificationWorker.js';
 import { checkUpcomingBookings } from './workers/bookingReminderWorker.js';
 import favoriteRoutes from './routes/favoriteRoutes.js';
 import estimateRoutes from './routes/estimateRoutes.js';
+import reliabilityRoutes from './routes/reliabilityRoutes.js';
+import quoteNegotiationRoutes from './routes/quoteNegotiationRoutes.js';
+import { createGracefulShutdown } from './utils/gracefulShutdown.js';
+import { healthHandlers } from './controllers/healthController.js';
+import serviceWarrantyManagerRoutes from './routes/serviceWarrantyManagerRoutes.js';
+import serviceCategoryTaxonomyRoutes from './routes/serviceCategoryTaxonomyRoutes.js';
+import warrantyClaimRoutes from './routes/warrantyClaimRoutes.js';
+import auditLogRoutes from './routes/auditLogRoutes.js';
+import partsBillingRoutes from './routes/partsBillingRoutes.js';
+import earningRoutes from './routes/earningRoutes.js';
+import voucherRedemptionRoutes from './routes/voucherRedemptionRoutes.js';
+import emergencyPriorityDispatchRoutes from './routes/emergencyPriorityDispatchRoutes.js';
+import moderationRoutes from './routes/moderationRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 import availabilityRoutes from './routes/availabilityRoutes.js';
 import auditLogRoutes from './routes/auditLogRoutes.js';
@@ -46,11 +73,26 @@ dotenv.config();
 
 validateEnv();
 
+process.on('unhandledRejection', (reason, promise) => {
+  if (reason && reason.message && (
+    reason.message.includes('ECONNREFUSED') ||
+    reason.message.includes('BullMQ') ||
+    reason.message.includes('ioredis') ||
+    reason.message.includes('Redis')
+  )) {
+    console.warn('[UnhandledRejection] Suppressed known Redis/BullMQ error:', reason.message);
+    return;
+  }
+  console.error('[UnhandledRejection]', reason);
+});
+
 const app = express();
 
 app.use(compressionMiddleware);
 app.use(cookieParser());
 app.use(securityHeaders);
+app.use(ipReputationShield());
+app.use('/api/v1/auth', authRateLimiter);
 
 // Security Middleware: Strict CSP headers and cross-origin resource protection
 app.use(
@@ -107,6 +149,7 @@ app.use(
 
 app.use(express.json({ limit: '10mb' }));
 app.use(sanitizeInput);
+app.use(mongoInjectionGuard);
 app.use(csrfProtection);
 
 // Serve uploaded images
@@ -116,25 +159,73 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Connect to Database
-// TODO: Uncomment when ready to connect to MongoDB
 connectDB();
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', healthRoutes);
+app.use('/api/workers/compliance', complianceRoutes);
+app.use('/api/bookings/gratuity-bonus', gratuityBonusRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/issues', issueRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/sla', slaRoutes);
+app.use('/api/rewards/vouchers', voucherRedemptionRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/bookings/gratuity-bonus', gratuityBonusRoutes);
+app.use('/api/warranties/claims', warrantyClaimRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/badges', badgeRoutes);
+app.use('/api/geofence', geofenceRoutes);
 app.use('/api/estimates', estimateRoutes);
-app.use('/api/availability', availabilityRoutes);
+app.use('/api/estimator', estimatorRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/workers/reliability', reliabilityRoutes);
+app.use('/api/chat/quote-negotiation', quoteNegotiationRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/warranties/claims', warrantyClaimRoutes);
+app.use('/api/workers/equipment-inventory', equipmentInventoryRoutes);
+app.use('/api/disputes/arbitration-escalation', serviceDisputeEscalationRoutes);
+app.use('/api/bookings/parts-inventory', partsBillingRoutes);
+app.use('/api/earnings', earningRoutes);
+app.use('/api/chat/quote-negotiation', quoteNegotiationRoutes);
+app.use('/api/rewards/vouchers', voucherRedemptionRoutes);
+app.use('/api/emergency/priority-dispatch', emergencyPriorityDispatchRoutes);
+app.use('/api/search/presets', searchPresetRoutes);
+app.use('/api/appliances', applianceRoutes);
+app.use('/api/workers/service-zones', zoneManagementRoutes);
+app.use('/api/admin/moderation', moderationRoutes);
+app.use('/api/schedule', scheduleRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/workers/compliance', complianceRoutes);
+app.use('/api/disputes/arbitration-escalation', serviceDisputeEscalationRoutes);
+app.use('/api/warranties/manager', serviceWarrantyManagerRoutes);
 app.use('/api/verification', verificationRoutes);
+app.use('/api/disputes', disputeRoutes);
+app.use('/api/wallet', walletRoutes);
+app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/payouts', payoutRoutes);
+app.use('/api/sla', slaRoutes);
+app.use('/api/attachments', attachmentRoutes);
+app.use('/api/categories/taxonomy', serviceCategoryTaxonomyRoutes);
+app.use('/api/bookings/tip-bonus', customerTipBonusRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/categories/taxonomy', serviceCategoryTaxonomyRoutes);
+app.use('/api/emergency', emergencyRoutes);
+app.use('/api/rewards', rewardsRoutes);
+app.use('/api/referrals', referralRoutes);
+app.use('/api/pricing', pricingRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/mfa', mfaRoutes);
+app.use('/api/workers/skills-certifications', workerSkillCertRoutes);
+app.use('/api/workers/multi-geofence', multiLocationGeofenceRoutes);
 
 // Start Booking Expiry Check Scheduler
 startBookingExpiryScheduler();
@@ -157,10 +248,10 @@ app.get('/api/protected', authMiddleware, (req, res) => {
   });
 });
 
-// Basic health check route
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'success', message: 'FixNearby API is running' });
-});
+// Liveness remains available at the legacy path for platform compatibility.
+app.get('/api/health', healthHandlers.live);
+app.get('/api/health/live', healthHandlers.live);
+app.get('/api/health/ready', healthHandlers.ready);
 
 // Client-side UI error reporting endpoint
 app.post('/api/logs/error', (req, res) => {
@@ -187,3 +278,7 @@ initSocket(server);
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const shutdown = createGracefulShutdown({ server });
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+process.once('SIGINT', () => shutdown('SIGINT'));

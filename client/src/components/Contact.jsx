@@ -257,6 +257,26 @@ const Contact = () => {
               <p className="mt-3 text-gray-600 dark:text-gray-300">
                 Fill out the form and our team will get back to you shortly.
               </p>
+
+              {/* Quote Wizard Callout */}
+              <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50/80 p-4 dark:border-blue-900/40 dark:bg-blue-950/40">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-blue-900 dark:text-blue-300">
+                      Looking for a Fast Service Quote?
+                    </h4>
+                    <p className="mt-0.5 text-xs text-blue-800 dark:text-blue-400">
+                      Use our interactive 4-step wizard with category questionnaires & photo uploads.
+                    </p>
+                  </div>
+                  <Link
+                    to="/request-service"
+                    className="shrink-0 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-md hover:bg-blue-700 transition"
+                  >
+                    Open Wizard ✨
+                  </Link>
+                </div>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">

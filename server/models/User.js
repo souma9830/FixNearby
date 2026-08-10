@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema({
     enum: ['online', 'offline', 'busy'],
     default: 'offline'
   },
+  lastActive: {
+    type: Date,
+    default: Date.now
+  },
   notificationPreferences: {
     email: { type: Boolean, default: true },
     sms: { type: Boolean, default: true },

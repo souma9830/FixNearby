@@ -1,10 +1,16 @@
-// Auto booking expiry checks enabled
 import Booking, { STATUS_ENUM } from '../models/Booking.js';
+import Referral from '../models/Referral.js';
+import Reward from '../models/Reward.js';
+import User from '../models/User.js';
+import WorkerModel from '../models/Worker.js';
 import { queueNotification } from '../utils/queue.js';
 import mongoose from 'mongoose';
 import { getPrincipal } from '../middleware/bookingMiddleware.js';
 import { getIo } from '../socket.js';
+import { emitBookingStatusUpdate } from '../socketHandlers/bookingHandler.js';
 import { acquireLock, releaseLock } from '../utils/lockManager.js';
+import { calculateSurgeEstimate } from '../services/surgePricingEngine.js';
+import { evaluateExpiredBookings } from '../services/bookingWatchdogService.js';
 
 // @desc    Create a new booking with concurrency control, transactions, and standalone DB fallback
 // @route   POST /api/bookings
@@ -21,15 +27,17 @@ export const createBooking = async (req, res, next) => {
       }
     }
 
-    const { workerId, service, scheduledTime, durationHours, address, price } = req.body;
-    const start = new Date(scheduledTime);
-    const end = new Date(start.getTime() + durationHours * 3600000);
-    console.log(`[BookingController] Creating booking: start=${start.toISOString()}, end=${end.toISOString()}, worker=${workerId}`);
+    const { workerId, service, scheduledTime, durationHours, address, price, timezone = 'UTC' } = req.body;
+    // Normalize time to UTC to prevent DST offset mismatches
+    const rawStart = new Date(scheduledTime);
+    const start = new Date(Date.UTC(rawStart.getUTCFullYear(), rawStart.getUTCMonth(), rawStart.getUTCDate(), rawStart.getUTCHours(), rawStart.getUTCMinutes()));
+    const end = new Date(start.getTime() + (durationHours || 2) * 3600000);
+    console.log(`[BookingController] Normalized UTC slot: start=${start.toISOString()}, end=${end.toISOString()}, worker=${workerId}`);
 
-    // Overlap condition query
+    // Overlap condition query for all active/pending slots
     const query = {
       workerId,
-      status: { $in: ['Accepted', 'In-Progress'] },
+      status: { $nin: ['Cancelled', 'Expired'] },
       $expr: {
         $and: [
           { $lt: ['$scheduledTime', end] },
@@ -63,63 +71,76 @@ export const createBooking = async (req, res, next) => {
       };
     }
 
-    const overlap = session
-      ? await Booking.findOne(query).session(session)
-      : await Booking.findOne(query);
+    try {
+      const overlap = session
+        ? await Booking.findOne(query).session(session)
+        : await Booking.findOne(query);
 
-    if (overlap) {
-      releaseLock(workerId, start.getTime());
+      if (overlap) {
+        releaseLock(workerId, start.getTime());
+        if (session) {
+          await session.abortTransaction();
+          session.endSession();
+        }
+        return {
+          status: 409,
+          data: {
+            success: false,
+            message: 'Worker has an overlapping accepted or in-progress booking during this time slot.'
+          }
+        };
+      }
+
+      const bookingData = {
+        userId: req.user._id,
+        workerId,
+        service,
+        scheduledTime: start,
+        durationHours,
+        address,
+        price,
+        status: 'Pending',
+        statusHistory: [{
+          status: 'Pending',
+          changedBy: req.user._id,
+          changedByModel: 'User',
+          note: 'Booking created'
+        }]
+      };
+
+      const bookingArray = session
+        ? await Booking.create([bookingData], { session })
+        : [await Booking.create(bookingData)];
+
+      const booking = bookingArray[0];
+
       if (session) {
-        await session.abortTransaction();
+        await session.commitTransaction();
         session.endSession();
       }
+
+      releaseLock(workerId, start.getTime());
+
       return {
-        status: 409,
+        status: 201,
         data: {
-          success: false,
-          message: 'Worker has an overlapping accepted or in-progress booking during this time slot.'
+          success: true,
+          message: 'Booking created successfully',
+          booking
         }
       };
-    }
-
-    const bookingData = {
-      userId: req.user._id,
-      workerId,
-      service,
-      scheduledTime: start,
-      durationHours,
-      address,
-      price,
-      status: 'Pending',
-      statusHistory: [{
-        status: 'Pending',
-        changedBy: req.user._id,
-        changedByModel: 'User',
-        note: 'Booking created'
-      }]
-    };
-
-    const bookingArray = session
-      ? await Booking.create([bookingData], { session })
-      : [await Booking.create(bookingData)];
-
-    const booking = bookingArray[0];
-
-    if (session) {
-      await session.commitTransaction();
-      session.endSession();
-    }
-
-    releaseLock(workerId, start.getTime());
-
-    return {
-      status: 201,
-      data: {
-        success: true,
-        message: 'Booking created successfully',
-        booking
+    } catch (createErr) {
+      releaseLock(workerId, start.getTime());
+      if (session) {
+        try {
+          await session.abortTransaction();
+          session.endSession();
+        } catch (abortErr) {
+          // ignore
+        }
       }
-    };
+      throw createErr;
+    }
   };
 
   try {
@@ -174,6 +195,7 @@ export const createBooking = async (req, res, next) => {
         const io = getIo();
         if (io) {
           io.emit('availability-update', { workerId: booking.workerId });
+          emitBookingStatusUpdate(io, booking, { oldStatus: null });
         }
       } catch (ioErr) {
         console.error('Failed to emit availability update:', ioErr.message);
@@ -188,6 +210,7 @@ export const createBooking = async (req, res, next) => {
             pendingBooking.status = 'Expired';
             await pendingBooking.save();
             console.log(`Booking ${booking._id} has expired due to worker response timeout.`);
+            emitBookingStatusUpdate(getIo(), pendingBooking, { oldStatus: 'Pending' });
           }
         } catch (err) {
           console.error('Error running booking expiry timeout:', err.message);
@@ -232,6 +255,7 @@ export const acceptBooking = async (req, res, next) => {
       const io = getIo();
       if (io) {
         io.emit('availability-update', { workerId: booking.workerId });
+        emitBookingStatusUpdate(io, booking, { oldStatus: 'Pending' });
       }
     } catch (ioErr) {
       console.error('Failed to emit availability update:', ioErr.message);
@@ -244,6 +268,68 @@ export const acceptBooking = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+const processReferralsAndRewardsOnCompletion = async (booking) => {
+  try {
+    // 1. Process Referral Credit for the customer's referrer
+    const customer = await User.findById(booking.userId);
+    if (customer && customer.email) {
+      const referral = await Referral.findOne({
+        referredEmail: customer.email.toLowerCase(),
+        status: { $in: ['pending', 'joined'] }
+      });
+
+      if (referral) {
+        referral.status = 'credited';
+        referral.referredUserId = customer._id;
+        referral.creditedAt = new Date();
+        await referral.save();
+
+        // Credit referrer (User or Worker)
+        let referrer = await User.findById(referral.referrerId);
+        if (!referrer) {
+          referrer = await WorkerModel.findById(referral.referrerId);
+        }
+        if (referrer) {
+          referrer.walletBalance = (referrer.walletBalance || 0) + referral.rewardAmount;
+          await referrer.save({ validateBeforeSave: false });
+          console.log(`[Referral] Credited ₹${referral.rewardAmount} to referrer ${referrer.name} for booking completion by ${customer.email}`);
+        }
+      }
+    }
+
+    // 2. Process Worker Monthly Job Milestone & Reward Badge
+    const worker = await WorkerModel.findById(booking.workerId);
+    if (worker) {
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      let reward = await Reward.findOne({ workerId: worker._id, month: currentMonth });
+
+      if (!reward) {
+        reward = await Reward.create({
+          workerId: worker._id,
+          month: currentMonth,
+          jobsCompleted: 0,
+          milestoneTarget: 10,
+          bonusAmount: 1000,
+          claimed: false,
+          badgeEarned: 'Top Performer'
+        });
+      }
+
+      reward.jobsCompleted += 1;
+      await reward.save();
+
+      worker.monthlyCompletedJobs = (worker.monthlyCompletedJobs || 0) + 1;
+      if (reward.jobsCompleted >= reward.milestoneTarget) {
+        worker.topPerformerBadge = true;
+      }
+      await worker.save({ validateBeforeSave: false });
+      console.log(`[Reward] Worker ${worker.name} completed job ${reward.jobsCompleted}/${reward.milestoneTarget} for ${currentMonth}`);
+    }
+  } catch (err) {
+    console.error('[Referral/Reward] Failed to process completion reward logic:', err.message);
   }
 };
 
@@ -265,6 +351,11 @@ export const completeBooking = async (req, res, next) => {
     });
     await booking.save();
 
+    // Trigger referral crediting and worker milestone rewards asynchronously
+    processReferralsAndRewardsOnCompletion(booking).catch(err =>
+      console.error('[Referral/Reward] Background completion handler failed:', err.message)
+    );
+
     try {
       await queueNotification('booking_status_update', {
         bookingId: booking._id,
@@ -279,6 +370,7 @@ export const completeBooking = async (req, res, next) => {
       const io = getIo();
       if (io) {
         io.emit('availability-update', { workerId: booking.workerId });
+        emitBookingStatusUpdate(io, booking, { oldStatus });
       }
     } catch (ioErr) {
       console.error('Failed to emit availability update:', ioErr.message);
@@ -326,6 +418,7 @@ export const cancelBooking = async (req, res, next) => {
       const io = getIo();
       if (io) {
         io.emit('availability-update', { workerId: booking.workerId });
+        emitBookingStatusUpdate(io, booking, { oldStatus, note: req.body.note || 'Booking cancelled' });
       }
     } catch (ioErr) {
       console.error('Failed to emit availability update:', ioErr.message);
@@ -503,6 +596,7 @@ export const rescheduleBooking = async (req, res, next) => {
       const io = getIo();
       if (io) {
         io.emit('availability-update', { workerId: booking.workerId });
+        emitBookingStatusUpdate(io, booking, { oldStatus: 'Pending', note: 'Booking rescheduled' });
       }
     } catch (ioErr) {
       console.error('Failed to emit availability update:', ioErr.message);
@@ -551,6 +645,7 @@ export const updateBookingStatusController = async (req, res, next) => {
       const io = getIo();
       if (io) {
         io.emit('availability-update', { workerId: booking.workerId });
+        emitBookingStatusUpdate(io, booking, { oldStatus, note: req.body.note || `Booking status updated to ${to}` });
       }
     } catch (ioErr) {
       console.error('Failed to emit availability update:', ioErr.message);
@@ -563,5 +658,47 @@ export const updateBookingStatusController = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// @desc    Get the status change timeline for a booking
+// @route   GET /api/bookings/:id/timeline
+// @access  Private (Participant)
+export const getBookingTimeline = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .select('status statusHistory updatedAt createdAt')
+      .populate('statusHistory.changedBy', 'name');
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    const steps = booking.statusHistory.map((h) => ({
+      status: h.status,
+      label: h.status,
+      timestamp: h.changedAt,
+      actor: h.changedBy?.name || 'System',
+      note: h.note || '',
+    }));
+
+    // Make sure the current status is represented as a step
+    const hasCurrent = steps.some((s) => s.status === booking.status);
+    if (!hasCurrent) {
+      steps.push({
+        status: booking.status,
+        label: booking.status,
+        timestamp: booking.updatedAt || booking.createdAt,
+        actor: 'Current',
+        note: 'Current status',
+      });
+    }
+
+    // Sort chronologically
+    steps.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    res.json({ success: true, steps });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

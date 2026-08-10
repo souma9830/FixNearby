@@ -1,12 +1,15 @@
 import mongoose from 'mongoose';
 import { Worker } from 'bullmq';
-import IORedis from 'ioredis';
+import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
+import { getRedis } from '../utils/redis.js';
+import { getIo } from '../socket.js';
+import { expirePendingBookings } from '../services/bookingExpiryService.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const isDbConnected = () => mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2;
 
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -63,23 +66,28 @@ export const startBookingExpiryScheduler = () => {
       { connection }
     );
 
-    expiryWorker.on('completed', (job) => {
-      console.log(`[BullMQ Expiry Worker]: Job completed successfully: ${job.id}`);
-    });
+      expiryWorker.on('completed', (job) => {
+        console.log(`[BullMQ Expiry Worker]: Job completed successfully: ${job.id}`);
+      });
 
-    expiryWorker.on('failed', (job, err) => {
-      console.error(`[BullMQ Expiry Worker]: Job failed for ID ${job?.id}:`, err.message);
-    });
+      expiryWorker.on('failed', (job, err) => {
+        console.error(`[BullMQ Expiry Worker]: Job failed for ID ${job?.id}:`, err.message);
+      });
 
-    console.log('[BullMQ Expiry Worker]: Registered BullMQ consumer.');
+      console.log('[BullMQ Expiry Worker]: Registered BullMQ consumer.');
+    } catch (err) {
+      console.warn('[Expiry Worker] Failed to create BullMQ Worker:', err.message);
+      console.log('[BullMQ Expiry Worker]: Fallback to standard setInterval loop.');
+    }
   } else {
     console.log('[BullMQ Expiry Worker]: Fallback to standard setInterval loop.');
-    setInterval(async () => {
-      try {
-        await performExpiryCheck();
-      } catch (err) {
-        console.error('[Expiry Scheduler Fallback Error]: Failed to expire stale bookings:', err.message);
-      }
-    }, 60000);
   }
+
+  setInterval(async () => {
+    try {
+      await performExpiryCheck();
+    } catch (err) {
+      console.error('[Expiry Scheduler Fallback Error]: Failed to expire stale bookings:', err.message);
+    }
+  }, 60000);
 };

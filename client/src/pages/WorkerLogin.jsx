@@ -11,6 +11,7 @@ import {
 
 import useToast from "../hooks/useToast";
 import { workerLogin } from "../services/workerService";
+import TwoFactorChallenge from "../components/TwoFactorChallenge";
 
 const WorkerLogin = () => {
 
@@ -23,6 +24,8 @@ const WorkerLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
+
+  const [twoFactorChallenge, setTwoFactorChallenge] = useState(null);
 
   const [error, setError] = useState("");
 
@@ -139,19 +142,27 @@ const WorkerLogin = () => {
       setError("");
 
       // LOGIN API
-      const response = 
-        await workerLogin(formData);
+      const response = await workerLogin(formData);
+
+      if (response?.require2FA) {
+        setTwoFactorChallenge({
+          userId: response.userId,
+          userType: response.userType || "Worker",
+        });
+        return;
+      }
 
       // STORE SESSION under the canonical key used by apiClient & AuthContext
-      if (response?.token && response?.worker) {
-
+      if (response?.token) {
+        const workerData = response.worker || response;
         localStorage.setItem(
           "fixnearby_user",
           JSON.stringify({
-            _id: response.worker._id,
-            name: response.worker.name,
-            email: response.worker.email,
-            phone: response.worker.phone,
+            _id: workerData.id || workerData._id,
+            name: workerData.name,
+            email: workerData.email,
+            phone: workerData.phone,
+            role: "worker",
             token: response.token,
           })
         );
@@ -383,6 +394,31 @@ const WorkerLogin = () => {
 
         </div>
       </div>
+
+      {twoFactorChallenge && (
+        <TwoFactorChallenge
+          userId={twoFactorChallenge.userId}
+          userType={twoFactorChallenge.userType}
+          onSuccess={(authData) => {
+            if (authData?.token) {
+              localStorage.setItem(
+                "fixnearby_user",
+                JSON.stringify({
+                  _id: authData._id,
+                  name: authData.name,
+                  email: authData.email,
+                  phone: authData.phone,
+                  role: "worker",
+                  token: authData.token,
+                })
+              );
+            }
+            showToast("Worker login successful!");
+            navigate("/worker/dashboard");
+          }}
+          onCancel={() => setTwoFactorChallenge(null)}
+        />
+      )}
     </div>
   );
 };

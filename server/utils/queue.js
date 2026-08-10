@@ -1,10 +1,10 @@
 import { Queue } from 'bullmq';
-import IORedis from 'ioredis';
+import { getRedis } from './redis.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+let notificationQueueInstance = null;
 
 let connection = null;
 let notificationQueue = null;
@@ -55,6 +55,28 @@ export const queueNotification = async (jobName, data) => {
     console.log(`[Queue Fallback Logging] Redis offline. Simulating queueing of Job: "${jobName}" with data:`, data);
     return null;
   }
+
+  if (!notificationQueueInstance) {
+    try {
+      notificationQueueInstance = new Queue('notification-queue', {
+        connection: conn,
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 1000
+          },
+          removeOnComplete: true,
+          removeOnFail: false
+        }
+      });
+    } catch (err) {
+      console.warn('[Queue] Failed to create notification queue:', err.message);
+      console.log(`[Queue Fallback Logging] Simulating queueing of Job: "${jobName}" due to error:`, data);
+      return null;
+    }
+  }
+
   try {
     const job = await queue.add(jobName, data);
     console.log(`[Queue] Job queued successfully: "${jobName}", Job ID: ${job.id}`);

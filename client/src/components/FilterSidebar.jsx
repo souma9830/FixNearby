@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, SlidersHorizontal, DollarSign, Star, MapPin, Clock } from 'lucide-react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
@@ -16,6 +16,10 @@ const FilterSidebar = ({
   className = '',
 }) => {
   const [localFilters, setLocalFilters] = useState(filters);
+
+  useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
   
   const handleLocalFilterChange = (key, value) => {
     const newFilters = { ...localFilters, [key]: value };
@@ -138,29 +142,69 @@ const FilterSidebar = ({
           
           {/* Price Range Filter */}
           <div>
-            <label className="mb-3 flex items-center gap-2 text-sm font-bold text-gray-700">
-              <DollarSign className="h-4 w-4" />
-              Price Range ($/hr)
-            </label>
-            <div className="px-2">
+            <div className="mb-3 flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm font-bold text-gray-700 dark:text-slate-200">
+                <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                Hourly Rate Range
+              </label>
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                ${priceRange[0]} - ${priceRange[1]}/hr
+              </span>
+            </div>
+            <div className="px-2 pt-2">
               <Slider
                 range
                 min={0}
-                max={100}
+                max={150}
+                step={5}
                 value={priceRange}
                 onChange={handlePriceRangeChange}
                 onAfterChange={handlePriceRangeAfterChange}
-                trackStyle={[{ backgroundColor: '#3B82F6' }]}
+                trackStyle={[{ backgroundColor: '#3B82F6', height: 6 }]}
                 handleStyle={[
-                  { borderColor: '#3B82F6', backgroundColor: '#fff' },
-                  { borderColor: '#3B82F6', backgroundColor: '#fff' },
+                  { borderColor: '#3B82F6', backgroundColor: '#fff', opacity: 1, width: 18, height: 18, marginTop: -6, boxShadow: '0 2px 4px rgba(0,0,0,0.15)' },
+                  { borderColor: '#3B82F6', backgroundColor: '#fff', opacity: 1, width: 18, height: 18, marginTop: -6, boxShadow: '0 2px 4px rgba(0,0,0,0.15)' },
                 ]}
-                railStyle={{ backgroundColor: '#E5E7EB' }}
+                railStyle={{ backgroundColor: '#E5E7EB', height: 6 }}
               />
-              <div className="mt-3 flex items-center justify-between text-sm">
-                <span className="font-medium text-gray-700">${priceRange[0]}</span>
-                <span className="text-gray-500">to</span>
-                <span className="font-medium text-gray-700">${priceRange[1]}</span>
+              <div className="mt-4 flex items-center gap-2">
+                <div className="flex-1">
+                  <label className="text-[11px] font-semibold text-gray-500 dark:text-slate-400">Min ($/hr)</label>
+                  <div className="relative mt-1">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400">$</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={priceRange[1]}
+                      value={localFilters.minPrice ?? 0}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(Number(e.target.value) || 0, priceRange[1]));
+                        handlePriceRangeChange([val, priceRange[1]]);
+                        handlePriceRangeAfterChange([val, priceRange[1]]);
+                      }}
+                      className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-6 pr-2 py-1.5 text-xs font-bold text-gray-800 dark:text-slate-200 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <span className="mt-5 text-xs text-gray-400 font-bold">-</span>
+                <div className="flex-1">
+                  <label className="text-[11px] font-semibold text-gray-500 dark:text-slate-400">Max ($/hr)</label>
+                  <div className="relative mt-1">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400">$</span>
+                    <input
+                      type="number"
+                      min={priceRange[0]}
+                      max={200}
+                      value={localFilters.maxPrice ?? 100}
+                      onChange={(e) => {
+                        const val = Math.max(priceRange[0], Math.min(Number(e.target.value) || 100, 200));
+                        handlePriceRangeChange([priceRange[0], val]);
+                        handlePriceRangeAfterChange([priceRange[0], val]);
+                      }}
+                      className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-6 pr-2 py-1.5 text-xs font-bold text-gray-800 dark:text-slate-200 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

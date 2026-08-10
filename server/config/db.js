@@ -1,5 +1,8 @@
 import mongoose from 'mongoose';
 
+// Ensure Mongoose operations fail fast if DB connection is offline
+mongoose.set('bufferCommands', false);
+
 const connectDB = async () => {
   try {
     if (!process.env.MONGODB_URI) {
@@ -21,5 +24,5 @@ const connectDB = async () => {
 
 export default connectDB;
 
-// Export helper for health checker
+// Export status checker helper for diagnostic probes
 export const getDbStatusDetails = () => mongoose.connection.readyState;
