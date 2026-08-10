@@ -1,58 +1,74 @@
-import RewardPoints from '../models/RewardPoints.js';
+import UserReward from '../models/UserReward.js';
+import crypto from 'crypto';
 
-export const getUserRewards = async (req, res) => {
+// @desc    Get customer loyalty XP profile & unlocked vouchers
+// @route   GET /api/rewards/profile
+// @access  Private
+export const getLoyaltyProfile = async (req, res, next) => {
   try {
-    let userRewards = await RewardPoints.findOne({ user: req.user.id });
-    if (!userRewards) {
-      userRewards = new RewardPoints({ user: req.user.id, balance: 50 });
-      await userRewards.save();
+    let reward = await UserReward.findOne({ userId: req.user._id });
+
+    if (!reward) {
+      reward = await UserReward.create({
+        userId: req.user._id,
+        totalXp: 350,
+        currentTier: 'Silver',
+        history: [
+          { action: 'Completed Plumbing Booking #101', xpEarned: 150 },
+          { action: 'Left 5-Star Review', xpEarned: 50 },
+          { action: 'App Setup Bonus', xpEarned: 150 }
+        ]
+      });
     }
-
-    const availableCoupons = [
-      { _id: 'c1', title: '$10 Off Plumbing Services', discount: 10, pointsCost: 50 },
-      { _id: 'c2', title: '$25 Off Electrical Repair', discount: 25, pointsCost: 100 },
-      { _id: 'c3', title: '50% Off House Cleaning', discount: 50, pointsCost: 200 }
-    ];
-
-    res.status(200).json({
-      balance: userRewards.balance,
-      tier: userRewards.tier,
-      history: userRewards.transactions,
-      availableCoupons
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching rewards', error: error.message });
-  }
-};
-
-export const redeemCoupon = async (req, res) => {
-  try {
-    const { couponId } = req.body;
-    const userRewards = await RewardPoints.findOne({ user: req.user.id });
-
-    if (!userRewards || userRewards.balance < 50) {
-      return res.status(400).json({ message: 'Insufficient points to redeem coupon' });
-    }
-
-    userRewards.balance -= 50;
-    userRewards.transactions.push({
-      type: 'redeemed',
-      points: 50,
-      description: `Redeemed coupon ${couponId}`
-    });
-    await userRewards.save();
 
     res.status(200).json({
       success: true,
-      code: `SAVE50-${Math.floor(1000 + Math.random() * 9000)}`,
-      newBalance: userRewards.balance
+      reward
     });
   } catch (error) {
-    res.status(500).json({ message: 'Redemption failed', error: error.message });
+    next(error);
   }
 };
 
-export default {
-  getUserRewards,
-  redeemCoupon
+// @desc    Redeem XP for a discount voucher
+// @route   POST /api/rewards/redeem
+// @access  Private
+export const redeemVoucher = async (req, res, next) => {
+  try {
+    const { xpCost = 200, title = '15% Off Next Booking', discountPct = 15 } = req.body;
+
+    let reward = await UserReward.findOne({ userId: req.user._id });
+    if (!reward) {
+      return res.status(404).json({ success: false, message: 'Reward profile not found' });
+    }
+
+    if (reward.totalXp < xpCost) {
+      return res.status(400).json({ success: false, message: `Insufficient XP balance. Need ${xpCost} XP.` });
+    }
+
+    const code = `SAVE${discountPct}_${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+
+    reward.totalXp -= xpCost;
+    reward.unlockedVouchers.push({
+      code,
+      title,
+      discountPct,
+      xpCost,
+      isRedeemed: false
+    });
+    reward.history.push({
+      action: `Redeemed ${title} Voucher`,
+      xpEarned: -xpCost
+    });
+
+    await reward.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Voucher "${code}" unlocked for ${xpCost} XP!`,
+      voucher: { code, title, discountPct }
+    });
+  } catch (error) {
+    next(error);
+  }
 };
