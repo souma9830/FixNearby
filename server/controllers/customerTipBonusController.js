@@ -1,28 +1,44 @@
-const CustomerTipBonus = require('../models/CustomerTipBonus');
+import CustomerTipBonus from '../models/CustomerTipBonus.js';
 
-exports.sendTipAndBonus = async (req, res) => {
+export const sendCustomerTip = async (req, res, next) => {
   try {
-    const { bookingId, workerId, tipAmount, performanceBonusAmount, note } = req.body;
-    const tipRecord = await CustomerTipBonus.create({
+    const { bookingId, workerId, tipAmount, bonusType, customerMessage } = req.body;
+    const userId = req.user.id;
+
+    const newTip = await CustomerTipBonus.create({
       bookingId,
-      customerId: req.user._id,
+      userId,
       workerId,
       tipAmount,
-      performanceBonusAmount: performanceBonusAmount || 0,
-      note
+      bonusType,
+      customerMessage,
+      paymentStatus: 'succeeded',
     });
 
-    return res.status(201).json({ success: true, message: 'Tip and gratuity bonus recorded', data: tipRecord });
+    res.status(201).json({
+      success: true,
+      message: 'Gratuity tip transferred to worker successfully',
+      data: newTip,
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-exports.getWorkerTipHistory = async (req, res) => {
+export const getWorkerTipsHistory = async (req, res, next) => {
   try {
-    const tips = await CustomerTipBonus.find({ workerId: req.user._id }).sort({ createdAt: -1 });
-    return res.status(200).json({ success: true, data: tips });
+    const { workerId } = req.params;
+    const tips = await CustomerTipBonus.find({ workerId }).sort({ createdAt: -1 });
+
+    const totalTips = tips.reduce((acc, curr) => acc + curr.tipAmount, 0);
+
+    res.status(200).json({
+      success: true,
+      totalTips,
+      count: tips.length,
+      data: tips,
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };

@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
+import { sendCustomerTip, getWorkerTipsHistory } from '../controllers/customerTipBonusController.js';
+
 const router = express.Router();
-const tipController = require('../controllers/customerTipBonusController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.post('/send', protect, tipController.sendTipAndBonus);
-router.get('/my-tips', protect, tipController.getWorkerTipHistory);
+router.post('/send', protect, sendCustomerTip);
+router.get('/worker/:workerId', protect, getWorkerTipsHistory);
 
-module.exports = router;
+export default router;
