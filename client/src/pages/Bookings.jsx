@@ -2,12 +2,20 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import CenteredLoadingSpinner from "../components/CenteredLoadingSpinner";
+import SkeletonLoader from "../components/SkeletonLoader";
 import StarRating from "../components/StarRating";
-import { Package, Clock, DollarSign, ChevronDown, ChevronUp, Zap, AlertCircle, X } from "lucide-react";
+import { Package, Clock, DollarSign, ChevronDown, ChevronUp, Zap, AlertCircle, X, History, MessageSquare } from "lucide-react";
+import BookingTimeline from "../components/BookingTimeline";
+import useBookingTimeline from "../hooks/useBookingTimeline";
 import { useBookings } from "../hooks/useBookings";
 import api from "../services/apiClient";
 import useToast from "../hooks/useToast";
 import { showApiError } from "../utils/apiErrorHandler";
+import CancelBookingModal from "../components/CancelBookingModal";
+import useBookingSocket from "../hooks/useBookingSocket";
+import AnimatedBookingProgressBar from "../components/AnimatedBookingProgressBar";
+import JobCompletionFlow from "../components/JobCompletionFlow";
+
 
 const statusOptions = ["All", "Pending", "Confirmed", "Reminder Sent", "Technician En Route", "Completed", "Cancelled"];
 
@@ -84,6 +92,25 @@ const normalizeBooking = (booking) => {
     formattedDate = new Date(booking.createdAt || Date.now()).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
   }
 
+  // Normalize backend `statusHistory` into unified `events` timeline.
+  // Each event is: { status, at, message }
+  const rawStatusHistory = Array.isArray(booking.statusHistory)
+    ? booking.statusHistory
+    : [];
+
+  const events = rawStatusHistory
+    .map((e) => ({
+      status: e?.status,
+      at: e?.changedAt ? new Date(e.changedAt).toISOString() : null,
+      message: e?.note || "",
+    }))
+    .filter((e) => e.status)
+    .sort((a, b) => {
+      const atA = a.at ? new Date(a.at).getTime() : 0;
+      const atB = b.at ? new Date(b.at).getTime() : 0;
+      return atA - atB;
+    });
+
   return {
     ...booking,
     id: booking._id || booking.id,
@@ -93,11 +120,122 @@ const normalizeBooking = (booking) => {
     date: formattedDate,
     estimateSpecs,
     status,
+    events,
   };
 };
 
+
 /* ── Estimate breakdown panel for a booking card ── */
+const TimelineDot = ({ variant }) => {
+  const className =
+    variant === "completed"
+      ? "bg-emerald-500"
+      : variant === "cancelled"
+        ? "bg-rose-500"
+        : variant === "active"
+          ? "bg-blue-500"
+          : "bg-slate-300";
+  return <span className={`inline-block w-2.5 h-2.5 rounded-full ${className}`} />;
+};
+
+const formatEventAt = (at) => {
+  if (!at) return "";
+  const d = new Date(at);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+};
+
+const BookingStatusTimeline = ({ booking }) => {
+  const status = booking.status;
+
+  const steps = [
+    { key: "Pending", label: "Pending" },
+    { key: "Confirmed", label: "Confirmed" },
+    { key: "Technician En Route", label: "En Route" },
+    { key: "Completed", label: "Completed" },
+    { key: "Cancelled", label: "Cancelled" },
+  ];
+
+  // Prefer events; fallback to inferred timestamps.
+  const events = Array.isArray(booking.events) ? booking.events : [];
+
+  const eventByStatus = new Map(
+    events.map((e) => [e.status, e]).filter(([k]) => !!k)
+  );
+
+  const createdAt = booking.createdAt ? new Date(booking.createdAt).toISOString() : null;
+  const scheduledAt = booking.scheduledTime ? new Date(booking.scheduledTime).toISOString() : null;
+
+  const timelineItems = steps.map((s) => {
+    let at = eventByStatus.get(s.key)?.at || null;
+    let message = eventByStatus.get(s.key)?.message || "";
+
+    // Fallbacks
+    if (!at) {
+      if (s.key === "Pending") at = createdAt || null;
+      if (s.key === "Confirmed") at = scheduledAt || null;
+      if (s.key === "Technician En Route") at = null;
+      if (s.key === "Completed" || s.key === "Cancelled") at = booking.updatedAt ? new Date(booking.updatedAt).toISOString() : null;
+    }
+
+    return { ...s, at, message };
+  });
+
+  const currentIndex = Math.max(
+    0,
+    steps.findIndex((s) => s.key === status) // if status matches one of the keys
+  );
+
+  return (
+    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="text-sm font-bold text-slate-800">Booking Timeline</h4>
+        <span className="text-xs font-medium text-slate-500">{status}</span>
+      </div>
+
+      <div className="mt-3 space-y-3">
+        {timelineItems.map((item, idx) => {
+          const isReached = item.key === status || idx <= currentIndex;
+          const variant = item.key === "Completed" && status === "Completed"
+            ? "completed"
+            : item.key === "Cancelled" && status === "Cancelled"
+              ? "cancelled"
+              : isReached
+                ? "active"
+                : "pending";
+
+          // Hide En Route step if it has no event and booking isn't yet in that state.
+          const shouldHideEnRoute = item.key === "Technician En Route" && !item.at && status !== "Technician En Route";
+          if (shouldHideEnRoute) return null;
+
+          return (
+            <div key={item.key} className="flex items-start gap-3">
+              <div className="pt-1">
+                <TimelineDot variant={variant} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`text-sm font-semibold ${isReached ? "text-slate-900" : "text-slate-500"}`}>
+                    {item.label}
+                  </span>
+                  <span className={`text-xs ${isReached ? "text-slate-600" : "text-slate-400"}`}>
+                    {formatEventAt(item.at) || "—"}
+                  </span>
+                </div>
+                {item.message ? (
+                  <p className="mt-1 text-xs text-slate-600 leading-relaxed">{item.message}</p>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const EstimateBreakdown = ({ specs }) => {
+
   const [open, setOpen] = useState(false);
   // Guard against divide-by-zero when a malformed estimate has no total.
   const total = specs.totalCost > 0 ? specs.totalCost : 0;
@@ -177,6 +315,23 @@ const EstimateBreakdown = ({ specs }) => {
   );
 };
 
+const BookingTimelineInline = ({ bookingId, currentStatus }) => {
+  const { steps, loading, error } = useBookingTimeline(bookingId);
+
+  return (
+    <BookingTimeline
+      statusHistory={steps.map((s) => ({
+        status: s.status,
+        changedAt: s.timestamp,
+        changedBy: { name: s.actor },
+        note: s.note,
+      }))}
+      currentStatus={currentStatus}
+      loading={loading}
+    />
+  );
+};
+
 const Bookings = () => {
   const {
     bookings: rawBookings,
@@ -196,6 +351,9 @@ const Bookings = () => {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
   const [activeReview, setActiveReview] = useState(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -209,6 +367,42 @@ const Bookings = () => {
   const [newTime, setNewTime] = useState("");
   const [rescheduleError, setRescheduleError] = useState("");
   const [submittingReschedule, setSubmittingReschedule] = useState(null);
+  const [submittingReview, setSubmittingReview] = useState(null);
+
+  // Timeline toggle state
+  const [expandedTimelineId, setExpandedTimelineId] = useState(null);
+  const [liveUpdatedId, setLiveUpdatedId] = useState(null);
+  const [activeEscrowBooking, setActiveEscrowBooking] = useState(null);
+
+  // Filter change handlers that guarantee pagination page index resets to 1
+  const handleStatusFilterChange = (status) => {
+    setStatusFilter(status);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearch(event.target.value);
+    setCurrentPage(1);
+  };
+
+  // Subscribe to real-time booking socket status updates
+  const handleSocketStatusUpdate = (eventData) => {
+    const updatedId = eventData?.bookingId || eventData?.booking?._id || eventData?.booking?.id;
+    const newStatus = eventData?.status;
+    if (newStatus) {
+      showToast(`Real-time update: Booking status changed to "${newStatus}"`, "info");
+    }
+    if (updatedId) {
+      setLiveUpdatedId(updatedId);
+      setTimeout(() => setLiveUpdatedId(null), 4000);
+    }
+    refresh();
+  };
+
+  useBookingSocket({
+    onStatusUpdate: handleSocketStatusUpdate,
+    enableNotifications: true,
+  });
 
   const filteredBookings = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -222,6 +416,13 @@ const Bookings = () => {
       return matchesSearch && matchesStatus;
     });
   }, [bookings, search, statusFilter]);
+
+  const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE) || 1;
+
+  const paginatedBookings = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredBookings.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredBookings, currentPage]);
 
   const handleCancel = async (id) => {
     setCancelTargetId(id);
@@ -280,6 +481,7 @@ const Bookings = () => {
       formData.append("images", img);
     });
 
+    setSubmittingReview(id);
     try {
       const response = await api.post(`/bookings/${id}/review`, formData, {
         headers: {
@@ -297,6 +499,8 @@ const Bookings = () => {
     } catch (err) {
       console.error("Error submitting review:", err);
       showApiError(err, showToast);
+    } finally {
+      setSubmittingReview(null);
     }
   };
 
@@ -347,7 +551,7 @@ const Bookings = () => {
         <input
           type="text"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={handleSearchChange}
           placeholder="Search worker or service..."
           className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 md:w-1/2"
         />
@@ -356,7 +560,7 @@ const Bookings = () => {
             <button
               key={status}
               type="button"
-              onClick={() => setStatusFilter(status)}
+              onClick={() => handleStatusFilterChange(status)}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
                 statusFilter === status
                   ? "border-blue-600 bg-blue-600 text-white"
@@ -408,7 +612,7 @@ const Bookings = () => {
 
       {!loading && !error && filteredBookings.length > 0 && (
         <div className="space-y-4">
-          {filteredBookings.map((booking) => (
+          {paginatedBookings.map((booking) => (
             <div
               key={booking.id}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
@@ -450,6 +654,16 @@ const Bookings = () => {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-4 text-sm items-center">
+                {/* Escrow Release Action */}
+                {booking.status !== "Cancelled" && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveEscrowBooking(booking)}
+                    className="inline-flex items-center gap-1 font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-xl text-xs transition shadow-sm"
+                  >
+                    🔒 Escrow Approval
+                  </button>
+                )}
                 {(booking.status === "Pending" || booking.status === "Confirmed" || booking.status === "Reminder Sent" || booking.status === "Technician En Route") && (
                   <button
                     type="button"
@@ -487,11 +701,33 @@ const Bookings = () => {
                     Rated {booking.review.rating}/5
                   </span>
                 )}
+                <Link
+                  to="/chat"
+                  className="inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-700 transition"
+                >
+                  <MessageSquare size={14} />
+                  Chat
+                </Link>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedTimelineId(
+                      expandedTimelineId === booking.id ? null : booking.id
+                    )
+                  }
+                  className="inline-flex items-center gap-1 font-medium text-slate-600 hover:text-slate-800 transition"
+                >
+                  <History size={14} />
+                  {expandedTimelineId === booking.id
+                    ? "Hide Timeline"
+                    : "View Timeline"}
+                </button>
               </div>
 
               {/* RESCHEDULE BOX */}
               {reschedulingId === booking.id && (
                 <div className="mt-4 p-5 rounded-2xl border border-blue-100 bg-blue-50/50 space-y-3 max-w-md transition-all duration-300">
+
                   <h4 className="text-sm font-bold text-slate-800">Reschedule Booking</h4>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <input
@@ -530,12 +766,25 @@ const Bookings = () => {
                 </div>
               )}
 
+              {/* STATUS TIMELINE */}
+              {expandedTimelineId === booking.id && (
+                <div className="mt-4">
+                  <BookingTimelineInline bookingId={booking.id} currentStatus={booking.status} />
+                </div>
+              )}
+              {/* REAL-TIME ANIMATED STATUS PROGRESS BAR */}
+              <AnimatedBookingProgressBar booking={booking} liveUpdated={liveUpdatedId === booking.id} />
+
+              {/* BOOKING TIMELINE */}
+              <BookingStatusTimeline booking={booking} />
+
               {/* ESTIMATE BREAKDOWN */}
               {booking.estimateSpecs && (
                 <EstimateBreakdown specs={booking.estimateSpecs} />
               )}
 
               {/* REVIEW BOX */}
+
               {activeReview === booking.id && (
                 <div className="mt-6 relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
 
@@ -623,7 +872,6 @@ const Bookings = () => {
                       />
                      </div>
 
-                     {/* PHOTO UPLOADER */}
                      <div className="mb-6">
                        <label className="text-sm font-medium text-slate-700 block mb-2">
                          Add Photos (Optional, max 5)
@@ -635,23 +883,6 @@ const Bookings = () => {
                          onChange={handleImageChange}
                          className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
                        />
-                       {reviewImages.length > 0 && (
-                         <div className="flex gap-2 flex-wrap mt-3">
-                           {reviewImages.map((img, idx) => (
-                             <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200">
-                               <img src={URL.createObjectURL(img)} alt="upload preview" className="w-full h-full object-cover" />
-                               <button
-                                 type="button"
-                                 onClick={() => handleRemoveImage(idx)}
-                                 className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/60 text-white hover:bg-black"
-                                 title="Remove photo"
-                               >
-                                 <X size={10} />
-                               </button>
-                             </div>
-                           ))}
-                         </div>
-                       )}
                      </div>
 
                     {/* QUICK TAGS */}
@@ -678,15 +909,32 @@ const Bookings = () => {
                     </div>
 
                     {/* PREVIEW */}
-                    {(rating > 0 || comment) && (
+                    {(rating > 0 || comment || reviewImages.length > 0) && (
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6">
                         <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">Preview</p>
                         <div className="flex items-center gap-1 text-yellow-400 text-lg mb-2">
                           {"★".repeat(rating)}
                         </div>
-                        <p className="text-slate-700 text-sm leading-relaxed">
+                        <p className="text-slate-700 text-sm leading-relaxed mb-3">
                           {comment || "Your review preview will appear here..."}
                         </p>
+                        {reviewImages.length > 0 && (
+                          <div className="flex gap-2 flex-wrap">
+                            {reviewImages.map((img, idx) => (
+                              <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200">
+                                <img src={URL.createObjectURL(img)} alt="upload preview" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveImage(idx)}
+                                  className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/60 text-white hover:bg-black"
+                                  title="Remove photo"
+                                >
+                                  <X size={10} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -695,9 +943,10 @@ const Bookings = () => {
                       <button
                         type="button"
                         onClick={() => handleReviewSubmit(booking.id)}
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-2xl font-semibold hover:opacity-90 transition shadow-lg shadow-blue-100"
+                        disabled={submittingReview === booking.id}
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-2xl font-semibold hover:opacity-90 transition shadow-lg shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Submit Review
+                        {submittingReview === booking.id ? "Submitting..." : "Submit Review"}
                       </button>
                       <button
                         type="button"
@@ -717,6 +966,33 @@ const Bookings = () => {
               )}
             </div>
           ))}
+
+          {/* Pagination Controls Bar */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-6">
+              <p className="text-xs font-semibold text-slate-500">
+                Showing Page <span className="font-bold text-slate-900">{currentPage}</span> of <span className="font-bold text-slate-900">{totalPages}</span> ({filteredBookings.length} total bookings)
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-40 transition"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-40 transition"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -725,6 +1001,17 @@ const Bookings = () => {
         onClose={() => { setCancelModalOpen(false); setCancelTargetId(null); }}
         onConfirm={confirmCancel}
       />
+
+      {activeEscrowBooking && (
+        <JobCompletionFlow
+          booking={activeEscrowBooking}
+          isOpen={!!activeEscrowBooking}
+          onClose={() => setActiveEscrowBooking(null)}
+          onEscrowReleased={() => {
+            refresh();
+          }}
+        />
+      )}
     </div>
   );
 };

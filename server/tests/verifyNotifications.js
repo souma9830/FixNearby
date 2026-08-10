@@ -181,7 +181,7 @@ const runTests = async () => {
     await WorkerModel.findByIdAndDelete(worker._id);
     await DeadLetterJob.deleteMany({});
     
-    if (backgroundWorker) {
+    if (backgroundWorker && typeof backgroundWorker.close === 'function') {
       await backgroundWorker.close();
     }
     

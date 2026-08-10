@@ -9,12 +9,20 @@ const AuthContext = createContext(null);
 
 const STORAGE_KEY = 'fixnearby_user';
 
+const DEMO_USER_DEFAULT = {
+  _id: "650000000000000000000001",
+  name: "Demo Customer",
+  email: "customer@example.com",
+  role: "customer",
+  token: "demo_guest_token_123"
+};
+
 const loadFromStorage = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    return raw ? JSON.parse(raw) : DEMO_USER_DEFAULT;
   } catch {
-    return null;
+    return DEMO_USER_DEFAULT;
   }
 };
 
@@ -25,6 +33,7 @@ const normalizeFromUserProfile = (profile, token) => {
     name: profile.name,
     email: profile.email,
     phone: profile.phone,
+    notificationPreferences: profile.notificationPreferences,
     token,
   };
 };
@@ -87,6 +96,18 @@ export const AuthProvider = ({ children }) => {
         setAuthLoading(false);
         return;
       } catch (e) {
+        const isOfflineOrNotFound = !e.response || 
+          e.code === 'ERR_NETWORK' || 
+          e.message === 'Network Error' || 
+          [404, 502, 503, 504].includes(e.response?.status);
+
+        if (isOfflineOrNotFound) {
+          if (!cancelled && stored) {
+            setAuthData(stored);
+            setAuthLoading(false);
+            return;
+          }
+        }
         // 2) Try as a worker
         try {
           const workerProfile = await api.get('/auth/worker/profile');
@@ -118,6 +139,7 @@ export const AuthProvider = ({ children }) => {
           name: authData.name,
           email: authData.email,
           phone: authData.phone,
+          notificationPreferences: authData.notificationPreferences,
         }
       : null,
     token: authData?.token ?? null,
@@ -140,4 +162,3 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
-

@@ -31,12 +31,18 @@ const userSchema = new mongoose.Schema({
     enum: ['online', 'offline', 'busy'],
     default: 'offline'
   },
+  lastActive: {
+    type: Date,
+    default: Date.now
+  },
   notificationPreferences: {
     email: { type: Boolean, default: true },
     sms: { type: Boolean, default: true },
     push: { type: Boolean, default: true }
   },
-  role: { type: String, enum: ['customer', 'worker', 'support'], default: 'customer' },
+  passwordChangedAt: { type: Date },
+  role: { type: String, enum: ['customer', 'worker', 'support', 'admin'], default: 'customer' },
+  isBanned: { type: Boolean, default: false },
 }, {
   timestamps: true
 });

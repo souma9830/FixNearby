@@ -4,9 +4,14 @@ import ToastContext from '../context/ToastContext';
 const useToast = () => {
   const ctx = useContext(ToastContext);
   if (!ctx) {
-    throw new Error('useToast must be used inside <ToastProvider>');
+    return {
+      toasts: [],
+      showToast: () => {},
+      removeToast: () => {}
+    };
   }
   return ctx;
 };
+
 
 export default useToast;

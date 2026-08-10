@@ -26,7 +26,7 @@ const PASSWORD_POLICY_MESSAGE =
   'a lowercase letter, a digit, and a special character.';
 
 export const validateRegistration = (req, res, next) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone } = req.body;
 
   if (!name || typeof name !== 'string' || name.trim().length < 2) {
     return res.status(400).json({ error: 'Name is required and must be at least 2 characters.' });
@@ -43,6 +43,14 @@ export const validateRegistration = (req, res, next) => {
 
   if (!STRONG_PASSWORD_REGEX.test(password)) {
     return res.status(400).json({ error: PASSWORD_POLICY_MESSAGE });
+  }
+
+  if (phone !== undefined && phone !== '') {
+    if (typeof phone !== 'string' || !/^\d{10}$/.test(phone.trim())) {
+      return res.status(400).json({
+        error: 'Phone number must contain exactly 10 digits.',
+      });
+    }
   }
 
   next();
