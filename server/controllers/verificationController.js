@@ -1,5 +1,6 @@
 import Verification from '../models/Verification.js';
 import Worker from '../models/Worker.js';
+import WorkerVerificationAudit from '../models/WorkerVerificationAudit.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -212,13 +213,24 @@ export const approveVerification = async (req, res, next) => {
     await verification.save();
 
     // Update the Worker model to reflect verified status
+    const prevWorker = await Worker.findById(verification.workerId);
+    const prevStatus = prevWorker?.complianceStatus || 'UNVERIFIED';
+
     try {
       await Worker.findByIdAndUpdate(verification.workerId, {
         isVerified: true,
-        verificationBadge: 'verified'
+        verificationBadge: 'verified',
+        complianceStatus: 'FULLY_COMPLIANT'
+      });
+      await WorkerVerificationAudit.create({
+        workerId: verification.workerId,
+        reviewerId: req.user._id,
+        previousStatus: prevStatus,
+        newStatus: 'FULLY_COMPLIANT',
+        notes: adminNotes || 'Verification document approved'
       });
     } catch (workerErr) {
-      console.error('Failed to update worker verification flag:', workerErr.message);
+      console.error('Failed to update worker verification flag or audit:', workerErr.message);
     }
 
     res.status(200).json({
@@ -335,3 +347,24 @@ export const uploadDocument = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Get verification audit logs for a worker
+// @route   GET /api/verification/audits/:workerId
+// @access  Private (Admin)
+export const getWorkerAuditLogs = async (req, res, next) => {
+  try {
+    const { workerId } = req.params;
+    const logs = await WorkerVerificationAudit.find({ workerId })
+      .populate('reviewerId', 'name email')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: logs.length,
+      logs
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
