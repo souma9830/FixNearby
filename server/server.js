@@ -59,6 +59,7 @@ import geofenceRoutes from './routes/geofenceRoutes.js';
 import estimatorRoutes from './routes/estimatorRoutes.js';
 import referralRoutes from './routes/referralRoutes.js';
 import serviceRequestRoutes from './routes/serviceRequestRoutes.js';
+import aiDiagnosticsRoutes from './routes/aiDiagnosticsRoutes.js';
 
 dotenv.config();
 
@@ -184,6 +185,7 @@ app.use('/api/emergency', emergencyRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/ai-diagnostics', aiDiagnosticsRoutes);
 
 // Start background workers after DB connection is established
 (async () => {
