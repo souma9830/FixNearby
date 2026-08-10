@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 
 import api from "../services/apiClient";
 import { getEstimatorConfig } from "../utils/estimatorConfig";
@@ -21,10 +21,15 @@ import {
   ChevronDown,
   ChevronUp,
   Heart,
+  Share2,
+  DollarSign,
+  CheckCircle,
+  Download,
 } from "lucide-react";
 
 import SkeletonLoader from "../components/SkeletonLoader";
 import BookingConfirmationModal from "../components/BookingConfirmationModal";
+import WorkerVerificationBadge from "../components/WorkerVerificationBadge";
 import SmartEstimator from "../components/SmartEstimator";
 import EstimateWizard from "../components/EstimateWizard";
 import ImageGallery from "../components/ImageGallery";
@@ -35,7 +40,11 @@ import { getWorkerAvailability } from "../services/availabilityService";
 import { getFavorites, toggleFavorite } from "../services/favoriteService";
 import useToast from "../hooks/useToast";
 import ReviewBadge from "../components/ReviewBadge";
-import ReviewList from "../components/ReviewList";
+import { shareWorkerProfile } from "../utils/shareWorkerProfile";
+import { getWorkerServices } from "../services/workerService";
+import { downloadWorkerVCard } from "../utils/workerVCard";
+import MultiLocationGeofenceCard from "../components/MultiLocationGeofenceCard";
+
 
 /* ✅ Move data outside component */
 const WORKERS = {
@@ -43,6 +52,7 @@ const WORKERS = {
     id: 1,
     name: "John Doe",
     profession: "Electrician",
+    isAvailableNow: true,
     price: "$45/hr",
     rating: 4.8,
     experience: "10+ Years",
@@ -262,12 +272,210 @@ const parsePriceToNumber = (price) => {
   return match ? Number(match[0]) : 0;
 };
 
+const ReviewList = ({ reviews, isOwnProfile, workerName, onReplyAdded }) => {
+  const { showToast } = useToast();
+  const [replyingToId, setReplyingToId] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [submittingReply, setSubmittingReply] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+
+  const handleSubmitReply = async (reviewId) => {
+    if (!replyText.trim()) return;
+    setSubmittingReply(true);
+    try {
+      const res = await api.post(`/reviews/${reviewId}/response`, { responseText: replyText });
+      if (res.data?.success) {
+        showToast("Response posted successfully!", "success");
+        setReplyText("");
+        setReplyingToId(null);
+        if (onReplyAdded) onReplyAdded();
+      }
+    } catch (err) {
+      console.error("Failed to post reply:", err);
+      showToast(err.response?.data?.message || "Failed to post reply.", "error");
+    } finally {
+      setSubmittingReply(false);
+    }
+  };
+
+  const totalReviews = reviews.length;
+  const averageRating = totalReviews > 0
+    ? (reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / totalReviews).toFixed(1)
+    : 0;
+
+  const distribution = [0, 0, 0, 0, 0];
+  reviews.forEach(r => {
+    const star = Math.min(5, Math.max(1, Math.round(r.rating || 0)));
+    distribution[star - 1]++;
+  });
+
+  return (
+    <div className="space-y-8">
+      {totalReviews > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-50 dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-700">
+          <div className="text-center">
+            <p className="text-5xl font-black text-blue-600 dark:text-blue-400">{averageRating}</p>
+            <div className="flex justify-center gap-1 my-2 text-yellow-400 text-lg">
+              {"★".repeat(Math.round(averageRating)) + "☆".repeat(5 - Math.round(averageRating))}
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Based on {totalReviews} reviews</p>
+          </div>
+          
+          <div className="md:col-span-2 space-y-2">
+            {[5, 4, 3, 2, 1].map(stars => {
+              const count = distribution[stars - 1];
+              const pct = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
+              return (
+                <div key={stars} className="flex items-center gap-3 text-sm">
+                  <span className="w-12 font-medium text-slate-600 dark:text-slate-400">{stars} Star</span>
+                  <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="w-8 text-right font-medium text-slate-600 dark:text-slate-400">{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl">
+          <p className="text-slate-500 dark:text-slate-400 font-medium">No reviews yet for this professional.</p>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {reviews.map(review => (
+          <div key={review._id || review.id} className="border border-slate-150 dark:border-slate-700 rounded-3xl p-6 bg-white dark:bg-slate-800 shadow-sm space-y-4">
+            <div className="flex justify-between items-start gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-slate-800 dark:text-white">{review.user?.name || "Verified Customer"}</h4>
+                  {review.isVerified && (
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                      ✓ Verified Hire
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex text-yellow-400 text-sm">
+                    {"★".repeat(Math.round(review.rating || 0)) + "☆".repeat(5 - Math.round(review.rating || 0))}
+                  </div>
+                  <span className="text-xs text-slate-400 dark:text-slate-500">
+                    {new Date(review.createdAt).toLocaleDateString([], { dateStyle: 'medium' })}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-sm">{review.reviewText}</p>
+
+            {review.images && review.images.length > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                {review.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedPhoto(img.startsWith('http') || img.startsWith('/') ? img : `${api.defaults.baseURL || 'http://localhost:5000'}${img}`)}
+                    className="w-16 h-16 rounded-xl overflow-hidden border border-slate-200 hover:border-blue-500 transition active:scale-95"
+                  >
+                    <img
+                      src={img.startsWith('http') || img.startsWith('/') ? img : `${api.defaults.baseURL || 'http://localhost:5000'}${img}`}
+                      alt="Review attachment"
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {review.replyText ? (
+              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-2xl p-4 ml-4 sm:ml-8 mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Response from {workerName}
+                  </h5>
+                  <span className="text-[10px] text-slate-400">
+                    {new Date(review.repliedAt).toLocaleDateString([], { dateStyle: 'medium' })}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-450 leading-relaxed">
+                  {review.replyText}
+                </p>
+              </div>
+            ) : (
+              isOwnProfile && (
+                <div className="pt-2">
+                  {replyingToId === (review._id || review.id) ? (
+                    <div className="space-y-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                      <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Respond as {workerName}
+                      </h5>
+                      <textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Type your response to this customer review..."
+                        maxLength={1000}
+                        className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 resize-none min-h-[100px]"
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingToId(null);
+                            setReplyText("");
+                          }}
+                          className="px-3.5 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-white dark:hover:bg-slate-700 transition"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={submittingReply || !replyText.trim()}
+                          onClick={() => handleSubmitReply(review._id || review.id)}
+                          className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white transition disabled:opacity-50"
+                        >
+                          {submittingReply ? "Posting..." : "Post Response"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyingToId(review._id || review.id);
+                        setReplyText("");
+                      }}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    >
+                      💬 Respond to Review
+                    </button>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        ))}
+      </div>
+
+      {selectedPhoto && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 cursor-zoom-out"
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl">
+            <img src={selectedPhoto} alt="Review attachment full resolution" className="max-w-full max-h-[85vh] object-contain rounded-2xl" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const WorkerProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab]          = useState("overview");
@@ -281,6 +489,54 @@ const WorkerProfile = () => {
   const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [showWizardModal, setShowWizardModal] = useState(false);
+
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [workerServices, setWorkerServices] = useState([]);
+  const [servicesLoading, setServicesLoading] = useState(false);
+
+  const fetchReviews = useCallback(async () => {
+    if (!id) return;
+    setReviewsLoading(true);
+    try {
+      const res = await api.get(`/workers/${id}/reviews`);
+      if (res.data?.success) {
+        setReviews(res.data.reviews || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch worker reviews:", err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
+
+  // Fetch worker's service catalog
+  useEffect(() => {
+    const fetchServices = async () => {
+      if (!id) return;
+      setServicesLoading(true);
+      try {
+        const data = await getWorkerServices(id);
+        if (data?.success && data.services) {
+          setWorkerServices(data.services);
+        }
+      } catch (err) {
+        console.error('Failed to fetch worker services:', err);
+      } finally {
+        setServicesLoading(false);
+      }
+    };
+    // Only fetch for non-mock workers (valid ObjectId)
+    if (id && !/^\d+$/.test(id)) {
+      fetchServices();
+    }
+  }, [id]);
+
+  const isOwnProfile = isAuthenticated && user && String(user._id || user.id) === String(id);
 
   useEffect(() => {
     if (isAuthenticated && id) {
@@ -317,6 +573,25 @@ const WorkerProfile = () => {
     }
   };
 
+  const handleShareProfile = async () => {
+    try {
+      const result = await shareWorkerProfile({ worker });
+      showToast(
+        result === 'copied' ? 'Profile link copied to clipboard.' : 'Profile shared successfully.',
+        'success',
+      );
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        showToast(error.message || 'Unable to share this profile.', 'error');
+      }
+    }
+  };
+
+  const handleSaveContact = () => {
+    downloadWorkerVCard(worker, window.location.href);
+    showToast('Professional contact card downloaded.', 'success');
+  };
+
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -348,18 +623,27 @@ const WorkerProfile = () => {
       setLoading(true);
       const workerId = Number(id);
       if (!isNaN(workerId) && WORKERS[workerId]) {
-        setWorker(WORKERS[workerId]);
+        const mockW = WORKERS[workerId];
+        setWorker({
+          ...mockW,
+          slaResponseMins: mockW.slaResponseMins || 20,
+          serviceCoverage: mockW.serviceCoverage || ["Local Metro Area"],
+          cancellationPolicy: mockW.cancellationPolicy || "Free cancellation up to 24 hours prior to slot.",
+          refundPolicy: mockW.refundPolicy || "Full refund guaranteed if response SLA is missed.",
+          verificationStatus: mockW.verificationStatus || "verified",
+        });
         setLoading(false);
       } else {
         // Fetch from backend
         try {
           const res = await api.get(`/workers/${id}`);
-          const backendWorker = res.data;
+          const backendWorker = res.data?.worker || res.data;
           
           setWorker({
             id: backendWorker._id || backendWorker.id,
             name: backendWorker.name,
             profession: backendWorker.category || backendWorker.profession,
+            isAvailableNow: backendWorker.isAvailableNow === true,
             price: backendWorker.price ? (backendWorker.price.toString().startsWith('$') ? backendWorker.price : `$${backendWorker.price}/hr`) : "$30/hr",
             rating: backendWorker.rating || 4.5,
             experience: backendWorker.experience ? (backendWorker.experience.toString().toLowerCase().includes("year") ? backendWorker.experience : `${backendWorker.experience} Years`) : "3 Years",
@@ -376,6 +660,13 @@ const WorkerProfile = () => {
                 review: "Great job, very detail-oriented and responsive.",
               }
             ],
+            slaResponseMins: backendWorker.slaResponseMins,
+            serviceCoverage: backendWorker.serviceCoverage,
+            cancellationPolicy: backendWorker.cancellationPolicy,
+            refundPolicy: backendWorker.refundPolicy,
+            verificationStatus: backendWorker.verificationStatus || 'verified',
+            topPerformerBadge: backendWorker.topPerformerBadge || false,
+            monthlyCompletedJobs: backendWorker.monthlyCompletedJobs || 0,
           });
         } catch (err) {
           console.error("Failed to load worker from backend", err);
@@ -593,23 +884,56 @@ const WorkerProfile = () => {
         bookingDetails={bookingDetails}
       />
 
+      <div className="max-w-6xl mx-auto flex flex-wrap justify-end gap-2 mb-4 px-2">
+        <button
+          type="button"
+          onClick={handleSaveContact}
+          className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 border border-gray-200 rounded-xl shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label={`Save ${worker.name} as a contact`}
+        >
+          <Download className="w-5 h-5" />
+          Save Contact
+        </button>
+        <button
+          type="button"
+          onClick={handleShareProfile}
+          className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 border border-gray-200 rounded-xl shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label={`Share ${worker.name}'s profile`}
+        >
+          <Share2 className="w-5 h-5" />
+          Share Profile
+        </button>
+      </div>
+
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {/* LEFT PROFILE CARD */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sticky top-6">
+          <div className={`bg-white dark:bg-slate-800 rounded-3xl shadow-lg border p-6 sticky top-6 transition-all duration-300 ${
+            worker.isAvailableNow
+              ? "border-emerald-400/80 dark:border-emerald-500/60 shadow-emerald-500/10 ring-2 ring-emerald-500/20"
+              : "border-amber-300/80 dark:border-amber-500/50 shadow-amber-500/10 ring-2 ring-amber-400/20"
+          }`}>
 
             {/* Avatar */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-28 h-28 rounded-full bg-blue-100 flex items-center justify-center text-4xl font-bold text-blue-700">
-                {worker.name.charAt(0)}
+              <div className="relative">
+                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center text-4xl font-black text-blue-700 dark:text-blue-400 shadow-inner">
+                  {worker.name.charAt(0)}
+                </div>
+                {worker.isAvailableNow && (
+                  <span className="absolute bottom-2 right-2 flex h-5 w-5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-5 w-5 bg-green-500 border-2 border-white dark:border-slate-800"></span>
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2 mt-4 justify-center">
-                <h1 className="text-2xl font-bold">{worker.name}</h1>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white">{worker.name}</h1>
                 <button
                   type="button"
                   onClick={handleToggleFavorite}
-                  className="p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-red-500 transition-all focus:outline-none"
+                  className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-500 transition-all focus:outline-none"
                   title={isSaved ? "Remove from Saved" : "Save Professional"}
                 >
                   <Heart
@@ -619,11 +943,12 @@ const WorkerProfile = () => {
                   />
                 </button>
               </div>
-              <p className="text-blue-600 font-medium">{worker.profession}</p>
+              <p className="text-blue-600 dark:text-blue-400 font-extrabold text-sm tracking-wide mt-0.5">{worker.profession}</p>
               <div className="flex items-center gap-2 mt-3">
-                <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-full">
-                  <Star size={16} className="fill-yellow-400 text-yellow-400" />
-                  <span className="font-semibold">{worker.rating}</span>
+                {/* High-Contrast Floating Rating Pill */}
+                <div className="flex items-center gap-1.5 bg-amber-400 dark:bg-amber-500 px-3.5 py-1.5 rounded-full shadow-md shadow-amber-500/20 border border-amber-300/50 backdrop-blur-md">
+                  <Star size={16} className="fill-slate-950 text-slate-950" />
+                  <span className="font-black text-slate-950 text-xs">{worker.rating}</span>
                 </div>
                 <ReviewBadge rating={worker.rating} count={worker.completedJobs} />
               </div>
@@ -647,9 +972,22 @@ const WorkerProfile = () => {
               </div>
 
               <div className="flex items-center gap-3 text-gray-700">
-                <ShieldCheck size={18} />
-                <span>Verified Professional</span>
+                <ShieldCheck size={18} className={worker.verificationStatus === 'verified' ? "text-emerald-500" : "text-amber-500"} />
+                <span className="capitalize">{worker.verificationStatus || 'Verified'} Professional</span>
               </div>
+
+              {/* Top Performer Milestone Reward Badge */}
+              {(worker.topPerformerBadge || (worker.monthlyCompletedJobs && worker.monthlyCompletedJobs >= 10)) && (
+                <div className="mt-3 flex items-center gap-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-2xl p-3 shadow-md border border-amber-400/30">
+                  <div className="p-1.5 bg-white/20 rounded-xl">
+                    <Award size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-wider">Top Performer</p>
+                    <p className="text-[11px] text-amber-100 font-medium">{worker.monthlyCompletedJobs || 10}+ jobs completed this month</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Smart Estimate Badge */}
@@ -732,6 +1070,20 @@ const WorkerProfile = () => {
               ) : (
                 "Quick Book"
               )}
+            </button>
+
+            <button
+              onClick={() => {
+                if (!isAuthenticated) {
+                  navigate("/login", { state: { from: `/worker/${id}` } });
+                  return;
+                }
+                navigate("/chat");
+              }}
+              className="w-full mt-2.5 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200 hover:border-blue-200 transition font-semibold py-3 rounded-2xl flex items-center justify-center gap-2"
+            >
+              <MessageSquare size={18} />
+              Chat with Professional
             </button>
 
             {bookingError && (
@@ -829,19 +1181,117 @@ const WorkerProfile = () => {
 
               {/* Services */}
               <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                <h2 className="text-2xl font-bold mb-6">Services Offered</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {["Installation", "Maintenance", "Repair", "Emergency Service"].map((service, index) => (
-                    <div
-                      key={index}
-                      className="border border-gray-200 rounded-2xl p-4 hover:border-blue-500 transition"
-                    >
-                      <h3 className="font-semibold text-gray-800">{service}</h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Professional {worker.profession.toLowerCase()} service.
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold">Services & Pricing</h2>
+                  {servicesLoading && (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <span className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                      Loading...
+                    </span>
+                  )}
+                </div>
+                {workerServices.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {workerServices.map((service, index) => (
+                      <div
+                        key={service._id || index}
+                        className="border border-gray-200 rounded-2xl p-4 hover:border-blue-500 hover:shadow-sm transition"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-800 truncate">{service.name}</h3>
+                            {service.description && (
+                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{service.description}</p>
+                            )}
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-lg font-bold text-blue-600">${Number(service.price).toFixed(2)}</p>
+                            <p className="text-[10px] text-gray-400">{service.duration || 60} min</p>
+                          </div>
+                        </div>
+                        {service.isActive && (
+                          <div className="mt-2 flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3 text-green-500" />
+                            <span className="text-[10px] font-medium text-green-600">Available</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {["Installation", "Maintenance", "Repair", "Emergency Service"].map((service, index) => (
+                      <div
+                        key={index}
+                        className="border border-gray-200 rounded-2xl p-4 hover:border-blue-500 transition"
+                      >
+                        <h3 className="font-semibold text-gray-800">{service}</h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Professional {worker.profession.toLowerCase()} service.
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Trust, SLA & Policies */}
+              <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                <h2 className="text-2xl font-bold mb-6">Trust, SLA & Policies</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Response SLA */}
+                  <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50/50 border border-blue-100/50">
+                    <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                      <Clock size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">Response SLA</h4>
+                      <p className="text-sm text-gray-600 mt-1">Replies within {worker.slaResponseMins || 30} minutes</p>
+                    </div>
+                  </div>
+
+                  {/* Coverage Area */}
+                  <div className="flex items-start gap-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/50">
+                    <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+                      <MapPin size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">Service Coverage</h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {Array.isArray(worker.serviceCoverage) ? worker.serviceCoverage.join(', ') : worker.serviceCoverage || 'Local Metro Area'}
                       </p>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Cancellation Policy */}
+                  <div className="flex items-start gap-4 p-4 rounded-2xl bg-amber-50/50 border border-amber-100/50">
+                    <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
+                      <ShieldCheck size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">Cancellation Policy</h4>
+                      <p className="text-sm text-gray-600 mt-1">{worker.cancellationPolicy || 'Free cancellation up to 24 hours prior to slot.'}</p>
+                    </div>
+                  </div>
+
+                  {/* Refund Policy */}
+                  <div className="flex items-start gap-4 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100/50">
+                    <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                      <Award size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">Refund Policy</h4>
+                      <p className="text-sm text-gray-600 mt-1">{worker.refundPolicy || 'Full refund guaranteed if response SLA is missed.'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Compliance / Verification Alert */}
+                <div className="mt-6 flex items-center gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-xs text-gray-500 font-medium">
+                    This service provider's credentials, business license, and identification are <span className="text-emerald-600 font-bold capitalize">{worker.verificationStatus || 'verified'}</span> by our compliance team.
+                  </p>
                 </div>
               </div>
 
@@ -885,15 +1335,12 @@ const WorkerProfile = () => {
           {activeTab === "reviews" && (
             <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-800">
               <h2 className="mb-6 text-2xl font-bold dark:text-white">Customer Reviews</h2>
-              <ReviewList reviews={reviews.map(r => ({
-                _id: r.id,
-                rating: r.rating,
-                reviewText: r.text,
-                createdAt: r.createdAt,
-                isVerified: r.isVerified,
-                images: r.images,
-                user: { name: r.name }
-              }))} />
+              <ReviewList
+                reviews={reviews}
+                isOwnProfile={isOwnProfile}
+                workerName={worker?.name || "Professional"}
+                onReplyAdded={fetchReviews}
+              />
             </div>
           )}
 

@@ -49,6 +49,14 @@ const serviceRequestSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  questionnaireData: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
+  photoUrls: {
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true

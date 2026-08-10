@@ -13,6 +13,7 @@ const SearchBar = ({
   onRemoveHistory,
   onClearHistory,
   onLoadFavorite,
+  onRemoveFavorite,
   onSaveFavorite,
   onShare,
   suggestions = [],
@@ -297,7 +298,7 @@ const SearchBar = ({
                         </div>
                       </button>
                       <button
-                        onClick={() => onLoadFavorite && onLoadFavorite(favorite)}
+                        onClick={() => onRemoveFavorite && onRemoveFavorite(favorite.id)}
                         className="opacity-0 transition group-hover:opacity-100"
                       >
                         <Trash2 className="h-4 w-4 text-gray-400 hover:text-red-500" />

@@ -5,23 +5,25 @@ import ServiceRequest from '../models/ServiceRequest.js';
 // @access  Private
 export const createRequest = async (req, res) => {
   try {
-    const { categoryName, description, urgency, location, preferredSchedule, budget } = req.body;
+    const { categoryName, description, urgency, location, preferredSchedule, budget, questionnaireData, photoUrls } = req.body;
 
-    if (!categoryName || !description) {
+    if (!categoryName) {
       return res.status(400).json({
         success: false,
-        message: 'categoryName and description are required'
+        message: 'categoryName is required'
       });
     }
 
     const request = await ServiceRequest.create({
       userId: req.user._id,
       categoryName: categoryName.trim(),
-      description: description.trim(),
+      description: (description || 'Structured Quote Request Wizard Lead').trim(),
       urgency: urgency || 'medium',
       location: location || '',
       preferredSchedule: preferredSchedule || 'Flexible',
-      budget: budget || 'Not sure'
+      budget: budget || 'Not sure',
+      questionnaireData: questionnaireData || {},
+      photoUrls: Array.isArray(photoUrls) ? photoUrls : []
     });
 
     res.status(201).json({
@@ -116,7 +118,10 @@ export const getRequestById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Service request not found' });
     }
 
-    res.json({ success: true, request });
+    const { verifyWarrantyCoverage } = await import('../services/serviceWarrantyCoverageService.js');
+    const warrantyInfo = verifyWarrantyCoverage(request.createdAt);
+
+    res.json({ success: true, request, warrantyInfo });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

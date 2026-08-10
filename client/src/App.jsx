@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useLocation,
+  Navigate,
 } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import { lazyWithRetry } from "./utils/performance";
@@ -41,7 +42,6 @@ const Feedback         = lazy(() => import('./pages/Feedback'));
 const FAQ              = lazy(() => import('./pages/FAQ'));
 const SavedWorkers     = lazy(() => import('./pages/SavedWorkers'));
 const Recommendations  = lazy(() => import('./pages/Recommendations')); // ✨ NEW
-const RequestService      = lazy(() => import('./pages/RequestService'));
 const CivicIssues         = lazy(() => import('./pages/CivicIssues'));
 const ReportIssue         = lazy(() => import('./components/IssueSubmissionForm'));
 const IssueDetail         = lazy(() => import('./pages/IssueDetail'));
@@ -49,11 +49,13 @@ const NotFound            = lazy(() => import('./pages/NotFound'));
 
 const AdminDashboard      = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers          = lazy(() => import('./pages/admin/AdminUsers'));
+const ModerationPanel     = lazy(() => import('./pages/admin/ModerationPanel'));
 
 const ForgotPasswordUser = lazy(()=>import('./pages/ForgotPasswordUser'));
 const ResetPasswordUser = lazy(()=>import('./pages/ResetPasswordUser'));
 const ForgotPasswordWorker = lazy(()=>import('./pages/ForgotPasswordWorker'));
 const ResetPasswordWorker = lazy(()=>import('./pages/ResetPasswordWorker'));
+const NotificationPreferences = lazy(() => import('./pages/user/NotificationPreferences'));
 
 
 // ─── Route Definitions ────────────────────────────────────────────────────────
@@ -72,7 +74,7 @@ function RequireAuth({ children }) {
     );
   }
 
-  return isAuthenticated ? children : <Login />;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
 const ROUTES = [
@@ -96,12 +98,12 @@ const ROUTES = [
   { path: '/worker/:id',        element: <WorkerProfile /> },
   { path: '/saved-workers',     element: <SavedWorkers /> },
   { path: '/recommendations',   element: <Recommendations /> }, // ✨ NEW
-  { path: '/request-service',   element: <RequestService /> },
   { path: '/civic-issues',           element: <CivicIssues /> },
   { path: '/civic-issues/report',    element: <ReportIssue /> },
   { path: '/civic-issues',     element: <CivicIssues /> },
   { path: '/admin',            element: <AdminDashboard /> },
   { path: '/admin/users',      element: <AdminUsers /> },
+  { path: '/admin/moderation', element: <ModerationPanel /> },
   // User (protected)
   {
     path: "/profile",
@@ -128,6 +130,14 @@ const ROUTES = [
   { path: "/contact", element: <Contact /> },
   { path: "/community", element: <Community /> },
   { path: "/feedback", element: <Feedback /> },
+  {
+    path: "/notification-preferences",
+    element: (
+      <RequireAuth>
+        <NotificationPreferences />
+      </RequireAuth>
+    ),
+  },
 
   // Fallback
   { path: "*", element: <NotFound /> },
