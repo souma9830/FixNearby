@@ -11,9 +11,12 @@ import {
   ArrowLeft,
   ShieldCheck,
   Sparkles,
+  Download,
 } from 'lucide-react';
 import useWorkerComparison from '../hooks/useWorkerComparison';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import { exportToCSV } from '../utils/exportUtils';
+import { buildWorkerComparisonRows } from '../utils/workerComparisonExport';
 
 const WorkerColumn = ({ worker, onRemove, isBestPrice, isBestRating, isBestExperience }) => {
   const recentReviews = (worker.reviews || []).slice(0, 2);
@@ -217,6 +220,13 @@ const CompareWorkers = () => {
   useDocumentTitle('Compare Workers');
   const { workers, loading, error, removeWorker, clearAll } = useWorkerComparison();
 
+  const exportComparison = () => {
+    exportToCSV(
+      buildWorkerComparisonRows(workers),
+      `fixnearby-worker-comparison-${new Date().toISOString().slice(0, 10)}.csv`,
+    );
+  };
+
   if (workers.length === 0 && !loading && !error) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center">
@@ -247,6 +257,15 @@ const CompareWorkers = () => {
           </p>
         </div>
         <div className="flex gap-3">
+          {workers.length > 0 && (
+            <button
+              type="button"
+              onClick={exportComparison}
+              className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
+            >
+              <Download className="h-4 w-4" /> Export CSV
+            </button>
+          )}
           <Link
             to="/services"
             className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50"

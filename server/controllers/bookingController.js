@@ -9,6 +9,8 @@ import { getPrincipal } from '../middleware/bookingMiddleware.js';
 import { getIo } from '../socket.js';
 import { emitBookingStatusUpdate } from '../socketHandlers/bookingHandler.js';
 import { acquireLock, releaseLock } from '../utils/lockManager.js';
+import { calculateSurgeEstimate } from '../services/surgePricingEngine.js';
+import { evaluateExpiredBookings } from '../services/bookingWatchdogService.js';
 
 // @desc    Create a new booking with concurrency control, transactions, and standalone DB fallback
 // @route   POST /api/bookings
@@ -30,10 +32,10 @@ export const createBooking = async (req, res, next) => {
     const end = new Date(start.getTime() + durationHours * 3600000);
     console.log(`[BookingController] Creating booking: start=${start.toISOString()}, end=${end.toISOString()}, worker=${workerId}`);
 
-    // Overlap condition query
+    // Overlap condition query for all active/pending slots
     const query = {
       workerId,
-      status: { $in: ['Accepted', 'In-Progress'] },
+      status: { $nin: ['Cancelled', 'Expired'] },
       $expr: {
         $and: [
           { $lt: ['$scheduledTime', end] },

@@ -383,6 +383,7 @@ export const resetUserPassword = async (req, res) => {
     }
 
     user.password = password;
+    user.passwordChangedAt = new Date();
 
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
@@ -526,6 +527,7 @@ export const resetWorkerPassword = async (req, res) => {
     }
 
     worker.password = password;
+    worker.passwordChangedAt = new Date();
 
     worker.resetPasswordToken = undefined;
     worker.resetPasswordExpire = undefined;
@@ -571,5 +573,73 @@ export const logoutUser = async (req, res) => {
       success: false,
       message: "Server error during logout"
     });
+  }
+};
+
+/**
+ * REST HTTP fallback to update active presence status and lastActive timestamp.
+ * PATCH /api/presence/status
+ */
+export const updateUserPresenceStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowed = ['online', 'offline', 'busy', 'available'];
+    if (!status || !allowed.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status parameter' });
+    }
+
+    const userId = req.user?._id || req.worker?._id;
+    const isWorker = !!req.worker;
+    const lastActive = new Date();
+
+    if (isWorker) {
+      const dbStatus = status === 'online' ? 'available' : status;
+      await Worker.findByIdAndUpdate(userId, { availabilityStatus: dbStatus, lastActive });
+    } else {
+      const dbStatus = status === 'available' ? 'online' : status;
+      await User.findByIdAndUpdate(userId, { status: dbStatus, lastActive });
+    }
+
+    res.status(200).json({
+      success: true,
+      presence: { userId, status, lastActive }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Fetch last active status and online state of a user/worker.
+ * GET /api/presence/active-status/:userId
+ */
+export const getUserActiveStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let target = await User.findById(userId).select('name status lastActive role');
+    let userType = 'User';
+
+    if (!target) {
+      target = await Worker.findById(userId).select('name availabilityStatus lastActive category');
+      userType = 'Worker';
+    }
+
+    if (!target) {
+      return res.status(404).json({ success: false, message: 'User or Worker not found' });
+    }
+
+    const status = userType === 'Worker' ? target.availabilityStatus : target.status;
+    const isOnline = status === 'online' || status === 'available';
+
+    res.status(200).json({
+      success: true,
+      userId,
+      userType,
+      status,
+      isOnline,
+      lastActive: target.lastActive
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

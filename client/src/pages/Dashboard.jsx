@@ -9,6 +9,8 @@ import {
 
 import api from "../services/apiClient";
 import SkeletonLoader from "../components/SkeletonLoader";
+import PredictiveMaintenance from "../components/maintenance/PredictiveMaintenance";
+import SubscriptionBilling from "../components/subscription/SubscriptionBilling";
 
 const Dashboard = () => {
   const [stats, setStats] = useState([
@@ -225,6 +227,12 @@ const Dashboard = () => {
               )}
             </div>
           )}
+        </div>
+
+        {/* Enterprise Suite Components */}
+        <div className="mt-12 space-y-12">
+          <PredictiveMaintenance />
+          <SubscriptionBilling />
         </div>
       </div>
     </div>

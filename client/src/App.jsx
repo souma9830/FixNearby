@@ -4,8 +4,10 @@ import {
   Routes,
   Route,
   useLocation,
+  Navigate,
 } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import { lazyWithRetry } from "./utils/performance";
 
 // ─── Layout Components (always loaded — tiny, needed immediately) ─────────────
 import Navbar from "./components/Navbar";
@@ -24,11 +26,11 @@ const Home             = lazy(() => import('./pages/Home'));
 const Login            = lazy(() => import('./pages/Login'));
 const Register         = lazy(() => import('./pages/Register'));
 const Dashboard        = lazy(() => import('./pages/Dashboard'));
-const Services         = lazy(() => import('./pages/Services'));
-const WorkerProfile    = lazy(() => import('./pages/WorkerProfile'));
-const WorkerDashboard  = lazy(() => import('./pages/WorkerDashboard'));
-const Profile          = lazy(() => import('./pages/Profile'));
-const Bookings         = lazy(() => import('./pages/Bookings'));
+const Services         = lazy(() => lazyWithRetry(() => import('./pages/Services')));
+const WorkerProfile    = lazy(() => lazyWithRetry(() => import('./pages/WorkerProfile')));
+const WorkerDashboard  = lazy(() => lazyWithRetry(() => import('./pages/WorkerDashboard')));
+const Profile          = lazy(() => lazyWithRetry(() => import('./pages/Profile')));
+const Bookings         = lazy(() => lazyWithRetry(() => import('./pages/Bookings')));
 const WorkerRegister   = lazy(() => import('./pages/WorkerRegister'));
 const WorkerLogin      = lazy(() => import('./pages/WorkerLogin'));
 const HelpCenter       = lazy(() => import('./pages/HelpCenter'));
@@ -40,32 +42,20 @@ const Feedback         = lazy(() => import('./pages/Feedback'));
 const FAQ              = lazy(() => import('./pages/FAQ'));
 const SavedWorkers     = lazy(() => import('./pages/SavedWorkers'));
 const Recommendations  = lazy(() => import('./pages/Recommendations')); // ✨ NEW
-const WalletPage       = lazy(() => import('./pages/WalletPage'));
-const PaymentCheckout     = lazy(() => import('./pages/PaymentCheckout'));
 const CivicIssues         = lazy(() => import('./pages/CivicIssues'));
 const ReportIssue         = lazy(() => import('./components/IssueSubmissionForm'));
 const IssueDetail         = lazy(() => import('./pages/IssueDetail'));
 const NotFound            = lazy(() => import('./pages/NotFound'));
-const Notifications       = lazy(() => import('./pages/Notifications'));
-const RequestService      = lazy(() => import('./pages/RequestService'));
-const ReferralDashboard   = lazy(() => import('./pages/ReferralDashboard'));
-const ChatPage            = lazy(() => import('./pages/ChatPage'));
-const JobsFeed            = lazy(() => import('./pages/JobsFeed'));
-
 
 const AdminDashboard      = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers          = lazy(() => import('./pages/admin/AdminUsers'));
-const EarningsDashboard   = lazy(() => import('./pages/worker/EarningsDashboard'));
 const ModerationPanel     = lazy(() => import('./pages/admin/ModerationPanel'));
-const ScheduleManager     = lazy(() => import('./pages/worker/ScheduleManager'));
-
-const VerificationPage = lazy(() => import('./pages/worker/VerificationPage'));
-const ServiceManager = lazy(() => import('./components/ServiceManager'));
 
 const ForgotPasswordUser = lazy(()=>import('./pages/ForgotPasswordUser'));
 const ResetPasswordUser = lazy(()=>import('./pages/ResetPasswordUser'));
 const ForgotPasswordWorker = lazy(()=>import('./pages/ForgotPasswordWorker'));
 const ResetPasswordWorker = lazy(()=>import('./pages/ResetPasswordWorker'));
+const NotificationPreferences = lazy(() => import('./pages/user/NotificationPreferences'));
 
 
 // ─── Route Definitions ────────────────────────────────────────────────────────
@@ -84,7 +74,7 @@ function RequireAuth({ children }) {
     );
   }
 
-  return isAuthenticated ? children : <Login />;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
 const ROUTES = [
@@ -102,23 +92,15 @@ const ROUTES = [
 
   // Workers & Services
   { path: '/services',          element: <Services /> },
-  { path: '/providers',         element: <Services /> },
-  { path: '/jobs',              element: <JobsFeed /> },
   { path: '/worker/register',   element: <WorkerRegister /> },
   { path: '/worker/login',      element: <WorkerLogin /> },
   { path: '/worker/dashboard',    element: <WorkerDashboard /> }, 
-  { path: '/worker/earnings',      element: <EarningsDashboard /> },
-  { path: '/worker/schedule',     element: <ScheduleManager /> },
-  { path: '/worker/services',     element: <ServiceManager /> },
-  { path: '/worker/verification', element: <VerificationPage /> },
   { path: '/worker/:id',        element: <WorkerProfile /> },
   { path: '/saved-workers',     element: <SavedWorkers /> },
   { path: '/recommendations',   element: <Recommendations /> }, // ✨ NEW
-  { path: '/wallet',            element: <WalletPage /> },
-  { path: '/request-service',   element: <RequestService /> },
   { path: '/civic-issues',           element: <CivicIssues /> },
   { path: '/civic-issues/report',    element: <ReportIssue /> },
-  { path: '/civic-issues/:id',      element: <IssueDetail /> },
+  { path: '/civic-issues',     element: <CivicIssues /> },
   { path: '/admin',            element: <AdminDashboard /> },
   { path: '/admin/users',      element: <AdminUsers /> },
   { path: '/admin/moderation', element: <ModerationPanel /> },
@@ -139,38 +121,6 @@ const ROUTES = [
       </RequireAuth>
     ),
   },
-  {
-    path: "/chat",
-    element: (
-      <RequireAuth>
-        <ChatPage />
-      </RequireAuth>
-    ),
-  },
-  {
-    path: "/payment/checkout",
-    element: (
-      <RequireAuth>
-        <PaymentCheckout />
-      </RequireAuth>
-    ),
-  },
-  {
-    path: "/notifications",
-    element: (
-      <RequireAuth>
-        <Notifications />
-      </RequireAuth>
-    ),
-  },
-  {
-    path: "/referrals",
-    element: (
-      <RequireAuth>
-        <ReferralDashboard />
-      </RequireAuth>
-    ),
-  },
 
   // Info & Support
   { path: "/help", element: <HelpCenter /> },
@@ -180,6 +130,14 @@ const ROUTES = [
   { path: "/contact", element: <Contact /> },
   { path: "/community", element: <Community /> },
   { path: "/feedback", element: <Feedback /> },
+  {
+    path: "/notification-preferences",
+    element: (
+      <RequireAuth>
+        <NotificationPreferences />
+      </RequireAuth>
+    ),
+  },
 
   // Fallback
   { path: "*", element: <NotFound /> },

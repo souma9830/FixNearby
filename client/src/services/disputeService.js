@@ -16,7 +16,16 @@ const disputeService = {
   resolveDispute: async (id, resolutionData) => {
     const res = await api.patch(`/disputes/${id}/resolve`, resolutionData);
     return res.data;
+  },
+  escalateDispute: async (escalationData) => {
+    const res = await api.post('/disputes/arbitration-escalation/escalate', escalationData);
+    return res.data;
+  },
+  getEscalations: async () => {
+    const res = await api.get('/disputes/arbitration-escalation');
+    return res.data;
   }
 };
 
 export default disputeService;
+

@@ -1,17 +1,20 @@
 import EmergencyAlert from '../models/EmergencyAlert.js';
 import Worker from '../models/Worker.js';
+import { calculateEmergencyPriority } from '../services/emergencyDispatchService.js';
 
 export const broadcastEmergencyAlert = async (req, res) => {
   try {
-    const { issueType, description, location } = req.body;
+    const { issueType, description, location, severity = 'HIGH' } = req.body;
     const userId = req.user.id;
+
+    const priorityInfo = calculateEmergencyPriority(severity, location);
 
     const activeWorkers = await Worker.countDocuments({ isAvailable: true });
 
     const alert = new EmergencyAlert({
       user: userId,
       issueType,
-      description,
+      description: req.sanitizedEmergency?.notes || description,
       location,
       status: 'broadcasting',
       notifiedWorkersCount: Math.max(activeWorkers, 3)
@@ -21,7 +24,8 @@ export const broadcastEmergencyAlert = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      alert
+      alert,
+      priorityInfo
     });
   } catch (error) {
     res.status(500).json({ message: 'Emergency broadcast failed', error: error.message });
