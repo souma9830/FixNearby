@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from 'react';
 
-// Global state / emitter for announcing messages
 let announceCallback = null;
 
-export const announceToScreenReader = (message) => {
+export const announceToScreenReader = (message, priority = 'polite') => {
   if (announceCallback) {
-    announceCallback(message);
+    announceCallback(message, priority);
   }
 };
 
 const AriaAnnouncer = () => {
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement, setAnnouncement] = useState({ text: '', priority: 'polite' });
 
   useEffect(() => {
-    announceCallback = (msg) => {
-      setAnnouncement(msg);
-      // Clear after 3 seconds so the same announcement can be repeated if necessary
-      setTimeout(() => setAnnouncement(''), 3000);
+    announceCallback = (msg, priority = 'polite') => {
+      setAnnouncement({ text: msg, priority });
+      setTimeout(() => setAnnouncement({ text: '', priority: 'polite' }), 4000);
     };
     return () => {
       announceCallback = null;
@@ -25,12 +23,12 @@ const AriaAnnouncer = () => {
 
   return (
     <div
-      className="sr-only"
-      role="status"
-      aria-live="polite"
+      className="sr-only font-mono text-[1px] opacity-0 pointer-events-none"
+      role={announcement.priority === 'assertive' ? 'alert' : 'status'}
+      aria-live={announcement.priority}
       aria-atomic="true"
     >
-      {announcement}
+      {announcement.text}
     </div>
   );
 };

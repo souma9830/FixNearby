@@ -2,8 +2,15 @@ import { io } from 'socket.io-client';
 
 let socket = null;
 let listeners = new Map();
+let offlineQueue = [];
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const getSocketUrl = () => {
+  if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
+  if (import.meta.env.PROD && typeof window !== 'undefined') return window.location.origin;
+  return 'http://localhost:5000';
+};
+
+const SOCKET_URL = getSocketUrl();
 
 export const connectSocket = (token) => {
   if (socket?.connected) {
@@ -14,7 +21,7 @@ export const connectSocket = (token) => {
     auth: { token },
     transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: 10,
+    reconnectionAttempts: 15,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 10000,
     timeout: 20000,
@@ -22,6 +29,14 @@ export const connectSocket = (token) => {
 
   socket.on('connect', () => {
     console.debug('[Socket] Connected:', socket.id);
+    flushOfflineQueue();
+  });
+
+  socket.io.on('reconnect', (attempt) => {
+    console.debug('[Socket] Reconnected after', attempt, 'attempts');
+    if (socket?.connected) {
+      socket.emit('socket_reconnected', { timestamp: new Date().toISOString() });
+    }
   });
 
   socket.on('disconnect', (reason) => {
@@ -39,6 +54,15 @@ export const connectSocket = (token) => {
   return socket;
 };
 
+const flushOfflineQueue = () => {
+  if (!socket?.connected || offlineQueue.length === 0) return;
+  console.debug(`[Socket] Flushing ${offlineQueue.length} queued offline messages...`);
+  while (offlineQueue.length > 0) {
+    const item = offlineQueue.shift();
+    socket.emit(item.event, item.data);
+  }
+};
+
 export const disconnectSocket = () => {
   if (socket) {
     listeners.forEach((handler, event) => {
@@ -54,12 +78,32 @@ export const getSocket = () => socket;
 
 export const isConnected = () => socket?.connected || false;
 
+export const measureSocketLatency = (callback) => {
+  if (!socket?.connected) return;
+  const start = Date.now();
+  socket.emit('ping_check', { clientTimestamp: start }, (res) => {
+    const rtt = Date.now() - start;
+    if (typeof callback === 'function') callback(rtt);
+  });
+};
+
 export const sendMessage = (data) => {
   if (!socket?.connected) {
-    console.warn('[Socket] Cannot send message: not connected');
+    console.warn('[Socket] Disconnected: Queueing message for reconnect send');
+    offlineQueue.push({ event: 'send_message', data });
     return false;
   }
   socket.emit('send_message', data);
+  return true;
+};
+
+export const sendAttachmentMessage = (conversationId, attachment) => {
+  if (!socket?.connected) return false;
+  socket.emit('send_message', {
+    conversationId,
+    content: `[Attachment] ${attachment.fileName}`,
+    attachment
+  });
   return true;
 };
 
@@ -123,18 +167,42 @@ export const onConversationUpdate = (handler) => {
   };
 };
 
+export const joinBooking = (bookingId) => {
+  if (!socket?.connected) return;
+  socket.emit('join_booking', { bookingId });
+};
+
+export const leaveBooking = (bookingId) => {
+  if (!socket?.connected) return;
+  socket.emit('leave_booking', { bookingId });
+};
+
+export const onBookingStatusUpdate = (handler) => {
+  if (!socket) return () => {};
+  socket.on('booking:statusUpdate', handler);
+  listeners.set('booking:statusUpdate', handler);
+  return () => {
+    socket.off('booking:statusUpdate', handler);
+    listeners.delete('booking:statusUpdate');
+  };
+};
+
 export default {
   connectSocket,
   disconnectSocket,
   getSocket,
   isConnected,
+  measureSocketLatency,
   sendMessage,
   joinConversation,
   leaveConversation,
+  joinBooking,
+  leaveBooking,
   startTyping,
   stopTyping,
   onMessage,
   onTyping,
   onPresenceUpdate,
   onConversationUpdate,
+  onBookingStatusUpdate,
 };

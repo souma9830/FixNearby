@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Bell, MessageSquare } from 'lucide-react';
 import NavLanguageToggle from "./NavLanguageToggle";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from "react-i18next";
+import { getUnreadCount } from '../services/notificationService';
 
 // Navigation Bar Component. Handles routing layouts. (Ref: ReviewBadge)
 
@@ -30,8 +32,28 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifCount, setNotifCount] = useState(0);
 
   const dropdownRef = useRef(null);
+
+  // Fetch unread notification count when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    const fetchCount = async () => {
+      try {
+        const data = await getUnreadCount();
+        if (!cancelled) setNotifCount(data.count || 0);
+      } catch {
+        // silently ignore — badge just won't show
+      }
+    };
+    fetchCount();
+    // Poll every 60s for fresh count
+    const interval = setInterval(fetchCount, 60000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [isAuthenticated]);
+
 
   // Scroll shadow
   useEffect(() => {
@@ -161,8 +183,26 @@ const Navbar = () => {
 
               {authenticated ? (
                 <>
+                  <Link to="/chat" className={desktopLinkCls('/chat')}>
+                    Chat
+                  </Link>
+
                   <Link to="/bookings" className={desktopLinkCls('/bookings')}>
                     {t("nav.bookings")}
+                  </Link>
+
+                  {/* Notification bell */}
+                  <Link
+                    to="/notifications"
+                    className="relative p-2 rounded-xl text-slate-500 hover:text-[#0056D2] hover:bg-blue-50 transition-colors"
+                    aria-label="Notifications"
+                  >
+                    <Bell size={20} />
+                    {notifCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-bold px-1">
+                        {notifCount > 9 ? "9+" : notifCount}
+                      </span>
+                    )}
                   </Link>
 
                   {/* User dropdown */}
@@ -213,6 +253,15 @@ const Navbar = () => {
                       </Link>
 
                       <Link
+                        to="/chat"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        role="menuitem"
+                      >
+                        <MessageSquare className="w-4 h-4 text-slate-400" />
+                        Chat Messages
+                      </Link>
+
+                      <Link
                         to="/bookings"
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                         role="menuitem"
@@ -232,6 +281,17 @@ const Navbar = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
                         </svg>
                         Saved Workers
+                      </Link>
+
+                      <Link
+                        to="/worker/earnings"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        role="menuitem"
+                      >
+                        <svg className="w-4 h-4 text-[#0056D2]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-6h6M6 12h12" />
+                        </svg>
+                        Worker Earnings
                       </Link>
 
                       <div className="my-1 border-t border-slate-100" />
@@ -389,6 +449,20 @@ const Navbar = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                 </svg>
                 {t("nav.bookings")}
+              </Link>
+
+              <Link
+                to="/notifications"
+                onClick={() => setMenuOpen(false)}
+                className={mobileLinkCls('/notifications')}
+              >
+                <Bell size={16} className="text-slate-400" />
+                <span className="flex-1">Notifications</span>
+                {notifCount > 0 && (
+                  <span className="min-w-[20px] h-5 flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-bold px-1">
+                    {notifCount > 9 ? "9+" : notifCount}
+                  </span>
+                )}
               </Link>
 
               <Link

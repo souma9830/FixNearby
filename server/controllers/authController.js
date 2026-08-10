@@ -4,6 +4,8 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import { writeAuditLog } from '../models/AuditLog.js';
 import crypto from "crypto";
+import { generateRefreshToken, rotateRefreshToken } from '../services/refreshTokenService.js';
+
 import sendEmail from "../utils/sendEmail.js";
 import { queueNotification } from "../utils/queue.js";
 // Generate JWT
@@ -25,7 +27,7 @@ const isValidEmail = (email) => {
 
 // Follows same rules as already existing login controller
 const isValidPassword = (password) => {
-  if (!password || password.length < 6) {
+  if (typeof password !== 'string' || password.length < 6) {
     return false;
   }
 
@@ -99,13 +101,22 @@ export const registerUser = async (req, res) => {
       userAgent: req.get('user-agent'),
     });
 
+    const token = generateToken(user._id);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000
+    });
+
     // 7. Response 
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
       phone: user.phone,
-      token: generateToken(user._id),
+      notificationPreferences: user.notificationPreferences,
+      token: token,
     });
 
   } catch (error) {
@@ -129,6 +140,16 @@ export const loginUser = async (req, res) => {
 
     // 3. Check password
     if (user && (await user.matchPassword(password))) {
+      if (user.twoFactorEnabled) {
+        return res.status(200).json({
+          success: true,
+          require2FA: true,
+          userId: user._id,
+          userType: 'User',
+          message: '2FA authentication code required to complete login'
+        });
+      }
+
       writeAuditLog({
         actorId: user._id,
         actorType: 'User',
@@ -144,6 +165,8 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        notificationPreferences: user.notificationPreferences,
+        twoFactorEnabled: !!user.twoFactorEnabled,
         token: generateToken(user._id),
       });
     } else {
@@ -164,6 +187,7 @@ export const getUserProfile = async (req, res) => {
       name: req.user.name,
       email: req.user.email,
       phone: req.user.phone,
+      notificationPreferences: req.user.notificationPreferences,
     });
 
   } catch (error) {
@@ -171,8 +195,53 @@ export const getUserProfile = async (req, res) => {
   }
 };
 
+export const normalizeNotificationPreferences = (preferences) => {
+  const allowed = ['email', 'sms', 'push'];
+  if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) {
+    throw new TypeError('Notification preferences must be an object');
+  }
+
+  const entries = Object.entries(preferences).filter(([key]) => allowed.includes(key));
+  if (entries.length === 0 || entries.some(([, value]) => typeof value !== 'boolean')) {
+    throw new TypeError('At least one boolean notification preference is required');
+  }
+
+  return Object.fromEntries(entries);
+};
+
+export const updateNotificationPreferences = async (req, res) => {
+  let preferences;
+  try {
+    preferences = normalizeNotificationPreferences(req.body);
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const current = user.notificationPreferences?.toObject?.() || user.notificationPreferences || {};
+    user.notificationPreferences = { ...current, ...preferences };
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      notificationPreferences: user.notificationPreferences,
+    });
+  } catch {
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 export const updateUserProfile = async (req, res) => {
   try {
+    if (req.body.password && !isValidPassword(req.body.password)) {
+      return res.status(400).json({
+        message: "Password must contain uppercase, lowercase and a number and be at least 6 characters long",
+      });
+    }
+
     const user = await User.findById(req.user._id);
 
     if (user) {
@@ -190,6 +259,7 @@ export const updateUserProfile = async (req, res) => {
         name: updatedUser.name,
         email: updatedUser.email,
         phone: updatedUser.phone,
+        notificationPreferences: updatedUser.notificationPreferences,
         token: generateToken(updatedUser._id),
       });
     } else {
@@ -321,6 +391,7 @@ export const resetUserPassword = async (req, res) => {
     }
 
     user.password = password;
+    user.passwordChangedAt = new Date();
 
     user.resetPasswordToken = null;
     user.resetPasswordExpire = null;
@@ -464,6 +535,7 @@ export const resetWorkerPassword = async (req, res) => {
     }
 
     worker.password = password;
+    worker.passwordChangedAt = new Date();
 
     worker.resetPasswordToken = undefined;
     worker.resetPasswordExpire = undefined;
@@ -509,5 +581,73 @@ export const logoutUser = async (req, res) => {
       success: false,
       message: "Server error during logout"
     });
+  }
+};
+
+/**
+ * REST HTTP fallback to update active presence status and lastActive timestamp.
+ * PATCH /api/presence/status
+ */
+export const updateUserPresenceStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const allowed = ['online', 'offline', 'busy', 'available'];
+    if (!status || !allowed.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status parameter' });
+    }
+
+    const userId = req.user?._id || req.worker?._id;
+    const isWorker = !!req.worker;
+    const lastActive = new Date();
+
+    if (isWorker) {
+      const dbStatus = status === 'online' ? 'available' : status;
+      await Worker.findByIdAndUpdate(userId, { availabilityStatus: dbStatus, lastActive });
+    } else {
+      const dbStatus = status === 'available' ? 'online' : status;
+      await User.findByIdAndUpdate(userId, { status: dbStatus, lastActive });
+    }
+
+    res.status(200).json({
+      success: true,
+      presence: { userId, status, lastActive }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Fetch last active status and online state of a user/worker.
+ * GET /api/presence/active-status/:userId
+ */
+export const getUserActiveStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    let target = await User.findById(userId).select('name status lastActive role');
+    let userType = 'User';
+
+    if (!target) {
+      target = await Worker.findById(userId).select('name availabilityStatus lastActive category');
+      userType = 'Worker';
+    }
+
+    if (!target) {
+      return res.status(404).json({ success: false, message: 'User or Worker not found' });
+    }
+
+    const status = userType === 'Worker' ? target.availabilityStatus : target.status;
+    const isOnline = status === 'online' || status === 'available';
+
+    res.status(200).json({
+      success: true,
+      userId,
+      userType,
+      status,
+      isOnline,
+      lastActive: target.lastActive
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

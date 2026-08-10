@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import {
   Droplet,
   Hammer,
@@ -10,13 +10,23 @@ import {
   SprayCan,
   Heart,
   Star,
+  GitCompareArrows,
+  X,
   Map,
   List,
+  DollarSign,
 } from "lucide-react";
+import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
 
 
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import SkeletonLoader from "../components/SkeletonLoader";
+import CenteredLoadingSpinner from "../components/CenteredLoadingSpinner";
+import useToast from "../hooks/useToast";
+
+
+import MapView from "../components/MapView";
 import SearchBar from "../components/SearchBar";
 import FilterSidebar from "../components/FilterSidebar";
 import ReviewBadge from "../components/ReviewBadge";
@@ -29,6 +39,7 @@ import { useAuth } from "../context/AuthContext";
 import { getFavorites, toggleFavorite } from "../services/favoriteService";
 import { getEstimatorConfig } from "../utils/estimatorConfig";
 import EstimateWizard from "../components/EstimateWizard";
+import CostEstimatorWidget from "../components/calculator/CostEstimatorWidget";
 import WorkerMap from "../components/WorkerMap";
 import MapView from "../components/MapView";
 import useToast from "../hooks/useToast";
@@ -205,18 +216,27 @@ const getDistanceKm = (lat1, lon1, lat2, lon2) => {
     Math.cos((lat2 * Math.PI) / 180) *
     Math.sin(dLon / 2) ** 2;
 
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  const clampedA = Math.min(1, Math.max(0, a));
+  return R * (2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA)));
 };
 
 const formatDistance = (d) =>
   d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`;
 
+import { useRef } from "react";
+import { getSocket } from "../utils/socketClient";
+
 const WorkerSlots = ({ workerId, mockAvailability, mockResponseTime }) => {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [isSocketFallback, setIsSocketFallback] = useState(false);
+  const socketRef = useRef(null);
+
   useEffect(() => {
     let active = true;
+    let didReceiveSocketUpdate = false;
+
     const fetchSlots = async () => {
       try {
         const res = await getWorkerAvailability(workerId);
@@ -230,15 +250,70 @@ const WorkerSlots = ({ workerId, mockAvailability, mockResponseTime }) => {
       }
     };
 
+    // Always fetch once to render immediately.
     fetchSlots();
 
-    const interval = setInterval(fetchSlots, 10000);
+    // Subscribe to worker availability updates over WebSockets.
+    const socket = getSocket();
+    socketRef.current = socket;
+
+    const handleAvailabilityUpdate = (payload) => {
+      if (!payload) return;
+      const updatedWorkerId = payload.workerId;
+      if (!updatedWorkerId || updatedWorkerId.toString() !== workerId.toString()) return;
+
+      if (payload.availableSlots && Array.isArray(payload.availableSlots)) {
+        didReceiveSocketUpdate = true;
+        setIsSocketFallback(false);
+        setSlots(payload.availableSlots);
+        setLoading(false);
+      }
+    };
+
+    const startPollingFallback = () => {
+      setIsSocketFallback(true);
+      const interval = setInterval(() => {
+        if (!active) return;
+        if (didReceiveSocketUpdate) {
+          clearInterval(interval);
+          return;
+        }
+        fetchSlots();
+      }, 10000);
+
+      return interval;
+    };
+
+    let pollingInterval = null;
+
+    // Attempt socket connect; if it fails quickly, enable polling.
+    // Socket.IO will also retry, but this keeps UI fresh when backend/socket isn't reachable.
+    const timeoutMs = 4000;
+    let timeoutHandle = setTimeout(() => {
+      if (!didReceiveSocketUpdate) {
+        pollingInterval = startPollingFallback();
+      }
+    }, timeoutMs);
+
+    socket.on("availability:update", handleAvailabilityUpdate);
+
+    // Back-end is expected to emit updates; joining a room/subscription is optional depending on implementation.
+    // We still emit a subscribe hint if the server supports it.
+    socket.emit("availability:subscribe", { workerId });
+
+    if (!socket.connected) {
+      socket.connect();
+    }
 
     return () => {
       active = false;
-      clearInterval(interval);
+      clearTimeout(timeoutHandle);
+      if (pollingInterval) clearInterval(pollingInterval);
+      socket.off("availability:update", handleAvailabilityUpdate);
+      socket.emit("availability:unsubscribe", { workerId });
     };
   }, [workerId]);
+
 
   if (loading) {
     return (
@@ -319,6 +394,8 @@ const Services = () => {
   const [favoritedWorkerIds, setFavoritedWorkerIds] = useState(new Set());
   const [selectedWorkerForWizard, setSelectedWorkerForWizard] = useState(null);
   const [selectedWorkerId, setSelectedWorkerId] = useState(null);
+  const [compareIds, setCompareIds] = useState([]);
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('list');
 
   const handleMarkerClick = (workerId) => {
@@ -405,10 +482,11 @@ const Services = () => {
     maxDistance: 50,
     availability: 'all',
     sortBy: sortBy,
-  });
+  }, isAuthenticated);
 
   const [suggestions, setSuggestions] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showPricePopover, setShowPricePopover] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
     minPrice: 0,
     maxPrice: 100,
@@ -438,22 +516,27 @@ const Services = () => {
         };
         const searchResponse = await searchWorkers(queryParams);
         const backendWorkers = searchResponse?.data || [];
-        // Map backend search result to client expectations
         const mappedBackend = backendWorkers.map(w => ({
           ...w,
           id: w._id || w.id,
           profession: w.category || w.profession,
-          price: w.price ? (w.price.toString().startsWith('$') ? w.price : `$${w.price}/hr`) : "$30/hr",
+          price: w.hourlyRate !== undefined && w.hourlyRate !== null && w.hourlyRate !== '' ? Number(w.hourlyRate) : (w.price !== undefined && w.price !== null ? (typeof w.price === 'number' ? w.price : (parseFloat(w.price.toString().replace(/[^0-9.]/g, '')) || 30)) : 30),
           availability: w.availability || 
             (w.availabilityStatus === "available" ? "Available today" : 
              w.availabilityStatus === "busy" ? "Busy" : 
              w.availabilityStatus === "offline" ? "Offline" : "Available today"),
-          responseTime: w.responseTime || "Replies in 15 min",
+          responseTime: w.slaResponseMins ? `Replies in ${w.slaResponseMins} min` : (w.responseTime || "Replies in 15 min"),
           outcomeText: w.outcomeText || `Review past work and request a ${w.category?.toLowerCase() || 'service'} visit.`,
           mockOffset: w.mockOffset || (w.coordinates ? { lat: w.coordinates.lat, lon: w.coordinates.lon } : null),
-          verified: w.verified ?? true,
+          verified: w.verificationStatus ? w.verificationStatus === 'verified' : (w.verified ?? true),
+          isAvailableNow: w.isAvailableNow === true,
           rating: Number(w.rating) || 4.5,
           completedJobs: w.completedJobs || 12,
+          slaResponseMins: w.slaResponseMins,
+          serviceCoverage: w.serviceCoverage,
+          cancellationPolicy: w.cancellationPolicy,
+          refundPolicy: w.refundPolicy,
+          verificationStatus: w.verificationStatus || 'verified',
         }));
 
         if (mappedBackend && mappedBackend.length > 0) {
@@ -465,9 +548,7 @@ const Services = () => {
         console.error("Failed to fetch search results from backend, falling back to mock data", err);
         setWorkers(mockWorkers);
       } finally {
-        const storedRecent =
-          JSON.parse(localStorage.getItem("recentWorkers")) || [];
-        setRecentWorkers(storedRecent);
+        setRecentWorkers(getRecentWorkers());
         setLoading(false);
       }
     };
@@ -478,13 +559,33 @@ const Services = () => {
   useEffect(() => {
     const urlCategory = searchParams.get("category") || "All";
     const urlUrgent = searchParams.get("urgent") === "true";
-    const urlSearch = searchParams.get("search") || "";
+    const urlSearch = searchParams.get("search") || searchParams.get("q") || "";
     const urlSort = searchParams.get("sort") || "distance";
+    const urlMinPrice = searchParams.get("minPrice") !== null ? Number(searchParams.get("minPrice")) : 0;
+    const urlMaxPrice = searchParams.get("maxPrice") !== null ? Number(searchParams.get("maxPrice")) : 100;
+    const urlMinRating = searchParams.get("minRating") !== null ? Number(searchParams.get("minRating")) : 0;
+    const urlMaxDistance = searchParams.get("maxDistance") !== null ? Number(searchParams.get("maxDistance")) : 50;
+    const urlAvailability = searchParams.get("availability") || "all";
 
     if (urlCategory !== categoryFilter) setCategoryFilter(urlCategory);
     if (urlUrgent !== urgentFilter) setUrgentFilter(urlUrgent);
     if (urlSearch !== searchQuery) setSearchQuery(urlSearch);
     if (urlSort !== sortBy) setSortBy(urlSort);
+    if (
+      urlMinPrice !== advancedFilters.minPrice ||
+      urlMaxPrice !== advancedFilters.maxPrice ||
+      urlMinRating !== advancedFilters.minRating ||
+      urlMaxDistance !== advancedFilters.maxDistance ||
+      urlAvailability !== advancedFilters.availability
+    ) {
+      setAdvancedFilters({
+        minPrice: urlMinPrice,
+        maxPrice: urlMaxPrice,
+        minRating: urlMinRating,
+        maxDistance: urlMaxDistance,
+        availability: urlAvailability,
+      });
+    }
   }, [searchParams]);
 
   // SYNC STATE TO URL PARAMS
@@ -495,6 +596,12 @@ const Services = () => {
     if (categoryFilter !== "All") params.category = categoryFilter;
     if (sortBy !== "distance") params.sort = sortBy;
     if (urgentFilter) params.urgent = "true";
+    
+    if (advancedFilters.minPrice > 0) params.minPrice = advancedFilters.minPrice;
+    if (advancedFilters.maxPrice < 100) params.maxPrice = advancedFilters.maxPrice;
+    if (advancedFilters.minRating > 0) params.minRating = advancedFilters.minRating;
+    if (advancedFilters.maxDistance < 50) params.maxDistance = advancedFilters.maxDistance;
+    if (advancedFilters.availability !== "all") params.availability = advancedFilters.availability;
 
     setSearchParams(params);
   }, [
@@ -502,6 +609,7 @@ const Services = () => {
     categoryFilter,
     sortBy,
     urgentFilter,
+    advancedFilters,
     setSearchParams,
   ]);
   /* FILTER + SORT */
@@ -554,9 +662,10 @@ const Services = () => {
         w.profession === categoryFilter;
 
       // Advanced filters
+      const workerPriceNum = typeof w.price === 'number' ? w.price : (parseFloat((w.price || '').toString().replace(/[^0-9.]/g, '')) || 0);
       const matchesPrice =
-        w.price >= advancedFilters.minPrice &&
-        w.price <= advancedFilters.maxPrice;
+        workerPriceNum >= (advancedFilters.minPrice || 0) &&
+        workerPriceNum <= (advancedFilters.maxPrice !== undefined ? advancedFilters.maxPrice : 150);
 
       const matchesRating = w.rating >= advancedFilters.minRating;
 
@@ -570,13 +679,21 @@ const Services = () => {
         !urgentFilter ||
         /today|emergency|open/i.test(w.availability || "");
 
+      // Availability filter
+      const matchesAvailability = 
+        advancedFilters.availability === 'all' || 
+        (advancedFilters.availability === 'available' && w.isAvailableNow) ||
+        (advancedFilters.availability === 'today' && /today/i.test(w.availability || "")) ||
+        (advancedFilters.availability === 'week' && /week|today|tomorrow/i.test(w.availability || ""));
+
       return (
         matchesSearch &&
         matchesCategory &&
         matchesPrice &&
         matchesRating &&
         matchesDistance &&
-        matchesUrgent
+        matchesUrgent &&
+        matchesAvailability
       );
     });
 
@@ -598,32 +715,96 @@ const Services = () => {
     return result;
   }, [workers, searchQuery, categoryFilter, sortBy, coords, advancedFilters, urgentFilter]);
 
+  const toggleCompare = (workerId) => {
+    setCompareIds(prev => {
+      if (prev.includes(workerId)) {
+        return prev.filter(id => id !== workerId);
+      }
+      if (prev.length >= 3) return prev;
+      return [...prev, workerId];
+    });
+  };
+
+  const removeCompare = (workerId) => {
+    setCompareIds(prev => prev.filter(id => id !== workerId));
+  };
+
+  const goToCompare = () => {
+    if (compareIds.length >= 2) {
+      navigate(`/compare-workers?ids=${compareIds.join(',')}`);
+    }
+  };
+
+  const getCompareWorkerNames = () => {
+    return compareIds.map(id => {
+      const w = filteredWorkers.find(worker => (worker._id || worker.id) === id);
+      return w ? w.name : id;
+    });
+  };
+
   const handleRecentlyViewed = (worker) => {
-    let stored = JSON.parse(localStorage.getItem("recentWorkers")) || [];
-    stored = stored.filter((i) => i.id !== worker.id);
-    stored.unshift(worker);
-    stored = stored.slice(0, 5);
-    localStorage.setItem("recentWorkers", JSON.stringify(stored));
-    setRecentWorkers(stored);
+    setRecentWorkers(addRecentWorker(worker));
+  };
+
+  const handleRemoveRecentWorker = (workerId) => {
+    setRecentWorkers(removeRecentWorker(workerId));
+  };
+
+  const handleClearRecentWorkers = () => {
+    setRecentWorkers(clearRecentWorkers());
   };
 
   const handleSearch = (query) => {
     addToHistory(query, { category: categoryFilter, ...advancedFilters });
   };
 
-  const handleSaveFavorite = (name) => {
-    const success = saveFavoriteSearch(name, searchQuery, { category: categoryFilter, ...advancedFilters });
+  const handleSaveFavorite = async (name) => {
+    const success = await saveFavoriteSearch(name, searchQuery, {
+      category: categoryFilter,
+      sortBy,
+      ...advancedFilters
+    });
     if (success) {
-      alert('Search saved to favorites!');
+      showToast('Search saved to favorites!', 'success');
+    } else {
+      showToast('Failed to save search.', 'error');
     }
   };
 
+  const handleLoadFavorite = (favorite) => {
+    setSearchQuery(favorite.query || "");
+    const favFilters = favorite.filters || {};
+    if (favFilters.category) setCategoryFilter(favFilters.category);
+    if (favFilters.sortBy) setSortBy(favFilters.sortBy);
+    setAdvancedFilters({
+      minPrice: favFilters.minPrice !== undefined ? Number(favFilters.minPrice) : 0,
+      maxPrice: favFilters.maxPrice !== undefined ? Number(favFilters.maxPrice) : 100,
+      minRating: favFilters.minRating !== undefined ? Number(favFilters.minRating) : 0,
+      maxDistance: favFilters.maxDistance !== undefined ? Number(favFilters.maxDistance) : 50,
+      availability: favFilters.availability || 'all',
+    });
+    showToast(`Loaded search template: ${favorite.name}`, 'info');
+  };
+
   const handleShareSearch = () => {
-    const url = getShareableUrl();
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('search', searchQuery);
+    if (categoryFilter !== "All") params.set('category', categoryFilter);
+    if (sortBy !== "distance") params.set('sort', sortBy);
+    if (urgentFilter) params.set('urgent', "true");
+    
+    if (advancedFilters.minPrice > 0) params.set('minPrice', advancedFilters.minPrice);
+    if (advancedFilters.maxPrice < 100) params.set('maxPrice', advancedFilters.maxPrice);
+    if (advancedFilters.minRating > 0) params.set('minRating', advancedFilters.minRating);
+    if (advancedFilters.maxDistance < 50) params.set('maxDistance', advancedFilters.maxDistance);
+    if (advancedFilters.availability !== "all") params.set('availability', advancedFilters.availability);
+
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
     navigator.clipboard.writeText(url).then(() => {
-      alert('Search URL copied to clipboard!');
+      showToast('Search URL copied to clipboard!', 'success');
     }).catch(err => {
       console.error('Failed to copy URL:', err);
+      showToast('Failed to copy URL.', 'error');
     });
   };
 
@@ -701,7 +882,8 @@ const Services = () => {
             favoriteSearches={favoriteSearches}
             onRemoveHistory={removeHistoryItem}
             onClearHistory={clearHistory}
-            onLoadFavorite={loadFavoriteSearch}
+            onLoadFavorite={handleLoadFavorite}
+            onRemoveFavorite={removeFavoriteSearch}
             onSaveFavorite={handleSaveFavorite}
             onShare={handleShareSearch}
             suggestions={suggestions}
@@ -719,6 +901,122 @@ const Services = () => {
             <option value="rating">⭐ Top Rated</option>
             <option value="price">💰 Lowest Price</option>
           </select>
+
+          {/* Quick Dual-Range Price Slider Button & Popover */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowPricePopover((prev) => !prev)}
+              className={`rounded-xl border px-5 py-3 font-bold shadow-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+                advancedFilters.minPrice > 0 || advancedFilters.maxPrice < 100
+                  ? "border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 ring-2 ring-blue-500/20"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              }`}
+            >
+              <DollarSign className="h-5 w-5 text-emerald-500" />
+              <span>
+                {advancedFilters.minPrice > 0 || advancedFilters.maxPrice < 100
+                  ? `$${advancedFilters.minPrice} - $${advancedFilters.maxPrice}/hr`
+                  : "Price Filter"}
+              </span>
+            </button>
+
+            {showPricePopover && (
+              <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-40 w-72 sm:w-80 rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900 animate-in fade-in-50 zoom-in-95">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="font-bold text-gray-900 dark:text-white text-sm">Hourly Rate ($/hr)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPricePopover(false)}
+                    className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="px-2 pt-2">
+                  <Slider
+                    range
+                    min={0}
+                    max={150}
+                    step={5}
+                    value={[advancedFilters.minPrice || 0, advancedFilters.maxPrice || 100]}
+                    onChange={(vals) => {
+                      setAdvancedFilters((prev) => ({
+                        ...prev,
+                        minPrice: vals[0],
+                        maxPrice: vals[1],
+                      }));
+                    }}
+                    trackStyle={[{ backgroundColor: '#3B82F6', height: 6 }]}
+                    handleStyle={[
+                      { borderColor: '#3B82F6', backgroundColor: '#fff', opacity: 1, width: 18, height: 18, marginTop: -6 },
+                      { borderColor: '#3B82F6', backgroundColor: '#fff', opacity: 1, width: 18, height: 18, marginTop: -6 },
+                    ]}
+                    railStyle={{ backgroundColor: '#E5E7EB', height: 6 }}
+                  />
+                  <div className="mt-4 flex items-center justify-between gap-3 text-xs">
+                    <div className="flex-1">
+                      <span className="text-[10px] text-gray-400 uppercase font-bold block mb-1">Min Rate</span>
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-gray-400">$</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={advancedFilters.maxPrice || 100}
+                          value={advancedFilters.minPrice || 0}
+                          onChange={(e) => {
+                            const val = Math.max(0, Math.min(Number(e.target.value) || 0, advancedFilters.maxPrice || 100));
+                            handleFilterChange('minPrice', val);
+                          }}
+                          className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-6 pr-2 py-1.5 font-extrabold text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <span className="mt-4 font-bold text-gray-400">-</span>
+                    <div className="flex-1">
+                      <span className="text-[10px] text-gray-400 uppercase font-bold block mb-1">Max Rate</span>
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-gray-400">$</span>
+                        <input
+                          type="number"
+                          min={advancedFilters.minPrice || 0}
+                          max={200}
+                          value={advancedFilters.maxPrice || 100}
+                          onChange={(e) => {
+                            const val = Math.max(advancedFilters.minPrice || 0, Math.min(Number(e.target.value) || 100, 200));
+                            handleFilterChange('maxPrice', val);
+                          }}
+                          className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-6 pr-2 py-1.5 font-extrabold text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleFilterChange('minPrice', 0);
+                        handleFilterChange('maxPrice', 100);
+                      }}
+                      className="text-xs font-semibold text-gray-500 hover:text-red-500"
+                    >
+                      Reset Price
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowPricePopover(false)}
+                      className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
+                    >
+                      Apply Filter
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setUrgentFilter((prev) => !prev)}
@@ -764,28 +1062,27 @@ const Services = () => {
 
         {/* CATEGORY CHIPS (FULL FIX) */}
         <div className="mb-10">
-          <div className="flex gap-2 overflow-x-auto whitespace-nowrap px-1 py-2 scrollbar-hide">
+          <div className="flex gap-2.5 overflow-x-auto whitespace-nowrap px-1 py-3 scrollbar-hide">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`shrink-0 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-95
-                ${categoryFilter === cat
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-white border text-gray-600 hover:border-blue-400 hover:text-blue-600"
-                  }`}
+                className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-extrabold transition-all duration-300 ease-out active:scale-95 flex items-center gap-2 ${
+                  categoryFilter === cat
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 ring-2 ring-blue-400/50 scale-105"
+                    : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 hover:shadow-md hover:-translate-y-0.5"
+                }`}
               >
                 {cat !== "All" && iconMap[cat] && (
-                  <span className="mb-1 flex h-6 w-6 items-center justify-center text-2xl">
+                  <span className="flex h-5 w-5 items-center justify-center">
                     {(() => {
                       const Icon = iconMap[cat];
-                      return <Icon className="h-5 w-5" aria-hidden="true" />;
+                      return <Icon className="h-4 w-4" aria-hidden="true" />;
                     })()}
                   </span>
                 )}
                 {cat}
               </button>
-
             ))}
           </div>
         </div>
@@ -816,18 +1113,35 @@ const Services = () => {
         {/* RECENTLY VIEWED */}
         {recentWorkers.length > 0 && (
           <div className="mb-14">
-            <div className="mb-6 flex items-center gap-2">
-              <span className="text-2xl">⭐</span>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Recently Viewed Professionals
-              </h2>
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl" aria-hidden="true">⭐</span>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Recently Viewed Professionals
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={handleClearRecentWorkers}
+                className="text-sm font-semibold text-slate-500 hover:text-rose-600"
+              >
+                Clear all
+              </button>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {recentWorkers.map((worker) => (
                 <div
-                  key={worker.id}
-                  className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:shadow-lg"
+                  key={worker._id || worker.id}
+                  className="relative rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:shadow-lg"
                 >
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveRecentWorker(worker._id || worker.id)}
+                    className="absolute right-3 top-3 rounded-full p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                    aria-label={`Remove ${worker.name} from recently viewed`}
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
                   <div className="mb-4 text-4xl">
                     {(() => {
                       const Icon = iconMap[worker.profession];
@@ -844,8 +1158,14 @@ const Services = () => {
                   </p>
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <span>⭐ {worker.rating}</span>
-                    <span>${worker.price}/hr</span>
+                    <span>{typeof worker.price === "number" ? `$${worker.price}/hr` : worker.price || "Rate unavailable"}</span>
                   </div>
+                  <Link
+                    to={`/worker/${worker.id}`}
+                    className="mt-4 inline-flex text-sm font-bold text-blue-600 hover:text-blue-700"
+                  >
+                    View profile →
+                  </Link>
                 </div>
               ))}
             </div>
@@ -866,22 +1186,18 @@ const Services = () => {
             categories={categories}
             isOpen={isFilterOpen}
             onClose={() => setIsFilterOpen(false)}
-            className="hidden lg:block"
+            className={isFilterOpen ? "block" : "hidden lg:block"}
           />
 
           {/* MAIN CONTENT */}
           <div className="flex-grow lg:grid lg:grid-cols-12 lg:gap-8 items-start w-full">
             {/* MAP VIEW */}
             {viewMode === 'map' ? (
-              <div className="lg:col-span-12 h-[600px]">
-                <WorkerMap
+              <div className="lg:col-span-12 h-[600px] shadow-lg rounded-3xl overflow-hidden border border-slate-200">
+                <MapView
                   workers={filteredWorkers}
-                  center={coords ? { lat: coords.latitude, lng: coords.longitude } : { lat: 17.385, lng: 78.4867 }}
-                  zoom={1.2}
-                  onWorkerClick={(id) => {
-                    const el = document.getElementById(`worker-card-${id}`);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
+                  selectedWorkerId={selectedWorkerId}
+                  onMarkerClick={handleMarkerClick}
                 />
               </div>
             ) : (
@@ -906,18 +1222,28 @@ const Services = () => {
                 </div>
               ) : (
                 <>
-                  <p className="mb-6 text-sm font-medium text-gray-500">
-                    Showing {filteredWorkers.length} services
+                  <p className="mb-6 text-sm font-medium text-gray-500 flex items-center justify-between">
+                    <span>Showing {filteredWorkers.length} services</span>
+                    <span className="text-xs font-semibold text-emerald-600">⚡ DOM Virtualized (60fps)</span>
                   </p>
-                  <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                    {filteredWorkers.map((worker) => (
+                  <SearchResults
+                    items={filteredWorkers}
+                    useWindowScroll={true}
+                    layout="grid"
+                    overscan={300}
+                    loading={loading}
+                    renderItem={(worker) => {
+                      const isAvailable = worker.isAvailableNow || /available|today|emergency/i.test(worker.availability || "");
+                      return (
                       <div
-                        key={worker.id}
-                        id={`worker-card-${worker.id}`}
-                        className={`flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 relative ${
-                          selectedWorkerId === worker.id
-                            ? "border-blue-500 shadow-xl ring-2 ring-blue-100 scale-[1.01]"
-                            : "border-gray-100 hover:border-blue-100 hover:shadow-2xl"
+                        key={worker.id || worker._id}
+                        id={`worker-card-${worker.id || worker._id}`}
+                        className={`group flex flex-col overflow-hidden rounded-3xl border bg-white dark:bg-slate-800 transition-all duration-300 ease-out relative h-full hover:-translate-y-1.5 ${
+                          selectedWorkerId === (worker.id || worker._id)
+                            ? "border-blue-500 shadow-xl ring-2 ring-blue-500/50 scale-[1.01]"
+                            : isAvailable
+                            ? "border-emerald-400/80 dark:border-emerald-500/60 shadow-md shadow-emerald-500/5 hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/15 ring-1 ring-emerald-500/20"
+                            : "border-amber-300/80 dark:border-amber-500/50 shadow-md shadow-amber-500/5 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/15 ring-1 ring-amber-400/20"
                         }`}
                       >
                         {/* Favorite/Save Toggle Button */}
@@ -928,7 +1254,7 @@ const Services = () => {
                             e.stopPropagation();
                             handleToggleFavorite(worker._id || worker.id);
                           }}
-                          className="absolute top-4 right-4 p-2.5 rounded-full bg-white/95 hover:bg-white text-gray-400 hover:text-red-500 transition-all shadow-sm border border-gray-100/60 z-10 focus:outline-none"
+                          className="absolute top-4 right-4 p-2.5 rounded-full bg-white/95 dark:bg-slate-900/95 hover:bg-white text-gray-400 hover:text-red-500 transition-all shadow-sm border border-gray-100/60 z-10 focus:outline-none"
                           title={favoritedWorkerIds.has(worker._id || worker.id) ? "Remove from Saved" : "Save Professional"}
                         >
                           <Heart
@@ -940,20 +1266,41 @@ const Services = () => {
                           />
                         </button>
 
+                        {/* Compare Checkbox */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleCompare(worker._id || worker.id);
+                          }}
+                          className={`absolute top-4 left-4 p-2.5 rounded-full transition-all shadow-sm border z-10 focus:outline-none ${
+                            compareIds.includes(worker._id || worker.id)
+                              ? "bg-blue-600 border-blue-600 text-white"
+                              : "bg-white/95 dark:bg-slate-900/95 hover:bg-white border-gray-100/60 text-gray-400 hover:text-blue-500"
+                          }`}
+                          title={compareIds.includes(worker._id || worker.id) ? "Remove from comparison" : "Add to comparison"}
+                        >
+                          <GitCompareArrows className="h-5 w-5" />
+                        </button>
+
                         {/* WORKER IMAGE & BADGES */}
-                        <div className="relative h-48 bg-slate-100">
+                        <div className="relative h-48 bg-slate-100 dark:bg-slate-900 overflow-hidden">
                           {/* Image placeholder or fallback */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 font-bold text-5xl">
+                          <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center text-slate-400 font-bold text-5xl group-hover:scale-105 transition-transform duration-500">
                             {worker.name.charAt(0)}
                           </div>
                           
                           {/* Badges Overlay */}
                           <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-                            <span className="rounded-lg bg-slate-900/80 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                            <span className="rounded-lg bg-slate-900/90 dark:bg-slate-950/90 px-2.5 py-1 text-xs font-extrabold text-white backdrop-blur-sm shadow-sm border border-white/10">
                               {worker.profession}
                             </span>
+                            <span className="rounded-lg bg-blue-600/90 px-2.5 py-1 text-xs font-black text-white backdrop-blur-sm shadow-xs border border-blue-400/40">
+                              📍 {worker.distanceText || (worker.distanceKm !== undefined ? `${worker.distanceKm} km away` : '1.8 km away')}
+                            </span>
                             {worker.verified && (
-                              <span className="rounded-lg bg-emerald-500/80 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                              <span className="rounded-lg bg-emerald-600/90 px-2.5 py-1 text-xs font-extrabold text-white backdrop-blur-sm shadow-sm border border-emerald-400/30">
                                 Verified
                               </span>
                             )}
@@ -963,10 +1310,19 @@ const Services = () => {
                         {/* CONTENT */}
                         <div className="flex flex-1 flex-col p-6">
                           <div className="mb-2 flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-gray-900">{worker.name}</h3>
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm font-bold text-gray-700">{worker.rating}</span>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{worker.name}</h3>
+                              {worker.isAvailableNow && (
+                                <span className="relative flex h-3 w-3" title="Available Now">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                                </span>
+                              )}
+                            </div>
+                            {/* High-Contrast Floating Rating Pill */}
+                            <div className="flex items-center gap-1.5 rounded-full bg-amber-400 dark:bg-amber-500 px-3 py-1 text-xs font-black text-slate-950 shadow-md shadow-amber-500/20 border border-amber-300/50 transition-transform group-hover:scale-105">
+                              <Star className="h-3.5 w-3.5 fill-slate-950 text-slate-950" />
+                              <span>{Number(worker.rating).toFixed(1)}</span>
                             </div>
                           </div>
 
@@ -1018,8 +1374,9 @@ const Services = () => {
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  }}
+                  />
                 </>
               )}
             </div>
@@ -1038,6 +1395,40 @@ const Services = () => {
           </div>
         </div>
       </div>
+      {/* Floating Compare Bar */}
+      {compareIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white rounded-2xl shadow-2xl border border-gray-200 px-5 py-3 flex items-center gap-4 animate-in slide-in-from-bottom-4">
+          <span className="text-sm font-bold text-gray-700">
+            Compare ({compareIds.length}/3)
+          </span>
+          <div className="flex gap-2">
+            {getCompareWorkerNames().map((name, idx) => (
+              <span key={idx} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+                {name}
+                <button
+                  type="button"
+                  onClick={() => removeCompare(compareIds[idx])}
+                  className="hover:text-red-500 transition"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={goToCompare}
+            disabled={compareIds.length < 2}
+            className={`rounded-xl px-5 py-2 text-sm font-bold transition ${
+              compareIds.length >= 2
+                ? "bg-slate-900 text-white hover:bg-blue-600"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            Compare Now
+          </button>
+        </div>
+      )}
       {selectedWorkerForWizard && (
         <EstimateWizard
           isOpen={!!selectedWorkerForWizard}

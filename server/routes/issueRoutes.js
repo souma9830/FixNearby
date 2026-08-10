@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { protect } from '../middleware/authMiddleware.js';
 import {
   getIssues,
   getNearbyIssues,
@@ -14,8 +15,6 @@ import {
   respondToDispute,
   supportReviewDispute
 } from '../controllers/issueController.js';
-import { protect } from '../middleware/authMiddleware.js';
-
 const router = express.Router();
 
 // Guarantee upload directory exists
@@ -82,7 +81,8 @@ router.patch('/:id/dispute/status', protect, supportReviewDispute);
 // GET /:id — issue detail
 router.get('/:id', getIssueById);
 
-// PATCH /:id/status
+// PUT & PATCH /:id/status — status update
+router.put('/:id/status', updateIssueStatus);
 router.patch('/:id/status', updateIssueStatus);
 
 export default router;

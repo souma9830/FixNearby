@@ -5,9 +5,9 @@ import ChatSidebar from '../components/ChatSidebar';
 import { connectSocket, disconnectSocket, onPresenceUpdate } from '../services/socketService';
 
 const MOCK_CONVERSATIONS = [
-  { id: 'conv1', participant: 'John Doe', role: 'Electrician', lastMessage: 'I can come by tomorrow at 2pm', timestamp: new Date(Date.now() - 300000), unread: 2, online: true },
-  { id: 'conv2', participant: 'Jane Smith', role: 'Plumber', lastMessage: 'Thanks for the quick response!', timestamp: new Date(Date.now() - 7200000), unread: 0, online: false },
-  { id: 'conv3', participant: 'Mike Johnson', role: 'Carpenter', lastMessage: 'The materials will cost around $50', timestamp: new Date(Date.now() - 86400000), unread: 1, online: true },
+  { id: 'conv1', participant: 'John Doe', role: 'Electrician', lastMessage: 'I can come by tomorrow at 2pm', timestamp: new Date(Date.now() - 300000), unread: 2, online: true, isVerified: true },
+  { id: 'conv2', participant: 'Jane Smith', role: 'Plumber', lastMessage: 'Thanks for the quick response!', timestamp: new Date(Date.now() - 7200000), unread: 0, online: false, isVerified: false },
+  { id: 'conv3', participant: 'Mike Johnson', role: 'Carpenter', lastMessage: 'The materials will cost around $50', timestamp: new Date(Date.now() - 86400000), unread: 1, online: true, isVerified: true },
 ];
 
 const MOCK_MESSAGES = {
@@ -29,9 +29,9 @@ const MOCK_MESSAGES = {
 };
 
 const ChatPage = () => {
-  const [activeConversation, setActiveConversation] = useState(null);
+  const [activeConversation, setActiveConversation] = useState('conv1');
   const [conversations, setConversations] = useState(MOCK_CONVERSATIONS);
-  const [messages, setMessages] = useState({});
+  const [messages, setMessages] = useState(MOCK_MESSAGES);
   const [connected, setConnected] = useState(false);
 
   useDocumentTitle('Chat');
@@ -87,12 +87,21 @@ const ChatPage = () => {
   };
 
   const handleSendMessage = (text) => {
-    if (!activeConversation || !text.trim()) return;
+    if (!activeConversation || typeof text !== 'string' || !text.trim()) return;
+
+    const sanitized = text
+      .trim()
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;');
 
     const newMsg = {
       id: `msg-${Date.now()}`,
       senderId: 'user',
-      text: text.trim(),
+      text: sanitized,
       timestamp: new Date(),
       isOwn: true,
     };
@@ -105,7 +114,7 @@ const ChatPage = () => {
     setConversations(prev =>
       prev.map(c =>
         c.id === activeConversation
-          ? { ...c, lastMessage: text.trim(), timestamp: new Date() }
+          ? { ...c, lastMessage: sanitized, timestamp: new Date() }
           : c
       )
     );
