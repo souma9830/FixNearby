@@ -33,6 +33,11 @@ const MultiLocationGeofenceCard = ({ geofenceConfig, onZoneToggle }) => {
           <p className="text-xs text-gray-400 italic">No additional service zones configured.</p>
         )}
       </div>
+
+      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center text-xs text-gray-500">
+        <span>Travel Surcharge: ${geofenceConfig.travelSurchargePerKm || 0}/km beyond zone</span>
+        <span className="text-emerald-600 dark:text-emerald-400 font-medium">Live GPS Monitoring Active</span>
+      </div>
     </div>
   );
 };
