@@ -2,18 +2,20 @@ import axios from "axios";
 import { getCsrfToken, fetchCsrfToken } from "./csrfService";
 
 const normalizeApiBaseURL = (value) => {
-  const baseURL = (value || "http://localhost:5000/api").replace(/\/+$/, "");
+  const fallback = import.meta.env.PROD ? "/api" : "http://localhost:5000/api";
+  const baseURL = (value || fallback).replace(/\/+$/, "");
   return baseURL.endsWith("/api") ? baseURL : `${baseURL}/api`;
 };
 
 const api = axios.create({
-   baseURL: normalizeApiBaseURL(import.meta.env.VITE_API_URL),
-    headers:{
-        "Content-Type":"application/json"
-    },
-    timeout:15000,
-    withCredentials: true,
+  baseURL: normalizeApiBaseURL(import.meta.env.VITE_API_URL),
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 15000,
+  withCredentials: true,
 });
+
 
 const TIMING_THRESHOLD_SLOW = 3000;
 
@@ -30,8 +32,10 @@ api.interceptors.response.use(
     if (response.headers["x-csrf-token"]) {
       sessionStorage.setItem("csrf_token", response.headers["x-csrf-token"]);
     }
+
     const startTime = response.config?.metadata?.startTime;
     if (startTime) {
+
       const duration = performance.now() - startTime;
       const method = (response.config.method || 'GET').toUpperCase();
       const url = response.config.url || '';
@@ -90,6 +94,11 @@ api.interceptors.request.use(
 
     const method = config.method?.toUpperCase();
     if (method && !["GET", "HEAD", "OPTIONS"].includes(method)) {
+      // Automatically generate and inject an Idempotency-Key if not explicitly set
+      if (!config.headers["Idempotency-Key"]) {
+        config.headers["Idempotency-Key"] = 'idemp_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
+      }
+
       const csrfToken = getCsrfToken();
       if (csrfToken) {
         config.headers["X-CSRF-Token"] = csrfToken;
@@ -102,5 +111,30 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Automatic retry response interceptor for retry-safe network mutations
+api.interceptors.response.use(null, async (error) => {
+  const { config } = error;
+  if (!config) return Promise.reject(error);
+
+  config.retryCount = config.retryCount || 0;
+
+  // Retry only on network connectivity issues (no response) or temporary server faults (5xx)
+  const shouldRetry = (!error.response || (error.response.status >= 500 && error.response.status <= 599)) &&
+                      config.retryCount < 3;
+
+  if (shouldRetry) {
+    config.retryCount += 1;
+    console.warn(`[API RETRY] Retrying request (${config.retryCount}/3) for ${config.method?.toUpperCase()} ${config.url}`);
+    
+    // Exponential backoff delay
+    const delay = Math.pow(2, config.retryCount) * 1000;
+    await new Promise(resolve => setTimeout(resolve, delay));
+    
+    return api(config);
+  }
+
+  return Promise.reject(error);
+});
 
 export default api;

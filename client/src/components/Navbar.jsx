@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+import { Bell, MessageSquare } from 'lucide-react';
 import NavLanguageToggle from "./NavLanguageToggle";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from '../context/AuthContext';
@@ -39,7 +39,7 @@ const Navbar = () => {
 
   // Fetch unread notification count when authenticated
   useEffect(() => {
-    if (!authenticated) return;
+    if (!isAuthenticated) return;
     let cancelled = false;
     const fetchCount = async () => {
       try {
@@ -53,7 +53,8 @@ const Navbar = () => {
     // Poll every 60s for fresh count
     const interval = setInterval(fetchCount, 60000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, [authenticated]);
+  }, [isAuthenticated]);
+
 
   // Scroll shadow
   useEffect(() => {
@@ -181,6 +182,10 @@ const Navbar = () => {
 
               {authenticated ? (
                 <>
+                  <Link to="/chat" className={desktopLinkCls('/chat')}>
+                    Chat
+                  </Link>
+
                   <Link to="/bookings" className={desktopLinkCls('/bookings')}>
                     {t("nav.bookings")}
                   </Link>
@@ -247,6 +252,15 @@ const Navbar = () => {
                       </Link>
 
                       <Link
+                        to="/chat"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        role="menuitem"
+                      >
+                        <MessageSquare className="w-4 h-4 text-slate-400" />
+                        Chat Messages
+                      </Link>
+
+                      <Link
                         to="/bookings"
                         className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                         role="menuitem"
@@ -266,6 +280,17 @@ const Navbar = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
                         </svg>
                         Saved Workers
+                      </Link>
+
+                      <Link
+                        to="/worker/earnings"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        role="menuitem"
+                      >
+                        <svg className="w-4 h-4 text-[#0056D2]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-6h6M6 12h12" />
+                        </svg>
+                        Worker Earnings
                       </Link>
 
                       <div className="my-1 border-t border-slate-100" />

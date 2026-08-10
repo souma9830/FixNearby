@@ -22,7 +22,6 @@ router.post('/:id/report', protect, reportReview);
 router.get('/:id', getReviewById);
 router.put('/:id', protect, updateReview);
 router.delete('/:id', protect, deleteReview);
+router.post('/:reviewId/response', protect, respondToReview);
 
 export default router;
-
-router.post('/:reviewId/response', respondToReview);

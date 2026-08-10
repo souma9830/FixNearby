@@ -41,6 +41,7 @@ const WorkerRegister = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [docVerificationStatus, setDocVerificationStatus] = useState("pending");
 
   const [error, setError] = useState("");
 

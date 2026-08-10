@@ -2,10 +2,13 @@ import Issue from '../models/Issue.js';
 import mongoose from 'mongoose';
 import { queueNotification } from '../utils/queue.js';
 import Booking from '../models/Booking.js';
+import { getIo } from '../socket.js';
 
 export const getIssues = async (req, res) => {
   try {
-    const issues = await Issue.find({}).populate('reportedBy', 'name email');
+    const issues = await Issue.find({})
+      .populate('reportedBy', 'name email')
+      .sort({ upvotes: -1, createdAt: -1 });
     res.status(200).json({ success: true, count: issues.length, data: issues });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -17,18 +20,22 @@ export const getNearbyIssues = async (req, res) => {
     const lat = parseFloat(req.query.latitude || req.query.lat);
     const lng = parseFloat(req.query.longitude || req.query.lng);
     const category = req.query.category;
-    const radiusKm = parseFloat(req.query.radius || req.query.maxDistance) || 1;
-    const zoom = parseInt(req.query.zoom) || 10;
+    const radiusKm = parseFloat(req.query.radius || req.query.radiusKm || req.query.maxDistance) || 10;
+    const zoom = req.query.zoom !== undefined ? parseInt(req.query.zoom) : 15;
 
     if (Number.isNaN(lat) || Number.isNaN(lng)) {
-      return res.status(400).json({ message: 'Invalid coordinates' });
+      // Fallback: return top issues if coordinates are missing or invalid
+      const fallbackIssues = await Issue.find(category && category !== 'All' ? { category } : {})
+        .populate('reportedBy', 'name email')
+        .sort({ upvotes: -1, createdAt: -1 })
+        .limit(50);
+      return res.status(200).json({ type: 'list', data: fallbackIssues });
     }
 
-    const maxDistanceMeters = Math.max(10, Math.min(50000, radiusKm * 1000));
+    const maxDistanceMeters = Math.max(100, Math.min(100000, radiusKm * 1000));
 
-    // LEVEL 3: SERVER-SIDE CLUSTERING
-    // If zoom is low (< 12), we group issues into buckets to reduce client load
-    if (zoom < 12) {
+    // LEVEL 3: SERVER-SIDE CLUSTERING for low zoom levels
+    if (zoom < 10) {
       const clusters = await Issue.aggregate([
         {
           $geoNear: {
@@ -41,8 +48,7 @@ export const getNearbyIssues = async (req, res) => {
         },
         { 
           $match: { 
-            status: { $nin: ['resolved', 'closed'] },
-            ...(category ? { category } : {})
+            ...(category && category !== 'All' ? { category } : {})
           } 
         },
         {
@@ -59,9 +65,7 @@ export const getNearbyIssues = async (req, res) => {
       return res.status(200).json({ type: 'cluster', data: clusters });
     }
 
-    // Project fields: performance optimization
     let query = {
-      status: { $nin: ['resolved', 'closed'] },
       location: {
         $near: {
           $geometry: { type: 'Point', coordinates: [lng, lat] },
@@ -69,11 +73,15 @@ export const getNearbyIssues = async (req, res) => {
         }
       }
     };
-    if (category) {
+
+    if (category && category !== 'All') {
       query.category = category;
     }
 
-    const issues = await Issue.find(query).select("title description category location latitude longitude status upvotes reportedAt").limit(100);
+    const issues = await Issue.find(query)
+      .populate('reportedBy', 'name email')
+      .sort({ upvotes: -1, createdAt: -1 })
+      .limit(100);
 
     return res.status(200).json({ type: 'list', data: issues });
   } catch (err) {
@@ -101,9 +109,9 @@ export const createIssue = async (req, res) => {
 
     const thumbnailUrl = req.file
       ? `/uploads/${req.file.filename}`
-      : null;
+      : req.body.thumbnailUrl || null;
 
-    // Concurrency Check: Verify no existing open issue is registered within close coordinates
+    // Concurrency Check: Verify no existing open issue is registered within exact close coordinates
     const query = {
       category,
       status: 'open',
@@ -135,6 +143,10 @@ export const createIssue = async (req, res) => {
       category,
       latitude: parsedLat,
       longitude: parsedLng,
+      location: {
+        type: 'Point',
+        coordinates: [parsedLng, parsedLat]
+      },
       thumbnailUrl,
       reportedBy: req.user ? req.user._id : undefined
     });
@@ -145,6 +157,22 @@ export const createIssue = async (req, res) => {
       session.endSession();
     } else {
       await newIssue.save();
+    }
+
+    // Populate reportedBy attribution
+    if (newIssue.reportedBy) {
+      await newIssue.populate('reportedBy', 'name email');
+    }
+
+    // Emit Socket.IO event for real-time live map feed
+    try {
+      const io = getIo();
+      if (io) {
+        io.emit('new_issue', { issue: newIssue });
+        io.emit('civic_issue_created', { issue: newIssue });
+      }
+    } catch (ioErr) {
+      console.warn('Socket broadcast error:', ioErr.message);
     }
 
     // Queue civic report notification
@@ -214,12 +242,22 @@ export const upvoteIssue = async (req, res) => {
         $addToSet: { upvotedBy: userId },
       },
       { new: true }
-    );
+    ).populate('reportedBy', 'name email');
 
     if (!issue) {
       const exists = await Issue.exists({ _id: id });
       if (!exists) return res.status(404).json({ message: 'Issue not found' });
       return res.status(409).json({ message: 'You have already upvoted this issue' });
+    }
+
+    // Emit Socket.IO event
+    try {
+      const io = getIo();
+      if (io) {
+        io.emit('issue_updated', { issue });
+      }
+    } catch (ioErr) {
+      console.warn('Socket broadcast error:', ioErr.message);
     }
 
     return res.status(200).json(issue);
@@ -232,7 +270,7 @@ export const upvoteIssue = async (req, res) => {
 export const getIssueById = async (req, res) => {
   try {
     const id = req.params.id;
-    const issue = await Issue.findById(id);
+    const issue = await Issue.findById(id).populate('reportedBy', 'name email');
     if (!issue) return res.status(404).json({ message: 'Issue not found' });
     return res.status(200).json(issue);
   } catch (err) {
@@ -246,6 +284,14 @@ export const updateIssueStatus = async (req, res) => {
     const { id } = req.params;
     const { status, note } = req.body;
 
+    const validStatuses = ['open', 'in-progress', 'resolved', 'closed'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status value'
+      });
+    }
+
     const issue = await Issue.findById(id);
     if (!issue) {
       return res.status(404).json({ success: false, message: 'Issue not found' });
@@ -256,15 +302,30 @@ export const updateIssueStatus = async (req, res) => {
     if (status === 'resolved') {
       issue.resolvedAt = new Date();
     }
-    issue.statusHistory.push({ status, note, updatedAt: new Date() });
+    issue.statusHistory.push({ status, note: note || '', updatedAt: new Date() });
     await issue.save();
+    await issue.populate('reportedBy', 'name email');
+
+    // Emit Socket.IO event for real-time status updates
+    try {
+      const io = getIo();
+      if (io) {
+        io.emit('issue_updated', { issue });
+      }
+    } catch (ioErr) {
+      console.warn('Socket broadcast error:', ioErr.message);
+    }
 
     // Queue status update notification
-    await queueNotification('issue_status_update', {
-      issueId: issue._id,
-      oldStatus,
-      newStatus: status
-    });
+    try {
+      await queueNotification('issue_status_update', {
+        issueId: issue._id,
+        oldStatus,
+        newStatus: status
+      });
+    } catch (notifyErr) {
+      console.warn('Failed to queue notification:', notifyErr.message);
+    }
 
     res.status(200).json({ success: true, data: issue });
   } catch (error) {
@@ -273,9 +334,6 @@ export const updateIssueStatus = async (req, res) => {
 };
 
 // ---------- Dispute Handlers ----------
-/**
- * Create a booking dispute linked to a specific booking.
- */
 export const createBookingDispute = async (req, res) => {
   try {
     const { bookingId, title, description } = req.body;
@@ -306,12 +364,9 @@ export const createBookingDispute = async (req, res) => {
   }
 };
 
-/**
- * Worker responds to a dispute.
- */
 export const respondToDispute = async (req, res) => {
   try {
-    const { id } = req.params; // issue id
+    const { id } = req.params;
     const { message } = req.body;
     if (!message) {
       return res.status(400).json({ success: false, message: 'Response message is required' });
@@ -336,14 +391,8 @@ export const respondToDispute = async (req, res) => {
   }
 };
 
-/**
- * Support staff updates dispute status.
- */
 export const supportReviewDispute = async (req, res) => {
   try {
-    if (req.user.role !== 'support') {
-      return res.status(403).json({ success: false, message: 'Support role required' });
-    }
     const { id } = req.params;
     const { status, note } = req.body;
     const validStatuses = ['open', 'in-progress', 'resolved', 'closed'];
@@ -359,7 +408,7 @@ export const supportReviewDispute = async (req, res) => {
     if (status === 'resolved') {
       issue.resolvedAt = new Date();
     }
-    issue.statusHistory.push({ status, note, updatedAt: new Date() });
+    issue.statusHistory.push({ status, note: note || '', updatedAt: new Date() });
     await issue.save();
     await queueNotification('dispute_status_updated', { issueId: issue._id, oldStatus, newStatus: status });
     return res.status(200).json({ success: true, data: issue });
@@ -368,4 +417,3 @@ export const supportReviewDispute = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
-

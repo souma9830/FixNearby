@@ -91,3 +91,7 @@ Thumbs.db
 
 # Ignore uploaded images/ files
 uploads/
+
+# Local database files and screenshots
+db/
+screenshots/
