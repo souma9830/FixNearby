@@ -10,13 +10,19 @@ export const submitBadgeRequest = async (data) => {
   return response.data;
 };
 
-export const reviewBadgeRequest = async (requestId, status) => {
-  const response = await apiClient.put(`/badges/review/${requestId}`, { status });
+export const reviewBadgeRequest = async (requestId, status, reviewNotes) => {
+  const response = await apiClient.put(`/badges/review/${requestId}`, { status, reviewNotes });
+  return response.data;
+};
+
+export const getMyBadgeRequests = async () => {
+  const response = await apiClient.get('/badges/my-requests');
   return response.data;
 };
 
 export default {
   getPendingBadgeRequests,
   submitBadgeRequest,
-  reviewBadgeRequest
+  reviewBadgeRequest,
+  getMyBadgeRequests
 };

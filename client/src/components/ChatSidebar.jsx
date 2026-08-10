@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Search, MessageSquare, Wifi, WifiOff } from 'lucide-react';
+import { Search, MessageSquare, Wifi, WifiOff, BadgeCheck } from 'lucide-react';
 
 const ChatSidebar = ({ conversations, activeConversation, onSelectConversation, connected }) => {
   const [search, setSearch] = useState('');
 
   const filtered = conversations.filter((c) =>
-    c.participant.toLowerCase().includes(search.toLowerCase())
+    c.participant.toLowerCase().includes(search.toLowerCase()) ||
+    (c.lastMessage && c.lastMessage.toLowerCase().includes(search.toLowerCase())) ||
+    (c.serviceCategory && c.serviceCategory.toLowerCase().includes(search.toLowerCase()))
   );
 
   const formatRelativeTime = (date) => {
@@ -75,15 +77,23 @@ const ChatSidebar = ({ conversations, activeConversation, onSelectConversation, 
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600">
                 {conv.participant.charAt(0)}
               </div>
-              {conv.online && (
-                <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
-              )}
+              <span
+                className={`absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${
+                  conv.online ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300'
+                }`}
+                title={conv.online ? 'Active now' : 'Offline'}
+              />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-900 truncate">
-                  {conv.participant}
-                </span>
+                <div className="flex items-center">
+                  <span className="text-sm font-semibold text-slate-900 truncate">
+                    {conv.participant}
+                  </span>
+                  {conv.isVerified && (
+                    <BadgeCheck className="ml-1 h-4 w-4 shrink-0 text-cyan-500" />
+                  )}
+                </div>
                 <span className="shrink-0 text-[10px] text-slate-400">
                   {formatRelativeTime(conv.timestamp)}
                 </span>

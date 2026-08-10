@@ -101,7 +101,10 @@ export const getFavorites = async (req, res, next) => {
         createdAt: fav.createdAt
       }));
 
-    res.status(200).json(formatted);
+    const { rankFavoriteWorkers } = await import('../services/favoriteWorkerRankingService.js');
+    const rankedFavorites = rankFavoriteWorkers(formatted);
+
+    res.status(200).json(rankedFavorites);
   } catch (error) {
     next(error);
   }

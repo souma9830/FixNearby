@@ -7,9 +7,10 @@ import SkeletonLoader from "../components/SkeletonLoader";
 import CivicIssueMap from "../components/CivicIssueMap";
 import { getNearbyIssues, upvoteIssue } from "../services/issueService";
 import useToast from "../hooks/useToast";
-import { AlertTriangle, Map as MapIcon, List, PlusCircle, RefreshCw } from "lucide-react";
+import { AlertTriangle, Map as MapIcon, List, PlusCircle, RefreshCw, Download } from "lucide-react";
 import useGeolocation from "../hooks/useGeolocation";
 import { getSocket } from "../services/socketService";
+import { downloadCivicIssuesGeoJson } from "../utils/civicGeoJson";
 
 const CATEGORIES = [
   "All",
@@ -126,6 +127,16 @@ const CivicIssues = () => {
   const inProgressCount = filteredIssues.filter((i) => i.status === "in-progress").length;
   const resolvedCount = filteredIssues.filter((i) => i.status === "resolved" || i.status === "closed").length;
 
+  const handleGeoJsonExport = () => {
+    const exportedCount = downloadCivicIssuesGeoJson(filteredIssues);
+    showToast(
+      exportedCount > 0
+        ? `Exported ${exportedCount} mapped issue${exportedCount === 1 ? "" : "s"}.`
+        : "No mapped issues are available to export.",
+      exportedCount > 0 ? "success" : "warning",
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       {/* Hero Heading */}
@@ -176,13 +187,24 @@ const CivicIssues = () => {
           </button>
         </div>
 
-        <button
-          onClick={fetchIssues}
-          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition"
-        >
-          <RefreshCw size={14} className={loading ? "animate-spin text-blue-600" : "text-slate-500"} />
-          Refresh Feed
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleGeoJsonExport}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition"
+          >
+            <Download size={14} />
+            Export GeoJSON
+          </button>
+          <button
+            type="button"
+            onClick={fetchIssues}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin text-blue-600" : "text-slate-500"} />
+            Refresh Feed
+          </button>
+        </div>
       </div>
 
       {/* Main Content Sections */}

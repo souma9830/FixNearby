@@ -22,7 +22,9 @@ const badgeRequestSchema = new mongoose.Schema(
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
-    }
+    },
+    reviewNotes: String,
+    expiresAt: Date
   },
   { timestamps: true }
 );

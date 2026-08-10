@@ -6,6 +6,8 @@ import { checkForDuplicates, getNearbyCandidates } from '../services/duplicateDe
 import { createIssue, upvoteIssue } from '../services/issueService';
 import { setIssuesCache } from '../services/issuesCache';
 import DuplicateWarningModal from './DuplicateWarningModal';
+import ImageUpload from './ImageUpload';
+import { compressImage } from '../utils/imageCompressor';
 
 const ISSUE_CATEGORIES = [
   'Traffic Light',
@@ -137,28 +139,26 @@ const IssueSubmissionForm = ({ onSubmitSuccess }) => {
   };
 
   // Handle image change
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  // Handle image change with client-side compression
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('Image size must be less than 5MB', 'error');
-        return;
-      }
-
       if (!file.type.startsWith('image/')) {
         showToast('Please upload a valid image file', 'error');
         return;
       }
 
-      setFormData((prev) => ({ ...prev, imageFile: file }));
-
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedResult = await compressImage(file, { maxWidth: 1920, maxHeight: 1920, quality: 0.8 });
+        setFormData((prev) => ({ ...prev, imageFile: compressedResult.file }));
+        setImagePreview(URL.createObjectURL(compressedResult.file));
+        if (compressedResult.compressed) {
+          showToast(`Image compressed from ${(compressedResult.originalSize / 1024 / 1024).toFixed(1)}MB to ${(compressedResult.compressedSize / 1024).toFixed(0)}KB for 3G upload`, 'success');
+        }
+      } catch (err) {
+        setFormData((prev) => ({ ...prev, imageFile: file }));
+        setImagePreview(URL.createObjectURL(file));
+      }
     }
   };
 
@@ -521,36 +521,17 @@ const IssueSubmissionForm = ({ onSubmitSuccess }) => {
           </div>
         </div>
 
-        {/* Image Upload */}
-        <div>
-          <label htmlFor="image" className="block text-sm font-semibold text-gray-700 mb-2">
-            Photo (Optional)
-          </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 transition">
-            <input
-              type="file"
-              id="image"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
-            <label htmlFor="image" className="cursor-pointer">
-              {imagePreview ? (
-                <div className="space-y-3">
-                  <img src={imagePreview} alt="Preview" className="max-h-48 mx-auto rounded-lg" />
-                  <p className="text-sm text-blue-600 font-semibold">Click to change image</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Upload className="mx-auto text-gray-400" size={32} />
-                  <p className="text-sm text-gray-600">
-                    Click to upload an image <span className="text-gray-400">(Max 5MB)</span>
-                  </p>
-                </div>
-              )}
-            </label>
-          </div>
-        </div>
+        {/* Image Upload Component */}
+        <ImageUpload
+          label="Photo (Optional)"
+          selectedFile={formData.imageFile}
+          previewUrl={imagePreview}
+          disabled={isSubmitting}
+          onImageSelect={(compressedFile) => {
+            setFormData((prev) => ({ ...prev, imageFile: compressedFile }));
+            setImagePreview(compressedFile ? URL.createObjectURL(compressedFile) : null);
+          }}
+        />
 
         {/* Submit Button */}
         <button

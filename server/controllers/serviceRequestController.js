@@ -118,7 +118,10 @@ export const getRequestById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Service request not found' });
     }
 
-    res.json({ success: true, request });
+    const { verifyWarrantyCoverage } = await import('../services/serviceWarrantyCoverageService.js');
+    const warrantyInfo = verifyWarrantyCoverage(request.createdAt);
+
+    res.json({ success: true, request, warrantyInfo });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
