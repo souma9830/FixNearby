@@ -1,4 +1,5 @@
 import WorkerSkillsMatrixVerification from '../models/WorkerSkillsMatrixVerification.js';
+import SkillEndorsementAudit from '../models/SkillEndorsementAudit.js';
 
 export const getWorkerSkillsMatrix = async (req, res, next) => {
   try {
@@ -45,3 +46,28 @@ export const addSkillCertification = async (req, res, next) => {
     next(error);
   }
 };
+
+export const endorseWorkerSkill = async (req, res, next) => {
+  try {
+    const { workerId } = req.params;
+    const { skillName, endorsementRating, bookingId, comment } = req.body;
+
+    const endorsement = await SkillEndorsementAudit.create({
+      workerId,
+      endorsedByUserId: req.user._id || req.user.id,
+      skillName,
+      endorsementRating: endorsementRating || 5,
+      verifiedJobContextId: bookingId || null,
+      comment: comment || '',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Worker skill endorsed successfully and audit trail logged',
+      data: endorsement,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
