@@ -1,11 +1,13 @@
 import express from 'express';
-const router = express.Router();
-import { createDispute, getDisputes, getDisputeById, resolveDispute } from '../controllers/disputeController.js';
-import { protect, adminOnly } from '../middleware/authMiddleware.js';
+import { createDispute, getDisputes, resolveDispute } from '../controllers/disputeController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
-router.post('/', protect, createDispute);
-router.get('/', protect, adminOnly, getDisputes);
-router.get('/:id', protect, getDisputeById);
-router.patch('/:id/resolve', protect, adminOnly, resolveDispute);
+const router = express.Router();
+
+router.use(protect);
+
+router.post('/', createDispute);
+router.get('/', getDisputes);
+router.patch('/:id/resolve', resolveDispute);
 
 export default router;

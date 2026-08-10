@@ -38,12 +38,11 @@ The project runs two test suites:
 - **New integration tests** (`npm run test:new` in `server/`): Health check, booking expiry, reminders, favorites, audit logs, rate limiting, review responses, validation schemas, and password policy.
 Both suites must pass before merging to `master`.
 
-## CI/CD Integration
+## CI/CD Quality Gate Workflows
 Pull requests against `master` automatically trigger:
-1. **Server Tests** — Integration test suite via GitHub Actions.
-2. **Client Lint** — ESLint on the React frontend.
-3. **Client Build** — Vite production build verification.
-Refer to `.github/workflows/ci-quality.yml` for the exact pipeline definition.
+1. **Automated Quality Gate** (`.github/workflows/quality-gate.yml`) — Backend sanity testing and frontend production build verification.
+2. **Documentation Integrity** (`.github/workflows/documentation-check.yml`) — Validates link integrity across docs directory.
+3. **Structured PR Checklists** — Managed via `.github/PULL_REQUEST_TEMPLATE/feature_pr.md`.
 
 ## Coding Rules
 - Do not commit secrets/credentials.

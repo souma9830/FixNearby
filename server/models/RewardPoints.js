@@ -17,9 +17,22 @@ const rewardPointsSchema = new mongoose.Schema(
       enum: ['Bronze', 'Silver', 'Gold', 'Platinum'],
       default: 'Bronze'
     },
+    lifetimeEarned: {
+      type: Number,
+      default: 0
+    },
+    activeCoupons: [
+      {
+        code: { type: String, required: true },
+        discount: { type: Number, required: true },
+        title: { type: String, required: true },
+        expiresAt: { type: Date, required: true },
+        isUsed: { type: Boolean, default: false }
+      }
+    ],
     transactions: [
       {
-        type: { type: String, enum: ['earned', 'redeemed'] },
+        type: { type: String, enum: ['earned', 'redeemed', 'expired'] },
         points: Number,
         description: String,
         createdAt: { type: Date, default: Date.now }

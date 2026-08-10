@@ -25,6 +25,14 @@ const geofenceSchema = new mongoose.Schema(
         type: [Number],
         default: [0, 0]
       }
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    },
+    maxTravelTimeMinutes: {
+      type: Number,
+      default: 45
     }
   },
   { timestamps: true }
