@@ -1,56 +1,42 @@
 import mongoose from 'mongoose';
 
-const serviceWarrantyClaimSchema = new mongoose.Schema({
-  bookingId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking',
-    required: true,
-    index: true,
+const serviceWarrantyClaimSchema = new mongoose.Schema(
+  {
+    bookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Booking',
+      required: true,
+      index: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    workerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Worker',
+      required: true,
+    },
+    warrantyPeriodDays: {
+      type: Number,
+      default: 30,
+    },
+    issueDescription: {
+      type: String,
+      required: true,
+    },
+    claimStatus: {
+      type: String,
+      enum: ['submitted', 'approved_free_revisit', 'rejected', 'resolved'],
+      default: 'submitted',
+    },
+    scheduledRevisitDate: {
+      type: Date,
+    },
   },
-  customerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  originalWorkerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  claimDescription: {
-    type: String,
-    required: true,
-    minlength: 15,
-  },
-  defectPhotos: [{
-    type: String,
-  }],
-  warrantyDaysAllowed: {
-    type: Number,
-    default: 30, // 30-Day FixNearby Satisfaction Guarantee
-  },
-  claimStatus: {
-    type: String,
-    enum: ['Claim Filed', 'Inspection Scheduled', 'Re-Dispatch Assigned', 'Claim Resolved', 'Claim Rejected'],
-    default: 'Claim Filed',
-    index: true,
-  },
-  assignedInspectorWorkerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null,
-  },
-  resolutionSummary: {
-    type: String,
-    default: null,
-  },
-  claimCategory: {
-    type: String,
-    enum: ['Workmanship Defect', 'Part Failure', 'Recurring Leak', 'Electrical Short', 'Other'],
-    default: 'Workmanship Defect'
-  }
-}, {
-  timestamps: true,
-});
+  { timestamps: true }
+);
 
-export default mongoose.model('ServiceWarrantyClaim', serviceWarrantyClaimSchema);
+const ServiceWarrantyClaim = mongoose.model('ServiceWarrantyClaim', serviceWarrantyClaimSchema);
+export default ServiceWarrantyClaim;
