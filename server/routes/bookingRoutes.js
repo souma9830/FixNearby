@@ -21,6 +21,7 @@ import {
 import upload from '../middleware/uploadMiddleware.js';
 import { createBookingReview } from '../controllers/reviewController.js';
 import { useIdempotency } from '../middleware/idempotencyMiddleware.js';
+import { disputePayloadValidator } from '../middleware/disputeValidationMiddleware.js';
 
 const router = express.Router();
 
@@ -57,6 +58,9 @@ router.route('/:id/timeline')
 router.route('/:id/review')
   .post(upload.array('images', 5), createBookingReview);
 
+router.route('/:id/dispute-validate')
+  .post(disputePayloadValidator, (req, res) => res.json({ success: true, message: 'Payload validated' }));
+
 router.route('/:id/payment')
   .post(loadBooking, requireBookingParticipant, async (req, res, next) => {
     const { createPaymentIntent } = await import('../controllers/paymentController.js');
@@ -64,6 +68,3 @@ router.route('/:id/payment')
   });
 
 export default router;
-
-// Booking reminders hook initialization
-// Reminder check loaded on routes module initializations

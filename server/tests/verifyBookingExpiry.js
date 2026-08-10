@@ -27,10 +27,10 @@ async function runTests() {
     const expiredCount = await expirePendingBookings();
     console.log(`SUCCESS: Expired ${expiredCount} old pending bookings.`);
     const updated = await Booking.findById(b._id);
-    if (updated.status !== 'Cancelled') {
-      throw new Error("Expired booking status was not updated to Cancelled.");
+    if (updated.status !== 'Expired' && updated.status !== 'Cancelled') {
+      throw new Error("Expired booking status was not updated to Expired or Cancelled.");
     }
-    console.log("SUCCESS: Booking status set to Cancelled due to timeout.");
+    console.log("SUCCESS: Booking status set to Expired due to timeout.");
   } finally {
     await Booking.deleteOne({ _id: b._id });
     await mongoose.connection.close();

@@ -1,6 +1,8 @@
 import Review from '../models/Review.js';
 import Booking from '../models/Booking.js';
 import mongoose from 'mongoose';
+import { analyzeToxicity } from '../utils/sentiment.js';
+import { calculateWorkerQualityMetrics } from '../services/qualityAnalyticsService.js';
 
 // @desc    Create a new review
 // @route   POST /api/reviews
@@ -56,18 +58,29 @@ export const createReview = async (req, res) => {
       });
     }
 
+    // AI Sentiment Toxicity & Fraudulence Analysis (#883)
+    const toxicity = analyzeToxicity(reviewText);
+    const moderationStatus = toxicity.isToxic ? 'pending' : 'approved';
+
     // Create review
     const review = await Review.create({
       rating,
       reviewText,
       bookingReference,
       user: req.user._id,
-      worker: booking.workerId
+      worker: booking.workerId,
+      moderationStatus,
+      reported: toxicity.isToxic,
+      reportReason: toxicity.reason || '',
     });
 
+    const isFlagged = toxicity.isToxic;
     res.status(201).json({
       success: true,
-      message: 'Review submitted successfully',
+      message: isFlagged
+        ? 'Review submitted and held in PENDING_MODERATION by AI sentiment analysis'
+        : 'Review submitted successfully',
+      flaggedForModeration: isFlagged,
       review
     });
   } catch (error) {
@@ -95,6 +108,11 @@ export const getReviews = async (req, res) => {
         });
       }
       query.worker = workerId;
+    }
+
+    // Filter out pending or toxic reviews from public rendering (#883)
+    if (!req.query.includePending) {
+      query.moderationStatus = 'approved';
     }
 
     const reviews = await Review.find(query)
@@ -304,6 +322,10 @@ export const createBookingReview = async (req, res, next) => {
       images = Array.isArray(req.body.images) ? req.body.images : [req.body.images];
     }
 
+    // AI Sentiment Toxicity & Fraudulence Analysis (#883)
+    const toxicity = analyzeToxicity(reviewText);
+    const moderationStatus = toxicity.isToxic ? 'pending' : 'approved';
+
     const review = await Review.create({
       rating: Number(rating),
       reviewText,
@@ -311,12 +333,19 @@ export const createBookingReview = async (req, res, next) => {
       user: req.user._id,
       worker: booking.workerId,
       images,
-      isVerified: true
+      isVerified: true,
+      moderationStatus,
+      reported: toxicity.isToxic,
+      reportReason: toxicity.reason || '',
     });
 
+    const isFlagged = toxicity.isToxic;
     res.status(201).json({
       success: true,
-      message: 'Review submitted successfully',
+      message: isFlagged
+        ? 'Review submitted and held in PENDING_MODERATION by AI sentiment analysis'
+        : 'Review submitted successfully',
+      flaggedForModeration: isFlagged,
       review
     });
   } catch (error) {

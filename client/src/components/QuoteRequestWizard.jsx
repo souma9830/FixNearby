@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { createRequest } from "../services/serviceRequestService";
 import useToast from "../hooks/useToast";
+import useGeolocation from "../hooks/useGeolocation";
+import { compressImage } from "../utils/imageCompressor";
 import { useLocation } from "../context/LocationContext";
 
 const CATEGORIES = [
@@ -197,24 +199,29 @@ const QuoteRequestWizard = ({ onComplete }) => {
   };
 
   // Photo Upload Handler (simulated base64 / data URL)
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (photos.length + files.length > 3) {
       showToast("Maximum 3 photos allowed.", "warning");
       return;
     }
 
-    files.forEach((file) => {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast(`File ${file.name} exceeds 5MB limit.`, "warning");
-        return;
+    for (const file of files) {
+      try {
+        const result = await compressImage(file, { maxWidth: 1920, maxHeight: 1920, quality: 0.8 });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhotos((prev) => [...prev, { name: result.file.name, url: reader.result, compressed: result.compressed }]);
+        };
+        reader.readAsDataURL(result.file);
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPhotos((prev) => [...prev, { name: file.name, url: reader.result }]);
+        };
+        reader.readAsDataURL(file);
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotos((prev) => [...prev, { name: file.name, url: reader.result }]);
-      };
-      reader.readAsDataURL(file);
-    });
+    }
   };
 
   const removePhoto = (index) => {
