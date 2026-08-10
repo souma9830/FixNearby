@@ -1,9 +1,16 @@
-const express = require('express');
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
+import {
+  createDisputeEscalation,
+  getDisputeEscalations,
+  updateDisputeStatus,
+} from '../controllers/serviceDisputeEscalationController.js';
+
 const router = express.Router();
-const disputeEscalationController = require('../controllers/serviceDisputeEscalationController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.post('/file', protect, disputeEscalationController.fileDisputeEscalation);
-router.get('/my-disputes', protect, disputeEscalationController.getDisputeEscalations);
+router.post('/escalate', protect, createDisputeEscalation);
+router.get('/', protect, getDisputeEscalations);
+router.patch('/:disputeId/status', protect, updateDisputeStatus);
 
-module.exports = router;
+export default router;
+

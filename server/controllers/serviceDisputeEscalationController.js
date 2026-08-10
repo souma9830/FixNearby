@@ -1,32 +1,71 @@
-const ServiceDisputeEscalation = require('../models/ServiceDisputeEscalation');
+import ServiceDisputeEscalation from '../models/ServiceDisputeEscalation.js';
 
-exports.fileDisputeEscalation = async (req, res) => {
+export const createDisputeEscalation = async (req, res, next) => {
   try {
-    const { bookingId, againstUser, reasonCategory, claimedRefundAmount, evidenceUrls } = req.body;
-    const escalation = await ServiceDisputeEscalation.create({
+    const { bookingId, workerId, reasonCategory, severity, claimAmount, evidenceUrls } = req.body;
+    const userId = req.user.id;
+
+    const newDispute = await ServiceDisputeEscalation.create({
       bookingId,
-      raisedBy: req.user._id,
-      againstUser,
+      userId,
+      workerId,
       reasonCategory,
-      claimedRefundAmount,
-      evidenceUrls
+      severity,
+      claimAmount,
+      evidenceUrls,
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
-      message: 'Dispute escalation ticket successfully registered for moderation review',
-      data: escalation
+      message: 'Dispute escalation filed successfully',
+      data: newDispute,
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-exports.getDisputeEscalations = async (req, res) => {
+export const getDisputeEscalations = async (req, res, next) => {
   try {
-    const escalations = await ServiceDisputeEscalation.find({ raisedBy: req.user._id }).sort({ createdAt: -1 });
-    return res.status(200).json({ success: true, data: escalations });
+    const userId = req.user.id;
+    const disputes = await ServiceDisputeEscalation.find({
+      $or: [{ userId }, { workerId: userId }],
+    })
+      .populate('bookingId')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: disputes.length,
+      data: disputes,
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
+
+export const updateDisputeStatus = async (req, res, next) => {
+  try {
+    const { disputeId } = req.params;
+    const { status, resolutionNotes } = req.body;
+
+    const dispute = await ServiceDisputeEscalation.findByIdAndUpdate(
+      disputeId,
+      { status, resolutionNotes },
+      { new: true, runValidators: true }
+    );
+
+    if (!dispute) {
+      return res.status(404).json({ success: false, message: 'Dispute escalation record not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Dispute status updated',
+      data: dispute,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

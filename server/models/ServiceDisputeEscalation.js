@@ -1,41 +1,55 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-const serviceDisputeEscalationSchema = new mongoose.Schema({
-  bookingId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking',
-    required: true,
-    index: true
+const serviceDisputeEscalationSchema = new mongoose.Schema(
+  {
+    bookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Booking',
+      required: true,
+      index: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    workerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Worker',
+      required: true,
+    },
+    reasonCategory: {
+      type: String,
+      enum: ['incomplete_work', 'damaged_property', 'overcharging', 'unprofessional_conduct', 'other'],
+      required: true,
+    },
+    severity: {
+      type: String,
+      enum: ['low', 'medium', 'high', 'critical'],
+      default: 'medium',
+    },
+    claimAmount: {
+      type: Number,
+      default: 0,
+    },
+    evidenceUrls: [{ type: String }],
+    status: {
+      type: String,
+      enum: ['pending', 'under_review', 'resolved_refunded', 'resolved_dismissed', 'escalated_legal'],
+      default: 'pending',
+    },
+    resolutionNotes: {
+      type: String,
+      default: '',
+    },
+    assignedArbitratorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
-  raisedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  againstUser: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  reasonCategory: {
-    type: String,
-    enum: ['INCOMPLETE_WORK', 'DAMAGE_CLAIM', 'OVERCHARGED_FEE', 'UNPROFESSIONAL_BEHAVIOR', 'OTHER'],
-    required: true
-  },
-  claimedRefundAmount: {
-    type: Number,
-    default: 0
-  },
-  disputeStatus: {
-    type: String,
-    enum: ['OPEN', 'UNDER_ARBITRATION', 'RESOLVED_REFUNDED', 'RESOLVED_REJECTED', 'CLOSED'],
-    default: 'OPEN',
-    index: true
-  },
-  arbitratorNotes: String,
-  evidenceUrls: [String]
-}, {
-  timestamps: true
-});
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('ServiceDisputeEscalation', serviceDisputeEscalationSchema);
+const ServiceDisputeEscalation = mongoose.model('ServiceDisputeEscalation', serviceDisputeEscalationSchema);
+export default ServiceDisputeEscalation;
+
