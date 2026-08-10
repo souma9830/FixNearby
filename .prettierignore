@@ -1,0 +1,20 @@
+# Dependencies & build outputs
+node_modules/
+dist/
+build/
+.next/
+coverage/
+
+# Lock files & generated files
+package-lock.json
+yarn.lock
+*.min.js
+*.min.css
+
+# System & uploads
+uploads/
+db/
+screenshots/
+__pycache__/
+*.pyc
+.git/

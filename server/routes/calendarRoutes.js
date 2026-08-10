@@ -13,5 +13,6 @@ router.get('/availability/:workerId', getWorkerAvailability);
 router.get('/check', checkSlotAvailability);
 router.post('/availability/slot', protect, addAvailabilitySlot);
 router.delete('/availability/slot/:slotId', protect, removeAvailabilitySlot);
+router.put('/settings', protect, (await import('../controllers/calendarController.js')).updateCalendarSettings);
 
 export default router;

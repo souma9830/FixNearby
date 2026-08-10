@@ -1,4 +1,6 @@
 import logger from './logger.js';
+import User from '../models/User.js';
+import Worker from '../models/Worker.js';
 
 const HEARTBEAT_INTERVAL_MS = 30000; // 30 seconds
 const PING_TIMEOUT_MS = 10000; // 10 seconds
@@ -36,9 +38,25 @@ export class SocketLifecycleManager {
     socket.isAlive = true;
     socket.lastPingTime = Date.now();
 
-    socket.on('pong_heartbeat', () => {
+    socket.on('pong_heartbeat', async () => {
       socket.isAlive = true;
       socket.lastPingTime = Date.now();
+      
+      // Update DB lastActive timestamp on heartbeat pong
+      try {
+        const userId = socket.user?._id;
+        const userType = socket.userType;
+        if (userId) {
+          const lastActive = new Date();
+          if (userType === 'Worker') {
+            await Worker.findByIdAndUpdate(userId, { lastActive });
+          } else {
+            await User.findByIdAndUpdate(userId, { lastActive });
+          }
+        }
+      } catch (err) {
+        logger.error('[SocketLifecycle] Failed to touch lastActive timestamp:', err);
+      }
     });
 
     this.activeSockets.set(socket.id, socket);

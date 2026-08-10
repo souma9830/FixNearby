@@ -50,10 +50,20 @@ export const deleteNotification = async (id) => {
   }
 };
 
+export const getQueueStatus = async () => {
+  try {
+    const response = await api.get('/notifications/queue/status');
+    return response.data;
+  } catch (error) {
+    throw normalizeError(error, 'Failed to fetch notification queue status');
+  }
+};
+
 export default {
   getNotifications,
   getUnreadCount,
   markAsRead,
   markAllAsRead,
   deleteNotification,
+  getQueueStatus,
 };

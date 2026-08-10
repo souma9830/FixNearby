@@ -14,7 +14,10 @@ import {
   X,
   Map,
   List,
+  DollarSign,
 } from "lucide-react";
+import Slider from "rc-slider";
+import "rc-slider/assets/index.css";
 
 
 import useDocumentTitle from "../hooks/useDocumentTitle";
@@ -39,6 +42,12 @@ import EstimateWizard from "../components/EstimateWizard";
 import CostEstimatorWidget from "../components/calculator/CostEstimatorWidget";
 import WorkerMap from "../components/WorkerMap";
 import SearchResults from "../components/SearchResults";
+import {
+  addRecentWorker,
+  clearRecentWorkers,
+  getRecentWorkers,
+  removeRecentWorker,
+} from "../utils/recentWorkers";
 
 
 const mockWorkers = [
@@ -212,7 +221,8 @@ const getDistanceKm = (lat1, lon1, lat2, lon2) => {
     Math.cos((lat2 * Math.PI) / 180) *
     Math.sin(dLon / 2) ** 2;
 
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  const clampedA = Math.min(1, Math.max(0, a));
+  return R * (2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA)));
 };
 
 const formatDistance = (d) =>
@@ -481,6 +491,7 @@ const Services = () => {
 
   const [suggestions, setSuggestions] = useState([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showPricePopover, setShowPricePopover] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState({
     minPrice: 0,
     maxPrice: 100,
@@ -514,7 +525,7 @@ const Services = () => {
           ...w,
           id: w._id || w.id,
           profession: w.category || w.profession,
-          price: w.hourlyRate ? Number(w.hourlyRate) : (w.price ? (w.price.toString().startsWith('$') ? w.price : `$${w.price}/hr`) : 30),
+          price: w.hourlyRate !== undefined && w.hourlyRate !== null && w.hourlyRate !== '' ? Number(w.hourlyRate) : (w.price !== undefined && w.price !== null ? (typeof w.price === 'number' ? w.price : (parseFloat(w.price.toString().replace(/[^0-9.]/g, '')) || 30)) : 30),
           availability: w.availability || 
             (w.availabilityStatus === "available" ? "Available today" : 
              w.availabilityStatus === "busy" ? "Busy" : 
@@ -656,9 +667,10 @@ const Services = () => {
         w.profession === categoryFilter;
 
       // Advanced filters
+      const workerPriceNum = typeof w.price === 'number' ? w.price : (parseFloat((w.price || '').toString().replace(/[^0-9.]/g, '')) || 0);
       const matchesPrice =
-        w.price >= advancedFilters.minPrice &&
-        w.price <= advancedFilters.maxPrice;
+        workerPriceNum >= (advancedFilters.minPrice || 0) &&
+        workerPriceNum <= (advancedFilters.maxPrice !== undefined ? advancedFilters.maxPrice : 150);
 
       const matchesRating = w.rating >= advancedFilters.minRating;
 
@@ -894,6 +906,122 @@ const Services = () => {
             <option value="rating">⭐ Top Rated</option>
             <option value="price">💰 Lowest Price</option>
           </select>
+
+          {/* Quick Dual-Range Price Slider Button & Popover */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowPricePopover((prev) => !prev)}
+              className={`rounded-xl border px-5 py-3 font-bold shadow-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+                advancedFilters.minPrice > 0 || advancedFilters.maxPrice < 100
+                  ? "border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 ring-2 ring-blue-500/20"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              }`}
+            >
+              <DollarSign className="h-5 w-5 text-emerald-500" />
+              <span>
+                {advancedFilters.minPrice > 0 || advancedFilters.maxPrice < 100
+                  ? `$${advancedFilters.minPrice} - $${advancedFilters.maxPrice}/hr`
+                  : "Price Filter"}
+              </span>
+            </button>
+
+            {showPricePopover && (
+              <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-40 w-72 sm:w-80 rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-slate-700 dark:bg-slate-900 animate-in fade-in-50 zoom-in-95">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <span className="font-bold text-gray-900 dark:text-white text-sm">Hourly Rate ($/hr)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPricePopover(false)}
+                    className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-400"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="px-2 pt-2">
+                  <Slider
+                    range
+                    min={0}
+                    max={150}
+                    step={5}
+                    value={[advancedFilters.minPrice || 0, advancedFilters.maxPrice || 100]}
+                    onChange={(vals) => {
+                      setAdvancedFilters((prev) => ({
+                        ...prev,
+                        minPrice: vals[0],
+                        maxPrice: vals[1],
+                      }));
+                    }}
+                    trackStyle={[{ backgroundColor: '#3B82F6', height: 6 }]}
+                    handleStyle={[
+                      { borderColor: '#3B82F6', backgroundColor: '#fff', opacity: 1, width: 18, height: 18, marginTop: -6 },
+                      { borderColor: '#3B82F6', backgroundColor: '#fff', opacity: 1, width: 18, height: 18, marginTop: -6 },
+                    ]}
+                    railStyle={{ backgroundColor: '#E5E7EB', height: 6 }}
+                  />
+                  <div className="mt-4 flex items-center justify-between gap-3 text-xs">
+                    <div className="flex-1">
+                      <span className="text-[10px] text-gray-400 uppercase font-bold block mb-1">Min Rate</span>
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-gray-400">$</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={advancedFilters.maxPrice || 100}
+                          value={advancedFilters.minPrice || 0}
+                          onChange={(e) => {
+                            const val = Math.max(0, Math.min(Number(e.target.value) || 0, advancedFilters.maxPrice || 100));
+                            handleFilterChange('minPrice', val);
+                          }}
+                          className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-6 pr-2 py-1.5 font-extrabold text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <span className="mt-4 font-bold text-gray-400">-</span>
+                    <div className="flex-1">
+                      <span className="text-[10px] text-gray-400 uppercase font-bold block mb-1">Max Rate</span>
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-gray-400">$</span>
+                        <input
+                          type="number"
+                          min={advancedFilters.minPrice || 0}
+                          max={200}
+                          value={advancedFilters.maxPrice || 100}
+                          onChange={(e) => {
+                            const val = Math.max(advancedFilters.minPrice || 0, Math.min(Number(e.target.value) || 100, 200));
+                            handleFilterChange('maxPrice', val);
+                          }}
+                          className="w-full rounded-lg border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-6 pr-2 py-1.5 font-extrabold text-gray-900 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleFilterChange('minPrice', 0);
+                        handleFilterChange('maxPrice', 100);
+                      }}
+                      className="text-xs font-semibold text-gray-500 hover:text-red-500"
+                    >
+                      Reset Price
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowPricePopover(false)}
+                      className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
+                    >
+                      Apply Filter
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setUrgentFilter((prev) => !prev)}
@@ -939,28 +1067,27 @@ const Services = () => {
 
         {/* CATEGORY CHIPS (FULL FIX) */}
         <div className="mb-10">
-          <div className="flex gap-2 overflow-x-auto whitespace-nowrap px-1 py-2 scrollbar-hide">
+          <div className="flex gap-2.5 overflow-x-auto whitespace-nowrap px-1 py-3 scrollbar-hide">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`shrink-0 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-200 active:scale-95
-                ${categoryFilter === cat
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "bg-white border text-gray-600 hover:border-blue-400 hover:text-blue-600"
-                  }`}
+                className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-extrabold transition-all duration-300 ease-out active:scale-95 flex items-center gap-2 ${
+                  categoryFilter === cat
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 ring-2 ring-blue-400/50 scale-105"
+                    : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 hover:shadow-md hover:-translate-y-0.5"
+                }`}
               >
                 {cat !== "All" && iconMap[cat] && (
-                  <span className="mb-1 flex h-6 w-6 items-center justify-center text-2xl">
+                  <span className="flex h-5 w-5 items-center justify-center">
                     {(() => {
                       const Icon = iconMap[cat];
-                      return <Icon className="h-5 w-5" aria-hidden="true" />;
+                      return <Icon className="h-4 w-4" aria-hidden="true" />;
                     })()}
                   </span>
                 )}
                 {cat}
               </button>
-
             ))}
           </div>
         </div>
@@ -1036,8 +1163,14 @@ const Services = () => {
                   </p>
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <span>⭐ {worker.rating}</span>
-                    <span>${worker.price}/hr</span>
+                    <span>{typeof worker.price === "number" ? `$${worker.price}/hr` : worker.price || "Rate unavailable"}</span>
                   </div>
+                  <Link
+                    to={`/worker/${worker.id}`}
+                    className="mt-4 inline-flex text-sm font-bold text-blue-600 hover:text-blue-700"
+                  >
+                    View profile →
+                  </Link>
                 </div>
               ))}
             </div>
@@ -1058,22 +1191,18 @@ const Services = () => {
             categories={categories}
             isOpen={isFilterOpen}
             onClose={() => setIsFilterOpen(false)}
-            className="hidden lg:block"
+            className={isFilterOpen ? "block" : "hidden lg:block"}
           />
 
           {/* MAIN CONTENT */}
           <div className="flex-grow lg:grid lg:grid-cols-12 lg:gap-8 items-start w-full">
             {/* MAP VIEW */}
             {viewMode === 'map' ? (
-              <div className="lg:col-span-12 h-[600px]">
-                <WorkerMap
+              <div className="lg:col-span-12 h-[600px] shadow-lg rounded-3xl overflow-hidden border border-slate-200">
+                <MapView
                   workers={filteredWorkers}
-                  center={coords ? { lat: coords.latitude, lng: coords.longitude } : { lat: 17.385, lng: 78.4867 }}
-                  zoom={1.2}
-                  onWorkerClick={(id) => {
-                    const el = document.getElementById(`worker-card-${id}`);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
+                  selectedWorkerId={selectedWorkerId}
+                  onMarkerClick={handleMarkerClick}
                 />
               </div>
             ) : (
@@ -1108,14 +1237,18 @@ const Services = () => {
                     layout="grid"
                     overscan={300}
                     loading={loading}
-                    renderItem={(worker) => (
+                    renderItem={(worker) => {
+                      const isAvailable = worker.isAvailableNow || /available|today|emergency/i.test(worker.availability || "");
+                      return (
                       <div
                         key={worker.id || worker._id}
                         id={`worker-card-${worker.id || worker._id}`}
-                        className={`flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 relative h-full ${
+                        className={`group flex flex-col overflow-hidden rounded-3xl border bg-white dark:bg-slate-800 transition-all duration-300 ease-out relative h-full hover:-translate-y-1.5 ${
                           selectedWorkerId === (worker.id || worker._id)
-                            ? "border-blue-500 shadow-xl ring-2 ring-blue-100 scale-[1.01]"
-                            : "border-gray-100 hover:border-blue-100 hover:shadow-2xl"
+                            ? "border-blue-500 shadow-xl ring-2 ring-blue-500/50 scale-[1.01]"
+                            : isAvailable
+                            ? "border-emerald-400/80 dark:border-emerald-500/60 shadow-md shadow-emerald-500/5 hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/15 ring-1 ring-emerald-500/20"
+                            : "border-amber-300/80 dark:border-amber-500/50 shadow-md shadow-amber-500/5 hover:border-amber-400 hover:shadow-xl hover:shadow-amber-500/15 ring-1 ring-amber-400/20"
                         }`}
                       >
                         {/* Favorite/Save Toggle Button */}
@@ -1126,7 +1259,7 @@ const Services = () => {
                             e.stopPropagation();
                             handleToggleFavorite(worker._id || worker.id);
                           }}
-                          className="absolute top-4 right-4 p-2.5 rounded-full bg-white/95 hover:bg-white text-gray-400 hover:text-red-500 transition-all shadow-sm border border-gray-100/60 z-10 focus:outline-none"
+                          className="absolute top-4 right-4 p-2.5 rounded-full bg-white/95 dark:bg-slate-900/95 hover:bg-white text-gray-400 hover:text-red-500 transition-all shadow-sm border border-gray-100/60 z-10 focus:outline-none"
                           title={favoritedWorkerIds.has(worker._id || worker.id) ? "Remove from Saved" : "Save Professional"}
                         >
                           <Heart
@@ -1149,7 +1282,7 @@ const Services = () => {
                           className={`absolute top-4 left-4 p-2.5 rounded-full transition-all shadow-sm border z-10 focus:outline-none ${
                             compareIds.includes(worker._id || worker.id)
                               ? "bg-blue-600 border-blue-600 text-white"
-                              : "bg-white/95 hover:bg-white border-gray-100/60 text-gray-400 hover:text-blue-500"
+                              : "bg-white/95 dark:bg-slate-900/95 hover:bg-white border-gray-100/60 text-gray-400 hover:text-blue-500"
                           }`}
                           title={compareIds.includes(worker._id || worker.id) ? "Remove from comparison" : "Add to comparison"}
                         >
@@ -1157,19 +1290,22 @@ const Services = () => {
                         </button>
 
                         {/* WORKER IMAGE & BADGES */}
-                        <div className="relative h-48 bg-slate-100">
+                        <div className="relative h-48 bg-slate-100 dark:bg-slate-900 overflow-hidden">
                           {/* Image placeholder or fallback */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 font-bold text-5xl">
+                          <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center text-slate-400 font-bold text-5xl group-hover:scale-105 transition-transform duration-500">
                             {worker.name.charAt(0)}
                           </div>
                           
                           {/* Badges Overlay */}
                           <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-                            <span className="rounded-lg bg-slate-900/80 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                            <span className="rounded-lg bg-slate-900/90 dark:bg-slate-950/90 px-2.5 py-1 text-xs font-extrabold text-white backdrop-blur-sm shadow-sm border border-white/10">
                               {worker.profession}
                             </span>
+                            <span className="rounded-lg bg-blue-600/90 px-2.5 py-1 text-xs font-black text-white backdrop-blur-sm shadow-xs border border-blue-400/40">
+                              📍 {worker.distanceText || (worker.distanceKm !== undefined ? `${worker.distanceKm} km away` : '1.8 km away')}
+                            </span>
                             {worker.verified && (
-                              <span className="rounded-lg bg-emerald-500/80 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                              <span className="rounded-lg bg-emerald-600/90 px-2.5 py-1 text-xs font-extrabold text-white backdrop-blur-sm shadow-sm border border-emerald-400/30">
                                 Verified
                               </span>
                             )}
@@ -1180,7 +1316,7 @@ const Services = () => {
                         <div className="flex flex-1 flex-col p-6">
                           <div className="mb-2 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <h3 className="text-lg font-bold text-gray-900">{worker.name}</h3>
+                              <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">{worker.name}</h3>
                               {worker.isAvailableNow && (
                                 <span className="relative flex h-3 w-3" title="Available Now">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -1188,9 +1324,10 @@ const Services = () => {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm font-bold text-gray-700">{worker.rating}</span>
+                            {/* High-Contrast Floating Rating Pill */}
+                            <div className="flex items-center gap-1.5 rounded-full bg-amber-400 dark:bg-amber-500 px-3 py-1 text-xs font-black text-slate-950 shadow-md shadow-amber-500/20 border border-amber-300/50 transition-transform group-hover:scale-105">
+                              <Star className="h-3.5 w-3.5 fill-slate-950 text-slate-950" />
+                              <span>{Number(worker.rating).toFixed(1)}</span>
                             </div>
                           </div>
 
@@ -1242,7 +1379,8 @@ const Services = () => {
                           </div>
                         </div>
                       </div>
-                    )}
+                    );
+                  }}
                   />
                 </>
               )}

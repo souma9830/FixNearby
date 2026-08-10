@@ -10,7 +10,13 @@ export const getWorkerGeofence = async (workerId) => {
   return response.data;
 };
 
+export const getMyGeofence = async () => {
+  const response = await apiClient.get('/geofence/my-geofence');
+  return response.data;
+};
+
 export default {
   updateGeofence,
-  getWorkerGeofence
+  getWorkerGeofence,
+  getMyGeofence
 };
