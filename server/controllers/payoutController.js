@@ -1,5 +1,6 @@
 import Worker from '../models/Worker.js';
 import Payout from '../models/Payout.js';
+import { calculatePayoutSplit } from '../services/payoutSplitService.js';
 
 export const getPayoutDetails = async (req, res) => {
   try {
@@ -52,9 +53,11 @@ export const requestPayout = async (req, res) => {
       return res.status(400).json({ message: 'Invalid payout amount' });
     }
 
+    const splitInfo = calculatePayoutSplit(amount);
+
     const payout = new Payout({
       worker: worker._id,
-      amount,
+      amount: splitInfo.netWorkerPayout || amount,
       status: 'completed',
       stripeTransferId: `tr_mock_${Date.now()}`
     });
@@ -63,7 +66,7 @@ export const requestPayout = async (req, res) => {
     worker.earningsBalance = (worker.earningsBalance || 0) - amount;
     await worker.save();
 
-    res.status(200).json({ success: true, payout });
+    res.status(200).json({ success: true, payout, splitInfo });
   } catch (error) {
     res.status(500).json({ message: 'Failed to process payout', error: error.message });
   }

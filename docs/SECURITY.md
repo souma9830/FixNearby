@@ -36,6 +36,11 @@ We take security seriously. If you discover a security vulnerability in FixNearb
 
 ## Security Measures
 
+### IP Reputation Shield & Threat Inspection
+- Real-time payload inspection for injection vectors (SQLi, XSS, Path Traversal)
+- Dynamic client IP blocklisting with auto-expiring temporary window (10 minutes)
+- Specialized authentication rate limiting (10 attempts / 15 minutes) to mitigate credential stuffing
+
 ### Authentication & Authorization
 - JWT-based authentication with token expiration and blacklisting
 - Role-based access control (User, Worker, Admin)

@@ -41,6 +41,14 @@ export const protect = async (req, res, next) => {
       if (!principal) {
         return res.status(401).json({ success: false, message: 'Not authorized: User or Worker account not found' });
       }
+
+      // Invalidate JWT tokens issued prior to password reset
+      if (principal.passwordChangedAt && decoded.iat) {
+        const passwordChangedTime = Math.floor(new Date(principal.passwordChangedAt).getTime() / 1000);
+        if (decoded.iat < passwordChangedTime) {
+          return res.status(401).json({ success: false, message: 'Session expired due to recent password reset. Please log in again.' });
+        }
+      }
       
       req.user = principal;
       return next();
@@ -77,6 +85,14 @@ export const protectWorker = async (req, res, next) => {
           success: false,
           message: "Worker account not found",
         });
+      }
+
+      // Invalidate JWT tokens issued prior to password reset
+      if (worker.passwordChangedAt && decoded.iat) {
+        const passwordChangedTime = Math.floor(new Date(worker.passwordChangedAt).getTime() / 1000);
+        if (decoded.iat < passwordChangedTime) {
+          return res.status(401).json({ success: false, message: 'Session expired due to recent password reset. Please log in again.' });
+        }
       }
 
       const workerObj = worker.toObject ? worker.toObject() : worker;

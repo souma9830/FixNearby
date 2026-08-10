@@ -1,5 +1,6 @@
 import BadgeRequest from '../models/BadgeRequest.js';
 import Worker from '../models/Worker.js';
+import { verifyBadgeEligibility } from '../services/badgeAccreditationService.js';
 
 export const getPendingBadgeRequests = async (req, res) => {
   try {
@@ -22,15 +23,17 @@ export const submitBadgeRequest = async (req, res) => {
       return res.status(404).json({ message: 'Worker profile not found' });
     }
 
+    const eligibility = verifyBadgeEligibility(worker.completedJobsCount || 0, worker.rating || 0, worker.isVerified || false);
+
     const newReq = new BadgeRequest({
       worker: worker._id,
-      badgeType,
+      badgeType: req.sanitizedBadge?.badgeType || badgeType,
       documentNumber,
       documentUrl
     });
 
     await newReq.save();
-    res.status(201).json({ success: true, request: newReq });
+    res.status(201).json({ success: true, request: newReq, eligibility });
   } catch (error) {
     res.status(500).json({ message: 'Error submitting badge request', error: error.message });
   }
@@ -39,11 +42,11 @@ export const submitBadgeRequest = async (req, res) => {
 export const reviewBadgeRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
-    const { status } = req.body;
+    const { status, reviewNotes } = req.body;
 
     const request = await BadgeRequest.findByIdAndUpdate(
       requestId,
-      { status, reviewedBy: req.user.id },
+      { status, reviewNotes, reviewedBy: req.user.id },
       { new: true }
     );
 

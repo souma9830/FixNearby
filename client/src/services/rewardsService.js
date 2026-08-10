@@ -10,7 +10,13 @@ export const redeemCoupon = async (couponId) => {
   return response.data;
 };
 
+export const getTierRules = async () => {
+  const response = await apiClient.get('/rewards/tier-rules');
+  return response.data;
+};
+
 export default {
   getUserRewards,
-  redeemCoupon
+  redeemCoupon,
+  getTierRules
 };

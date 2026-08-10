@@ -37,6 +37,8 @@ const socket = io('http://localhost:5000', {
 * `emergency:broadcast`: `{ alertId, issueType, location, coordinates }`
 * `emergency:accept`: `{ alertId, workerId, workerPhone }`
 
-### 3. Availability & Bookings
+### 4. Resilient Offline Event Queueing & Reconnection
+* `socketOfflineQueue`: LocalStorage-backed client event buffer holding outbound messages during disconnects.
+* Automatic flush upon reconnection event (`connect` hook).
 * `availability-update`: Triggered when worker alters schedule slots.
 * `booking:statusUpdate`: `{ bookingId, status, updatedAt }`

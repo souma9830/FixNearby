@@ -1,0 +1,44 @@
+name: CI Quality Gate & Automated Testing
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test-server:
+    name: Backend Test & Lint Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install Dependencies
+        run: |
+          cd server
+          npm ci || npm install
+      - name: Run Backend Tests
+        run: |
+          cd server
+          node tests/ciSanity.test.js
+
+  test-client:
+    name: Frontend Build & Sanity Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install Dependencies
+        run: |
+          cd client
+          npm ci || npm install
+      - name: Verify Client Build
+        run: |
+          cd client
+          npm run build

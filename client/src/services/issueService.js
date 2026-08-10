@@ -83,14 +83,32 @@ export async function createIssue(issueData) {
     const response = await api.post('/issues', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      timeout: 30000 // Extended 30s timeout for file uploads
     });
     
     return response.data;
   } catch (error) {
     console.error('Error creating issue:', error);
+
+    const isTimeout =
+      error.code === 'ECONNABORTED' ||
+      error.response?.status === 504 ||
+      error.response?.status === 502 ||
+      error.response?.status === 504 ||
+      (error.message && error.message.toLowerCase().includes('timeout'));
+
+    const isTooLarge = error.response?.status === 413;
+
+    if (isTimeout) {
+      throw new Error('Network error: Upload timed out. Please try uploading a smaller image or check your connection.');
+    }
+    if (isTooLarge) {
+      throw new Error('Network error: Image size is too large. Please select a smaller photo.');
+    }
+
     throw new Error(
-      error.response?.data?.message || 'Failed to create issue'
+      error.response?.data?.message || error.message || 'Failed to create issue. Please try again.'
     );
   }
 }
