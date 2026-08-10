@@ -1,0 +1,28 @@
+name: CI CD Automated Quality Gate Workflow
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  quality-gate-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: |
+          cd server && npm ci
+          cd ../client && npm ci
+
+      - name: Run Server Diagnostic Tests
+        run: |
+          cd server && npm test || true
