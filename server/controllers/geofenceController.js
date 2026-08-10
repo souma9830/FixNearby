@@ -1,3 +1,8 @@
+import GeoPolygon from '../models/GeoPolygon.js';
+
+export const updateGeofence = async (req, res) => {
+  try {
+    const { territoryName = 'Downtown Service Boundary', coordinates, radiusKm = 15 } = req.body;
 import Geofence from '../models/Geofence.js';
 import Worker from '../models/Worker.js';
 import { verifyGeofenceBoundary } from '../services/geofenceAuditorService.js';
@@ -7,10 +12,27 @@ export const updateGeofence = async (req, res) => {
     const { radiusKm, centerAddress, lat, lng, maxTravelTimeMinutes, isActive } = req.body;
     const worker = await Worker.findOne({ user: req.user.id });
 
-    if (!worker) {
-      return res.status(404).json({ message: 'Worker profile not found' });
-    }
+    const defaultCoords = coordinates || [
+      [
+        [-74.006, 40.7128],
+        [-73.935, 40.7306],
+        [-73.985, 40.7589],
+        [-74.006, 40.7128]
+      ]
+    ];
 
+    const polygonDoc = await GeoPolygon.findOneAndUpdate(
+      { workerId: req.user._id },
+      {
+        workerId: req.user._id,
+        territoryName,
+        polygon: { type: 'Polygon', coordinates: defaultCoords },
+        radiusKm
+      },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ success: true, message: 'Geofenced service territory boundary updated successfully!', geofence: polygonDoc });
     const updateData = { radiusKm, centerAddress };
     if (maxTravelTimeMinutes !== undefined) updateData.maxTravelTimeMinutes = maxTravelTimeMinutes;
     if (isActive !== undefined) updateData.isActive = isActive;
@@ -31,15 +53,31 @@ export const updateGeofence = async (req, res) => {
 
     res.status(200).json({ success: true, geofence, auditResult });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating geofence', error: error.message });
+    res.status(500).json({ message: 'Error updating geofence boundary', error: error.message });
   }
 };
 
 export const getWorkerGeofence = async (req, res) => {
   try {
-    const { workerId } = req.params;
-    const geofence = await Geofence.findOne({ worker: workerId });
-    res.status(200).json({ success: true, geofence: geofence || { radiusKm: 10 } });
+    let geofence = await GeoPolygon.findOne({ workerId: req.user._id });
+    if (!geofence) {
+      geofence = {
+        territoryName: 'Metro Operating Zone',
+        radiusKm: 15,
+        polygon: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-74.006, 40.7128],
+              [-73.935, 40.7306],
+              [-73.985, 40.7589],
+              [-74.006, 40.7128]
+            ]
+          ]
+        }
+      };
+    }
+    res.status(200).json({ success: true, geofence });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching geofence', error: error.message });
   }
