@@ -23,12 +23,12 @@ const WorkerEquipmentTracker = ({ items = [] }) => {
           items.map((item, idx) => (
             <div key={idx} className="py-3 flex items-center justify-between">
               <div>
-                <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{item.itemName}</p>
-                <span className="text-xs text-slate-500 capitalize">{item.category} • ${item.unitPrice}</span>
+                <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{item.itemName || item.partName}</p>
+                <span className="text-xs text-slate-500 capitalize">PN: {item.partNumber || 'N/A'} • {item.category || 'Part'} • ${item.unitPrice}</span>
               </div>
               <div className="flex items-center space-x-3">
-                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.stockQuantity <= item.reorderThreshold ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
-                  {item.stockQuantity} units left
+                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.stockQuantity <= (item.reorderThreshold || 2) ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
+                  {item.stockQuantity || 1} units left
                 </span>
               </div>
             </div>
@@ -40,3 +40,4 @@ const WorkerEquipmentTracker = ({ items = [] }) => {
 };
 
 export default WorkerEquipmentTracker;
+
