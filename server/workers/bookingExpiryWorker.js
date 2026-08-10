@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
 import { getRedis } from '../utils/redis.js';
 import { getIo } from '../socket.js';
+import { expirePendingBookings } from '../services/bookingExpiryService.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -23,39 +24,10 @@ export const startBookingExpiryScheduler = async () => {
         console.warn('[Expiry Worker] MongoDB unavailable — skipping expiry check.');
         return;
       }
-      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
-      // Find stale pending bookings to extract worker IDs before update
-      const staleBookings = await Booking.find({
-        status: 'Pending',
-        createdAt: { $lt: fifteenMinutesAgo },
-      }).select('_id workerId');
-
-      if (staleBookings.length > 0) {
-        const staleIds = staleBookings.map((b) => b._id);
-        const affectedWorkerIds = [...new Set(staleBookings.map((b) => b.workerId.toString()))];
-
-        const result = await Booking.updateMany(
-          { _id: { $in: staleIds } },
-          { $set: { status: 'Expired' } }
-        );
-
-        if (result.modifiedCount > 0) {
-          console.log(`[BullMQ Expiry Worker]: Transitioned ${result.modifiedCount} stale pending bookings to Expired`);
-
-          // Emit real-time socket events for affected workers to auto-release slots
-          try {
-            const io = getIo();
-            if (io) {
-              affectedWorkerIds.forEach((workerId) => {
-                io.emit('availability-update', { workerId, reason: 'slot_released' });
-                io.emit('schedule-update', { workerId, reason: 'slot_released' });
-              });
-            }
-          } catch (ioErr) {
-            console.warn('[Expiry Worker] Socket notification failed:', ioErr.message);
-          }
-        }
+      const expiredCount = await expirePendingBookings(24);
+      if (expiredCount > 0) {
+        console.log(`[BullMQ Expiry Worker]: Successfully auto-expired and refunded ${expiredCount} stale pending service bookings.`);
       }
     } catch (err) {
       console.error('[Expiry Worker] performExpiryCheck error:', err.message);

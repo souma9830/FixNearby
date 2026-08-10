@@ -12,7 +12,9 @@ import {
   forgotWorkerPassword,
   resetWorkerPassword,
   logoutUser,
-  updateNotificationPreferences
+  updateNotificationPreferences,
+  updateUserPresenceStatus,
+  getUserActiveStatus
 } from '../controllers/authController.js';
 import {
   registerWorker,
@@ -41,6 +43,7 @@ import {
   workerLoginLimiter,
   workerRegisterLimiter,
   passwordResetLimiter,
+  twoFactorChallengeLimiter,
   profileUpdateLimiter,
   logoutLimiter
 } from '../middleware/authRateLimiter.js';
@@ -118,6 +121,7 @@ router.post(
 
 router.put(
   '/reset-password/:token',
+  passwordResetLimiter,
   resetUserPassword
 );
 
@@ -129,6 +133,7 @@ router.post(
 
 router.put(
   '/worker/reset-password/:token',
+  passwordResetLimiter,
   resetWorkerPassword
 );
 
@@ -137,8 +142,12 @@ router.post('/2fa/setup', protectAny, setupTwoFactor);
 router.post('/2fa/enable', protectAny, setupTwoFactor);
 router.post('/2fa/verify', protectAny, verifyTwoFactorSetup);
 router.post('/2fa/disable', protectAny, disableTwoFactor);
-router.post('/2fa/challenge', challengeTwoFactorLogin);
-router.post('/2fa/verify-login', challengeTwoFactorLogin);
+router.post('/2fa/challenge', twoFactorChallengeLimiter, challengeTwoFactorLogin);
+router.post('/2fa/verify-login', twoFactorChallengeLimiter, challengeTwoFactorLogin);
 router.get('/2fa/status', protectAny, getTwoFactorStatus);
+
+/* PRESENCE & ACTIVE STATUS ROUTES */
+router.patch('/presence/status', protectAny, updateUserPresenceStatus);
+router.get('/presence/active-status/:userId', protectAny, getUserActiveStatus);
 
 export default router;

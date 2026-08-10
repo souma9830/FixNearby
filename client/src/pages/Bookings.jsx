@@ -351,6 +351,9 @@ const Bookings = () => {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
   const [activeReview, setActiveReview] = useState(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -371,6 +374,16 @@ const Bookings = () => {
   const [liveUpdatedId, setLiveUpdatedId] = useState(null);
   const [activeEscrowBooking, setActiveEscrowBooking] = useState(null);
 
+  // Filter change handlers that guarantee pagination page index resets to 1
+  const handleStatusFilterChange = (status) => {
+    setStatusFilter(status);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearch(event.target.value);
+    setCurrentPage(1);
+  };
 
   // Subscribe to real-time booking socket status updates
   const handleSocketStatusUpdate = (eventData) => {
@@ -403,6 +416,13 @@ const Bookings = () => {
       return matchesSearch && matchesStatus;
     });
   }, [bookings, search, statusFilter]);
+
+  const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE) || 1;
+
+  const paginatedBookings = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredBookings.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredBookings, currentPage]);
 
   const handleCancel = async (id) => {
     setCancelTargetId(id);
@@ -531,7 +551,7 @@ const Bookings = () => {
         <input
           type="text"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={handleSearchChange}
           placeholder="Search worker or service..."
           className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 md:w-1/2"
         />
@@ -540,7 +560,7 @@ const Bookings = () => {
             <button
               key={status}
               type="button"
-              onClick={() => setStatusFilter(status)}
+              onClick={() => handleStatusFilterChange(status)}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
                 statusFilter === status
                   ? "border-blue-600 bg-blue-600 text-white"
@@ -592,7 +612,7 @@ const Bookings = () => {
 
       {!loading && !error && filteredBookings.length > 0 && (
         <div className="space-y-4">
-          {filteredBookings.map((booking) => (
+          {paginatedBookings.map((booking) => (
             <div
               key={booking.id}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
@@ -946,6 +966,33 @@ const Bookings = () => {
               )}
             </div>
           ))}
+
+          {/* Pagination Controls Bar */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-between border-t border-slate-200 pt-6">
+              <p className="text-xs font-semibold text-slate-500">
+                Showing Page <span className="font-bold text-slate-900">{currentPage}</span> of <span className="font-bold text-slate-900">{totalPages}</span> ({filteredBookings.length} total bookings)
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-40 transition"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-40 transition"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

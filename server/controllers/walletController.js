@@ -50,37 +50,46 @@ export const getWalletBalance = async (req, res, next) => {
 export const topupWallet = async (req, res, next) => {
   try {
     const { amount, method = 'card', stripePaymentIntentId } = req.body;
-    const numAmount = Number(amount);
+    const { validateWalletAmount, sanitizeWalletDescription } = await import('../services/walletVerificationService.js');
+    const check = validateWalletAmount(amount);
 
-    if (!numAmount || numAmount <= 0) {
+    if (!check.valid) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide a valid top-up amount greater than zero'
+        message: check.reason
       });
     }
+    const numAmount = check.amount;
 
     const wallet = await getOrCreateUserWallet(req.user._id);
 
     const transactionId = `TXN_W_TOPUP_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
-    wallet.balance += numAmount;
-    wallet.transactions.push({
-      transactionId,
-      type: 'topup',
-      amount: numAmount,
-      status: 'completed',
-      stripePaymentIntentId: stripePaymentIntentId || null,
-      description: `Wallet top-up via ${method.toUpperCase()}`
-    });
-
-    await wallet.save();
+    // Atomic MongoDB balance update and transaction append to prevent lost update race conditions
+    const updatedWallet = await Wallet.findOneAndUpdate(
+      { _id: wallet._id },
+      {
+        $inc: { balance: numAmount },
+        $push: {
+          transactions: {
+            transactionId,
+            type: 'topup',
+            amount: numAmount,
+            status: 'completed',
+            stripePaymentIntentId: stripePaymentIntentId || null,
+            description: `Wallet top-up via ${method.toUpperCase()}`
+          }
+        }
+      },
+      { new: true, runValidators: true }
+    );
 
     res.status(200).json({
       success: true,
       message: `Successfully topped up $${numAmount.toFixed(2)} to your wallet!`,
-      balance: wallet.balance,
+      balance: updatedWallet.balance,
       transactionId,
-      transactions: wallet.transactions.slice(-10).reverse()
+      transactions: updatedWallet.transactions.slice(-10).reverse()
     });
   } catch (error) {
     next(error);
@@ -132,26 +141,36 @@ export const payWithWallet = async (req, res, next) => {
 
     const wallet = await getOrCreateUserWallet(req.user._id);
 
-    if (wallet.balance < numAmount) {
-      return res.status(400).json({
-        success: false,
-        message: `Insufficient wallet balance. Available: $${wallet.balance.toFixed(2)}, Required: $${numAmount.toFixed(2)}`
-      });
-    }
-
     const transactionId = `TXN_W_PAY_${Date.now()}_${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
-    // Deduct balance
-    wallet.balance -= numAmount;
-    wallet.transactions.push({
-      transactionId,
-      type: 'payment',
-      amount: numAmount,
-      status: 'completed',
-      bookingId,
-      description: `Payment for service (${booking.service || 'Booking'})`
-    });
-    await wallet.save();
+    // Atomic MongoDB balance deduction & balance check to prevent concurrent race conditions
+    const updatedWallet = await Wallet.findOneAndUpdate(
+      {
+        _id: wallet._id,
+        balance: { $gte: numAmount }
+      },
+      {
+        $inc: { balance: -numAmount },
+        $push: {
+          transactions: {
+            transactionId,
+            type: 'payment',
+            amount: numAmount,
+            status: 'completed',
+            bookingId,
+            description: `Payment for service (${booking.service || 'Booking'})`
+          }
+        }
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedWallet) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient wallet balance or concurrent transaction in progress. Required: $${numAmount.toFixed(2)}`
+      });
+    }
 
     // Create / Update Payment document
     const payment = await Payment.create({
@@ -181,7 +200,7 @@ export const payWithWallet = async (req, res, next) => {
       success: true,
       message: 'Payment completed successfully using your wallet balance!',
       payment,
-      newBalance: wallet.balance
+      newBalance: updatedWallet.balance
     });
   } catch (error) {
     next(error);

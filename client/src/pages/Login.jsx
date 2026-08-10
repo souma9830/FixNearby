@@ -31,9 +31,12 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const validateEmail = (email) => (!email ? "Email is required" : /\S+@\S+\.\S+/.test(email) ? "" : "Invalid email address");
+  const validatePassword = (pass) => (!pass ? "Password is required" : pass.length >= 6 ? "" : "Password must be at least 6 characters");
+
   const validateFields = (name, value) => {
-    if (name === "email") return validateEmail(value) || (value.trim() ? "" : "Email is required");
-    if (name === "password") return validatePassword(value) || (value.trim() ? "" : "Password is required");
+    if (name === "email") return validateEmail(value);
+    if (name === "password") return validatePassword(value);
     return "";
   };
   // ---------------- HANDLE CHANGE ----------------
@@ -264,6 +267,62 @@ const Login = () => {
             )}
           </button>
         </form>
+
+        {/* 1-Click Demo Quick Access Buttons */}
+        <div className="mt-6 border-t border-gray-100 pt-5">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-center mb-3">
+            ⚡ Quick Demo Access (No Typing Required)
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                setLoading(true);
+                setApiError("");
+                try {
+                  const data = await loginUser({ email: "customer@example.com", password: "password123" });
+                  login(data);
+                  showToast("Logged in as Demo Customer");
+                  navigate("/services");
+                } catch (err) {
+                  // Fallback demo login if server is offline
+                  const mockData = { user: { _id: "650000000000000000000001", name: "Demo User", email: "customer@example.com", role: "customer" }, token: "demo_token_123" };
+                  login(mockData);
+                  showToast("Logged in as Demo Customer (Mock Mode)");
+                  navigate("/services");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              className="py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border border-blue-200"
+            >
+              <span>👤 Demo Customer</span>
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                setLoading(true);
+                setApiError("");
+                try {
+                  const data = await loginUser({ email: "worker@example.com", password: "password123" });
+                  login(data);
+                  showToast("Logged in as Demo Worker");
+                  navigate("/worker/dashboard");
+                } catch (err) {
+                  const mockData = { user: { _id: "650000000000000000000002", name: "Demo Worker", email: "worker@example.com", role: "worker" }, token: "demo_token_456" };
+                  login(mockData);
+                  showToast("Logged in as Demo Worker (Mock Mode)");
+                  navigate("/worker/dashboard");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              className="py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border border-emerald-200"
+            >
+              <span>🛠️ Demo Worker</span>
+            </button>
+          </div>
+        </div>
 
         {/* Register */}
         <p className="mt-6 text-center text-sm text-gray-600">

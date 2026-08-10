@@ -12,12 +12,17 @@ export const previewEstimate = async (workerId, inputs) => {
   return response.data; // { success, profession, inputs, breakdown }
 };
 
-/**
- * Confirm and save estimate
- * @param {string} workerId
- * @param {object} inputs
- */
 export const confirmEstimate = async (workerId, inputs) => {
   const response = await api.post(`${BASE_URL}/confirm`, { workerId, inputs });
   return response.data; // { success, message, estimate }
+};
+
+export const getDynamicPricingEstimate = async (payload) => {
+  const response = await api.post('/pricing/estimate', payload);
+  return response.data;
+};
+
+export const fetchPriceMatrices = async () => {
+  const response = await api.get('/pricing/matrix');
+  return response.data;
 };

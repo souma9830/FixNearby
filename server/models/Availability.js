@@ -60,6 +60,14 @@ const availabilitySchema = new mongoose.Schema(
         },
       },
     ],
+    maxBookingsPerDay: {
+      type: Number,
+      default: 6
+    },
+    bufferMinutes: {
+      type: Number,
+      default: 30
+    }
   },
   {
     timestamps: true,

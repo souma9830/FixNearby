@@ -13,9 +13,10 @@ import logger from '../utils/logger.js';
 export const getOrCreateReferralCode = async (user) => {
   if (user.referralCode) return user.referralCode;
 
+  const { sanitizeReferralCode } = await import('../services/referralTierEvaluatorService.js');
   const cleanName = (user.name || 'USER').replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 5);
   const randomHex = crypto.randomBytes(2).toString('hex').toUpperCase();
-  const code = `REF-${cleanName}-${randomHex}`;
+  const code = sanitizeReferralCode(`REF-${cleanName}-${randomHex}`);
 
   user.referralCode = code;
   await user.save({ validateBeforeSave: false });

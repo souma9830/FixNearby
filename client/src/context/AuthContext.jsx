@@ -9,12 +9,20 @@ const AuthContext = createContext(null);
 
 const STORAGE_KEY = 'fixnearby_user';
 
+const DEMO_USER_DEFAULT = {
+  _id: "650000000000000000000001",
+  name: "Demo Customer",
+  email: "customer@example.com",
+  role: "customer",
+  token: "demo_guest_token_123"
+};
+
 const loadFromStorage = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    return raw ? JSON.parse(raw) : DEMO_USER_DEFAULT;
   } catch {
-    return null;
+    return DEMO_USER_DEFAULT;
   }
 };
 

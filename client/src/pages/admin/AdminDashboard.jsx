@@ -23,6 +23,12 @@ import { getAdminStats } from '../../services/adminService';
 import api from '../../services/apiClient';
 import { exportToCSV, exportToPDFReport } from '../../utils/exportUtils';
 
+import SpatialHeatmap from '../../components/admin/SpatialHeatmap';
+import DisputeArbitrationPanel from '../../components/admin/DisputeArbitrationPanel';
+import SlaComplianceTracker from '../../components/admin/SlaComplianceTracker';
+import AdminAuditLogs from '../../components/admin/AdminAuditLogs';
+import { Flame, Scale, ShieldCheck } from 'lucide-react';
+
 const StatCard = ({ icon: Icon, label, value, color, change, link, subtext }) => (
   <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700/60 hover:shadow-md transition duration-200">
     <div className="flex items-center justify-between">
@@ -145,7 +151,7 @@ const BookingTrendChart = ({ data }) => {
 };
 
 const AdminDashboard = () => {
-  useDocumentTitle('Admin Dashboard & Analytics');
+  useDocumentTitle('Admin Dashboard & Control Center');
 
   const [stats, setStats] = useState({
     users: 0,
@@ -169,6 +175,7 @@ const AdminDashboard = () => {
 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('signups'); // signups, bookings, revenue
+  const [mainTab, setMainTab] = useState('overview'); // overview, heatmap, disputes, sla, audit
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -228,11 +235,11 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header & Actions */}
+      {/* Header & Main Control Center Navigation */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Admin Executive Dashboard</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Multi-vendor platform management, analytics & system diagnostics</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Enterprise Operations Control Center</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Multi-role administrative management, dispute arbitration, SLA tracking & spatial heatmaps</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -263,50 +270,10 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          icon={Users}
-          label="Total Registered Users"
-          value={loading ? '...' : stats.users.toLocaleString()}
-          color="bg-blue-600"
-          change="+12% this mo"
-          link="/admin/users"
-          subtext="Customers & platform members"
-        />
-        <StatCard
-          icon={Wrench}
-          label="Active Service Workers"
-          value={loading ? '...' : stats.workers.toLocaleString()}
-          color="bg-emerald-600"
-          change="+8% this mo"
-          link="/admin/users"
-          subtext="Verified service technicians"
-        />
-        <StatCard
-          icon={ClipboardList}label="Total Platform Bookings"
-          value={loading ? '...' : stats.bookings.toLocaleString()}
-          color="bg-purple-600"
-          change="+15% this mo"
-          link="/admin/users"
-          subtext="Service requests dispatched"
-        />
-        <StatCard
-          icon={DollarSign}
-          label="Gross Revenue"
-          value={loading ? '...' : `₹${stats.revenue.toLocaleString()}`}
-          color="bg-amber-600"
-          change="+18% this mo"
-          link="/admin/users"
-          subtext="Earnings from completed jobs"
-        />
-      </div>
-
-      {/* Analytics Charts Section */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700/60 p-6 mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-gray-100 dark:border-slate-700/60">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-blue-600" />
               Platform Growth Analytics (30 Days)
             </h2>
