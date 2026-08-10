@@ -101,6 +101,14 @@ export const registerUser = async (req, res) => {
       userAgent: req.get('user-agent'),
     });
 
+    const token = generateToken(user._id);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000
+    });
+
     // 7. Response 
     res.status(201).json({
       _id: user._id,
@@ -108,7 +116,7 @@ export const registerUser = async (req, res) => {
       email: user.email,
       phone: user.phone,
       notificationPreferences: user.notificationPreferences,
-      token: generateToken(user._id),
+      token: token,
     });
 
   } catch (error) {
