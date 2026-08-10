@@ -5,17 +5,13 @@ import { sendNotification } from '../services/notificationService.js';
 
 dotenv.config();
 
-const isDbConnected = () => mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2;
+const isDbConnected = () => mongoose.connection.readyState === 1;
 
 export const checkUpcomingBookings = async () => {
+  if (!isDbConnected()) return 0;
   try {
-    if (!isDbConnected()) {
-      console.warn('[Booking Reminder] MongoDB unavailable — skipping reminder check.');
-      return 0;
-    }
-
     const now = new Date();
-    const targetTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
+    const targetTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
     const bookings = await Booking.find({
       scheduledTime: { $gte: now, $lte: targetTime },
@@ -32,12 +28,12 @@ export const checkUpcomingBookings = async () => {
         booking.reminderSent = true;
         await booking.save();
       } catch (err) {
-        console.error(`[Booking Reminder] Failed to process booking ${booking._id}:`, err.message);
+        console.error('[Booking Reminder] Failed to send reminder:', err.message);
       }
     }
     return bookings.length;
   } catch (err) {
-    console.error('[Booking Reminder] checkUpcomingBookings error:', err.message);
+    console.error('[Booking Reminder] Error checking upcoming bookings:', err.message);
     return 0;
   }
 };

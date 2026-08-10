@@ -6,13 +6,52 @@ dotenv.config();
 
 let notificationQueueInstance = null;
 
-export const redisConnection = null;
+let connection = null;
+let notificationQueue = null;
 
-export const notificationQueue = null;
+export const getRedisConnection = () => {
+  if (connection) return connection;
+  try {
+    connection = new IORedis(redisUrl, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      retryStrategy: () => null,
+    });
+    connection.on('error', () => {});
+  } catch (err) {
+    // Redis unavailable
+  }
+  return connection;
+};
+
+export const getNotificationQueue = () => {
+  if (notificationQueue) return notificationQueue;
+  const conn = getRedisConnection();
+  if (!conn) return null;
+  try {
+    notificationQueue = new Queue('notification-queue', {
+      connection: conn,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000
+        },
+        removeOnComplete: true,
+        removeOnFail: false
+      }
+    });
+  } catch (err) {
+    // Queue unavailable
+  }
+  return notificationQueue;
+};
+
+export { notificationQueue };
 
 export const queueNotification = async (jobName, data) => {
-  const conn = await getRedis();
-  if (!conn) {
+  const queue = getNotificationQueue();
+  if (!queue) {
     console.log(`[Queue Fallback Logging] Redis offline. Simulating queueing of Job: "${jobName}" with data:`, data);
     return null;
   }
@@ -39,7 +78,7 @@ export const queueNotification = async (jobName, data) => {
   }
 
   try {
-    const job = await notificationQueueInstance.add(jobName, data);
+    const job = await queue.add(jobName, data);
     console.log(`[Queue] Job queued successfully: "${jobName}", Job ID: ${job.id}`);
     return job;
   } catch (error) {

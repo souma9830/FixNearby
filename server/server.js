@@ -1,3 +1,11 @@
+// Catch BullMQ Redis version & connection errors gracefully (they fire as unhandled rejections)
+process.on('unhandledRejection', (err) => {
+  if (err?.message?.includes('Redis version') || err?.message?.includes('ECONNREFUSED') || err?.message?.includes('Connection is closed')) {
+    return; // Suppress — Redis unavailable or incompatible version
+  }
+  console.error('Unhandled Rejection:', err);
+});
+
 import healthRoutes from './routes/healthRoutes.js';
 import complianceRoutes from './routes/complianceRoutes.js';
 import customerTipBonusRoutes from './routes/customerTipBonusRoutes.js';
@@ -58,43 +66,8 @@ import voucherRedemptionRoutes from './routes/voucherRedemptionRoutes.js';
 import emergencyPriorityDispatchRoutes from './routes/emergencyPriorityDispatchRoutes.js';
 import moderationRoutes from './routes/moderationRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
-import serviceCategoryTaxonomyRoutes from './routes/serviceCategoryTaxonomyRoutes.js';
-import customerTipBonusRoutes from './routes/customerTipBonusRoutes.js';
-import serviceRequestRoutes from './routes/serviceRequestRoutes.js';
-import skillCertificationRoutes from './routes/skillCertificationRoutes.js';
-import serviceDisputeEscalationRoutes from './routes/serviceDisputeEscalationRoutes.js';
-import serviceWarrantyManagerRoutes from './routes/serviceWarrantyManagerRoutes.js';
-import disputeRoutes from './routes/disputeRoutes.js';
-import recommendationRoutes from './routes/recommendationRoutes.js';
-import reportRoutes from './routes/reportRoutes.js';
-import subscriptionRoutes from './routes/subscriptionRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
-import scheduleRoutes from './routes/scheduleRoutes.js';
-import walletRoutes from './routes/walletRoutes.js';
-import calendarRoutes from './routes/calendarRoutes.js';
-import payoutRoutes from './routes/payoutRoutes.js';
-import slaRoutes from './routes/slaRoutes.js';
-import attachmentRoutes from './routes/attachmentRoutes.js';
-import categoryRoutes from './routes/categoryRoutes.js';
-import equipmentInventoryRoutes from './routes/equipmentInventoryRoutes.js';
-import serviceDisputeEscalationRoutes from './routes/serviceDisputeEscalationRoutes.js';
-import rewardsRoutes from './routes/rewardsRoutes.js';
-import badgeRoutes from './routes/badgeRoutes.js';
-import geofenceRoutes from './routes/geofenceRoutes.js';
-import estimatorRoutes from './routes/estimatorRoutes.js';
-import referralRoutes from './routes/referralRoutes.js';
-import serviceRequestRoutes from './routes/serviceRequestRoutes.js';
-import mfaRoutes from './routes/mfaRoutes.js';
-import pricingRoutes from './routes/pricingRoutes.js';
-import maintenanceRoutes from './routes/maintenanceRoutes.js';
-import zoneManagementRoutes from './routes/zoneManagementRoutes.js';
-import searchPresetRoutes from './routes/searchPresetRoutes.js';
-import applianceRoutes from './routes/applianceRoutes.js';
-import webhookRoutes from './routes/webhookRoutes.js';
-import analyticsRoutes from './routes/analyticsRoutes.js';
-import notificationPreferencesRoutes from './routes/notificationPreferencesRoutes.js';
-import { serviceHealthRouter } from './middleware/serviceHealthMiddleware.js';
-import { mongoInjectionGuard } from './middleware/mongoInjectionGuard.js';
+import availabilityRoutes from './routes/availabilityRoutes.js';
+import auditLogRoutes from './routes/auditLogRoutes.js';
 
 dotenv.config();
 
@@ -254,32 +227,18 @@ app.use('/api/mfa', mfaRoutes);
 app.use('/api/workers/skills-certifications', workerSkillCertRoutes);
 app.use('/api/workers/multi-geofence', multiLocationGeofenceRoutes);
 
-// Start background workers after DB connection is established
-(async () => {
-  // Wait for MongoDB to connect before initializing workers that depend on it
-  const MAX_WAIT_MS = 10000;
-  const POLL_MS = 200;
-  const startTime = Date.now();
-  while (Date.now() - startTime < MAX_WAIT_MS) {
-    const { default: mongoose } = await import('mongoose');
-    if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) break;
-    await new Promise(r => setTimeout(r, POLL_MS));
-  }
-
-  startBookingExpiryScheduler().catch(err =>
-    console.error('[Server] Booking expiry scheduler failed:', err.message)
-  );
-  // Initialize Weekly Karma Scheduler
-  initKarmaScheduler();
-  startWorker().catch(err =>
-    console.error('[Server] Notification worker failed:', err.message)
-  );
-})();
-
-// Start Booking Reminder Scheduler (Hourly check fallback)
-setInterval(() => {
-  checkUpcomingBookings().catch(err => console.error('Booking reminder check failed:', err));
-}, 60 * 60 * 1000);
+// Start Booking Expiry Check Scheduler
+startBookingExpiryScheduler();
+// Initialize Weekly Karma Scheduler
+initKarmaScheduler();
+// Start Background Notification Worker
+startWorker();
+// Start Booking Reminder Scheduler
+const startBookingReminderScheduler = () => {
+  checkUpcomingBookings();
+  setInterval(checkUpcomingBookings, 60 * 60 * 1000);
+};
+startBookingReminderScheduler();
 
 // Protected test route
 app.get('/api/protected', authMiddleware, (req, res) => {
