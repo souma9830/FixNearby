@@ -25,10 +25,12 @@ export const createBooking = async (req, res, next) => {
       }
     }
 
-    const { workerId, service, scheduledTime, durationHours, address, price } = req.body;
-    const start = new Date(scheduledTime);
-    const end = new Date(start.getTime() + durationHours * 3600000);
-    console.log(`[BookingController] Creating booking: start=${start.toISOString()}, end=${end.toISOString()}, worker=${workerId}`);
+    const { workerId, service, scheduledTime, durationHours, address, price, timezone = 'UTC' } = req.body;
+    // Normalize time to UTC to prevent DST offset mismatches
+    const rawStart = new Date(scheduledTime);
+    const start = new Date(Date.UTC(rawStart.getUTCFullYear(), rawStart.getUTCMonth(), rawStart.getUTCDate(), rawStart.getUTCHours(), rawStart.getUTCMinutes()));
+    const end = new Date(start.getTime() + (durationHours || 2) * 3600000);
+    console.log(`[BookingController] Normalized UTC slot: start=${start.toISOString()}, end=${end.toISOString()}, worker=${workerId}`);
 
     // Overlap condition query
     const query = {
