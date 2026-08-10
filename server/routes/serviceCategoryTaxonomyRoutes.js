@@ -1,9 +1,15 @@
-const express = require('express');
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
+import {
+  getTaxonomyCategories,
+  createTaxonomyCategory,
+  addSubcategoryToTaxonomy,
+} from '../controllers/serviceCategoryTaxonomyController.js';
+
 const router = express.Router();
-const taxonomyController = require('../controllers/serviceCategoryTaxonomyController');
-const { protect, adminOnly } = require('../middleware/authMiddleware');
 
-router.post('/create', protect, adminOnly, taxonomyController.createTaxonomyCategory);
-router.get('/tree', taxonomyController.getTaxonomyTree);
+router.get('/', getTaxonomyCategories);
+router.post('/', protect, createTaxonomyCategory);
+router.post('/:categoryId/subcategories', protect, addSubcategoryToTaxonomy);
 
-module.exports = router;
+export default router;
