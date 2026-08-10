@@ -1,9 +1,8 @@
 import express from 'express';
-import { getRecommendationsHandler } from '../controllers/recommendationController.js';
+import { getRecommendedWorkers } from '../controllers/recommendationController.js';
 
 const router = express.Router();
 
-// GET /api/recommendations
-router.get('/', getRecommendationsHandler);
+router.get('/workers', getRecommendedWorkers);
 
 export default router;
