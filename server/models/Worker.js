@@ -40,6 +40,20 @@ const workerSchema = new mongoose.Schema(
       default: 10,
     },
 
+    complianceStatus: {
+      type: String,
+      enum: ['UNVERIFIED', 'PARTIALLY_COMPLIANT', 'FULLY_COMPLIANT'],
+      default: 'UNVERIFIED',
+    },
+    backgroundCheckDate: {
+      type: Date,
+      default: null,
+    },
+    insuranceExpiryDate: {
+      type: Date,
+      default: null,
+    },
+
     location: {
       type: {
         type: String,
@@ -267,6 +281,9 @@ const workerSchema = new mongoose.Schema(
     stripeConnectAccountId: {
       type: String,
       default: ''
+    },
+    passwordChangedAt: {
+      type: Date
     }
   },
   {

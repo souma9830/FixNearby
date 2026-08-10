@@ -49,7 +49,7 @@ export const emitBookingStatusUpdate = (io, booking, extraData = {}) => {
 };
 
 /**
- * Socket.IO listeners for client socket subscriptions to booking rooms.
+ * Socket.IO listeners for client socket subscriptions to booking rooms & live GPS tracking.
  */
 export const registerBookingHandlers = (io, socket) => {
   socket.on('join_booking', (data) => {
@@ -72,4 +72,35 @@ export const registerBookingHandlers = (io, socket) => {
       console.log(`[BookingSocket] Socket ${socket.id} left room ${room}`);
     }
   });
+
+  // Real-time Provider GPS Location Tracking Listener (#874)
+  const handleLocationUpdate = (data) => {
+    if (!data) return;
+    const { bookingId, lat, lng, latitude, longitude, userId, workerId } = data;
+    const resolvedLat = typeof lat === 'number' ? lat : latitude;
+    const resolvedLng = typeof lng === 'number' ? lng : longitude;
+
+    if (typeof resolvedLat !== 'number' || typeof resolvedLng !== 'number') return;
+
+    const payload = {
+      bookingId,
+      lat: resolvedLat,
+      lng: resolvedLng,
+      workerId,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (bookingId) {
+      io.to(`booking:${bookingId}`).emit('provider:location_update', payload);
+      io.to(`booking:${bookingId}`).emit('tracking:location', payload);
+    }
+
+    if (userId) {
+      io.to(userId).emit('provider:location_update', payload);
+      io.to(userId).emit('tracking:location', payload);
+    }
+  };
+
+  socket.on('provider:location_update', handleLocationUpdate);
+  socket.on('tracking:location', handleLocationUpdate);
 };

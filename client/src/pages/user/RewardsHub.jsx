@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Award, Gift, Sparkles, Ticket, CheckCircle, RefreshCw } from 'lucide-react';
+import { Award, Gift, Sparkles, Ticket, CheckCircle, RefreshCw, Copy } from 'lucide-react';
 import rewardsService from '../../services/rewardsService';
 
 const RewardsHub = () => {
-  const [pointsData, setPointsData] = useState({ balance: 0, tier: 'Bronze', history: [] });
+  const [pointsData, setPointsData] = useState({ balance: 0, tier: 'Bronze', history: [], activeCoupons: [] });
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
@@ -31,7 +31,7 @@ const RewardsHub = () => {
     setMsg('');
     try {
       const res = await rewardsService.redeemCoupon(couponId);
-      setMsg(`Success! Coupon Code: ${res.code}`);
+      setMsg(`Success! Generated Coupon Code: ${res.code}`);
       fetchRewards();
     } catch (err) {
       setMsg(err.response?.data?.message || 'Redemption failed');
@@ -62,6 +62,33 @@ const RewardsHub = () => {
       {msg && (
         <div className="p-4 bg-emerald-50 text-emerald-700 font-bold rounded-2xl flex items-center gap-2">
           <CheckCircle className="w-5 h-5" /> {msg}
+        </div>
+      )}
+
+      {pointsData.activeCoupons && pointsData.activeCoupons.length > 0 && (
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Ticket className="w-5 h-5 text-emerald-500" /> Your Active Claimed Coupons
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pointsData.activeCoupons.map((coupon, idx) => (
+              <div key={idx} className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-4 rounded-2xl flex justify-between items-center">
+                <div>
+                  <span className="font-mono text-sm font-bold text-emerald-700 dark:text-emerald-400">{coupon.code}</span>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">{coupon.title}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(coupon.code);
+                    setMsg(`Copied code ${coupon.code} to clipboard!`);
+                  }}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1"
+                >
+                  <Copy className="w-3.5 h-3.5" /> Copy
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
