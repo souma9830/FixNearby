@@ -1,4 +1,5 @@
 import WorkerMultiLocationGeofence from '../models/WorkerMultiLocationGeofence.js';
+import GeofenceBoundaryViolationLog from '../models/GeofenceBoundaryViolationLog.js';
 
 export const getWorkerGeofences = async (req, res, next) => {
   try {
@@ -60,3 +61,28 @@ export const updateGeofenceSettings = async (req, res, next) => {
     next(error);
   }
 };
+
+export const logBoundaryViolation = async (req, res, next) => {
+  try {
+    const { workerId } = req.params;
+    const { lat, lng, bookingId, distanceExcessKm, nearestZoneName } = req.body;
+
+    const violation = await GeofenceBoundaryViolationLog.create({
+      workerId,
+      bookingId: bookingId || null,
+      detectedLocation: { lat, lng },
+      nearestZoneName: nearestZoneName || 'Out of Zone',
+      distanceExcessKm: distanceExcessKm || 0,
+      autoAlertTriggered: true,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Geofence boundary breach logged and real-time alert dispatched',
+      data: violation,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
