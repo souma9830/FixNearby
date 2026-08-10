@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { updateNotificationPreferences, updateProfile } from "../services/authService";
 import useToast from "../hooks/useToast";
 import TwoFactorSetup from "../components/TwoFactorSetup";
+import MfaSettings from "../components/auth/MfaSettings";
 import api from "../services/apiClient";
 import { ShieldCheck, ShieldAlert, Lock, Trash2, CheckCircle2 } from "lucide-react";
 
@@ -257,6 +258,11 @@ const Profile = () => {
         >
           {preferencesLoading ? 'Saving...' : 'Save Notification Preferences'}
         </button>
+      </section>
+
+      {/* MFA 2FA Enterprise Portal */}
+      <section className="mt-8">
+        <MfaSettings />
       </section>
 
       {/* 2FA Setup Modal */}
