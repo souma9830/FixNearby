@@ -1,4 +1,5 @@
 import WorkerSlaCompliance from '../models/WorkerSlaCompliance.js';
+import WorkerSlaPenaltyAudit from '../models/WorkerSlaPenaltyAudit.js';
 
 export const getWorkerSlaStatus = async (req, res, next) => {
   try {
@@ -27,7 +28,7 @@ export const getWorkerSlaStatus = async (req, res, next) => {
 export const logSlaViolation = async (req, res, next) => {
   try {
     const { workerId } = req.params;
-    const { violationType } = req.body;
+    const { violationType, bookingId, penaltyDeductionAmount } = req.body;
     const currentMonth = new Date().toISOString().substring(0, 7);
 
     let sla = await WorkerSlaCompliance.findOne({ workerId, periodMonth: currentMonth });
@@ -44,8 +45,17 @@ export const logSlaViolation = async (req, res, next) => {
 
     await sla.save();
 
-    res.status(200).json({ success: true, message: 'SLA violation logged', data: sla });
+    await WorkerSlaPenaltyAudit.create({
+      workerId,
+      bookingId: bookingId || null,
+      violationType: violationType || 'MISSED_RESPONSE_SLA',
+      penaltyDeductionAmount: penaltyDeductionAmount || 15,
+      slaTierImpact: sla.slaStatus,
+    });
+
+    res.status(200).json({ success: true, message: 'SLA violation logged and penalty audit trail recorded', data: sla });
   } catch (error) {
     next(error);
   }
 };
+

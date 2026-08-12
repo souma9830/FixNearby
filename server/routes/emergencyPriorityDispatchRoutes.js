@@ -1,9 +1,11 @@
-const express = require('express');
+import express from 'express';
+import { createEmergencyDispatch, acceptEmergencyDispatch, escalateEmergencyBroadcast } from '../controllers/emergencyPriorityDispatchController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const dispatchController = require('../controllers/emergencyPriorityDispatchController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.post('/create', protect, dispatchController.createEmergencyDispatch);
-router.post('/accept/:ticketId', protect, dispatchController.acceptEmergencyDispatch);
+router.post('/create', protect, createEmergencyDispatch);
+router.post('/accept/:ticketId', protect, acceptEmergencyDispatch);
+router.post('/escalate/:ticketId', protect, escalateEmergencyBroadcast);
 
-module.exports = router;
+export default router;

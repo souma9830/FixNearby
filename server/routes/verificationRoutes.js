@@ -8,7 +8,8 @@ import {
   approveVerification,
   rejectVerification,
   getVerificationStats,
-  uploadDocument
+  uploadDocument,
+  getWorkerAuditLogs
 } from '../controllers/verificationController.js';
 
 const router = express.Router();
@@ -43,5 +44,8 @@ router.patch('/:id/reject', protect, adminOnly, rejectVerification);
 
 // Worker: upload a single document
 router.post('/upload', protectWorker, requireRole('provider', 'worker', 'admin'), upload.single('document'), uploadDocument);
+
+// Admin: get audit history for a worker
+router.get('/audits/:workerId', protect, adminOnly, getWorkerAuditLogs);
 
 export default router;

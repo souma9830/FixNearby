@@ -1,6 +1,7 @@
-const EmergencyDispatchTicket = require('../models/EmergencyDispatchTicket');
+import EmergencyDispatchTicket from '../models/EmergencyDispatchTicket.js';
+import EmergencyDispatchEscalationAudit from '../models/EmergencyDispatchEscalationAudit.js';
 
-exports.createEmergencyDispatch = async (req, res) => {
+export const createEmergencyDispatch = async (req, res) => {
   try {
     const { emergencyType, severityLevel, coordinates, address, notes } = req.body;
     const ticket = await EmergencyDispatchTicket.create({
@@ -10,6 +11,13 @@ exports.createEmergencyDispatch = async (req, res) => {
       coordinates,
       address,
       notes
+    });
+
+    await EmergencyDispatchEscalationAudit.create({
+      ticketId: ticket._id,
+      escalationLevel: 1,
+      broadcastRadiusKm: ticket.broadcastRadiusKm || 15,
+      escalationTriggerReason: 'Initial emergency dispatch broadcast initiated',
     });
 
     return res.status(201).json({
@@ -22,7 +30,7 @@ exports.createEmergencyDispatch = async (req, res) => {
   }
 };
 
-exports.acceptEmergencyDispatch = async (req, res) => {
+export const acceptEmergencyDispatch = async (req, res) => {
   try {
     const { ticketId } = req.params;
     const workerId = req.user._id;
@@ -45,3 +53,35 @@ exports.acceptEmergencyDispatch = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const escalateEmergencyBroadcast = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const { expandedRadiusKm, escalationLevel } = req.body;
+
+    const ticket = await EmergencyDispatchTicket.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: 'Ticket not found' });
+    }
+
+    ticket.broadcastRadiusKm = expandedRadiusKm || ticket.broadcastRadiusKm + 15;
+    await ticket.save();
+
+    const audit = await EmergencyDispatchEscalationAudit.create({
+      ticketId: ticket._id,
+      escalationLevel: escalationLevel || 2,
+      broadcastRadiusKm: ticket.broadcastRadiusKm,
+      escalationTriggerReason: 'Expanded broadcast radius due to unanswered dispatch timeout',
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Emergency ticket expanded broadcast radius escalated successfully',
+      data: ticket,
+      audit,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+

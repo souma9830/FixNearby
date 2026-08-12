@@ -48,6 +48,7 @@ const IssueDetail         = lazy(() => import('./pages/IssueDetail'));
 const NotFound            = lazy(() => import('./pages/NotFound'));
 const CompareWorkers      = lazy(() => import('./pages/CompareWorkers'));
 const VerificationPage    = lazy(() => lazyWithRetry(() => import('./pages/worker/VerificationPage')));
+const Notifications       = lazy(() => lazyWithRetry(() => import('./pages/Notifications')));
 
 const AdminDashboard      = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers          = lazy(() => import('./pages/admin/AdminUsers'));
@@ -133,6 +134,14 @@ const ROUTES = [
   { path: "/contact", element: <Contact /> },
   { path: "/community", element: <Community /> },
   { path: "/feedback", element: <Feedback /> },
+  {
+    path: "/notifications",
+    element: (
+      <RequireAuth>
+        <Notifications />
+      </RequireAuth>
+    ),
+  },
   {
     path: "/notification-preferences",
     element: (

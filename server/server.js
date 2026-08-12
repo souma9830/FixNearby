@@ -52,6 +52,8 @@ import { startWorker } from './workers/notificationWorker.js';
 import { checkUpcomingBookings } from './workers/bookingReminderWorker.js';
 import favoriteRoutes from './routes/favoriteRoutes.js';
 import estimateRoutes from './routes/estimateRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+import availabilityRoutes from './routes/availabilityRoutes.js';
 import reliabilityRoutes from './routes/reliabilityRoutes.js';
 import quoteNegotiationRoutes from './routes/quoteNegotiationRoutes.js';
 import { createGracefulShutdown } from './utils/gracefulShutdown.js';
@@ -62,12 +64,40 @@ import warrantyClaimRoutes from './routes/warrantyClaimRoutes.js';
 import auditLogRoutes from './routes/auditLogRoutes.js';
 import partsBillingRoutes from './routes/partsBillingRoutes.js';
 import earningRoutes from './routes/earningRoutes.js';
-import voucherRedemptionRoutes from './routes/voucherRedemptionRoutes.js';
 import emergencyPriorityDispatchRoutes from './routes/emergencyPriorityDispatchRoutes.js';
 import moderationRoutes from './routes/moderationRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
-import availabilityRoutes from './routes/availabilityRoutes.js';
-import auditLogRoutes from './routes/auditLogRoutes.js';
+import serviceRequestRoutes from './routes/serviceRequestRoutes.js';
+import skillCertificationRoutes from './routes/skillCertificationRoutes.js';
+import serviceDisputeEscalationRoutes from './routes/serviceDisputeEscalationRoutes.js';
+import disputeRoutes from './routes/disputeRoutes.js';
+import recommendationRoutes from './routes/recommendationRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import subscriptionRoutes from './routes/subscriptionRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import scheduleRoutes from './routes/scheduleRoutes.js';
+import walletRoutes from './routes/walletRoutes.js';
+import calendarRoutes from './routes/calendarRoutes.js';
+import payoutRoutes from './routes/payoutRoutes.js';
+import attachmentRoutes from './routes/attachmentRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import equipmentInventoryRoutes from './routes/equipmentInventoryRoutes.js';
+import rewardsRoutes from './routes/rewardsRoutes.js';
+import badgeRoutes from './routes/badgeRoutes.js';
+import geofenceRoutes from './routes/geofenceRoutes.js';
+import estimatorRoutes from './routes/estimatorRoutes.js';
+import referralRoutes from './routes/referralRoutes.js';
+import mfaRoutes from './routes/mfaRoutes.js';
+import pricingRoutes from './routes/pricingRoutes.js';
+import maintenanceRoutes from './routes/maintenanceRoutes.js';
+import zoneManagementRoutes from './routes/zoneManagementRoutes.js';
+import searchPresetRoutes from './routes/searchPresetRoutes.js';
+import applianceRoutes from './routes/applianceRoutes.js';
+import webhookRoutes from './routes/webhookRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
+import notificationPreferencesRoutes from './routes/notificationPreferencesRoutes.js';
+import { serviceHealthRouter } from './middleware/serviceHealthMiddleware.js';
+import { mongoInjectionGuard } from './middleware/mongoInjectionGuard.js';
 
 dotenv.config();
 
@@ -223,22 +253,33 @@ app.use('/api/pricing', pricingRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
-app.use('/api/mfa', mfaRoutes);
-app.use('/api/workers/skills-certifications', workerSkillCertRoutes);
-app.use('/api/workers/multi-geofence', multiLocationGeofenceRoutes);
+app.use('/api/notifications', notificationRoutes);
 
-// Start Booking Expiry Check Scheduler
-startBookingExpiryScheduler();
-// Initialize Weekly Karma Scheduler
-initKarmaScheduler();
-// Start Background Notification Worker
-startWorker();
-// Start Booking Reminder Scheduler
-const startBookingReminderScheduler = () => {
-  checkUpcomingBookings();
-  setInterval(checkUpcomingBookings, 60 * 60 * 1000);
-};
-startBookingReminderScheduler();
+// Start background workers after DB connection is established
+(async () => {
+  // Wait for MongoDB to connect before initializing workers that depend on it
+  const MAX_WAIT_MS = 10000;
+  const POLL_MS = 200;
+  const startTime = Date.now();
+  while (Date.now() - startTime < MAX_WAIT_MS) {
+    const { default: mongoose } = await import('mongoose');
+    if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) break;
+    await new Promise(r => setTimeout(r, POLL_MS));
+  }
+
+  startBookingExpiryScheduler().catch(err =>
+    console.error('[Server] Booking expiry scheduler failed:', err.message)
+  );
+  // Initialize Weekly Karma Scheduler
+  initKarmaScheduler();
+  startWorker().catch(err =>
+    console.error('[Server] Notification worker failed:', err.message)
+  );
+})();
+// Start Booking Reminder Scheduler (Hourly check fallback)
+setInterval(() => {
+  checkUpcomingBookings().catch(err => console.error('Booking reminder check failed:', err));
+}, 60 * 60 * 1000);
 
 // Protected test route
 app.get('/api/protected', authMiddleware, (req, res) => {

@@ -1,9 +1,10 @@
 import ServiceDisputeEscalation from '../models/ServiceDisputeEscalation.js';
+import DisputeArbitrationAudit from '../models/DisputeArbitrationAudit.js';
 
 export const createDisputeEscalation = async (req, res, next) => {
   try {
     const { bookingId, workerId, reasonCategory, severity, claimAmount, evidenceUrls } = req.body;
-    const userId = req.user.id;
+    const userId = req.user._id || req.user.id;
 
     const newDispute = await ServiceDisputeEscalation.create({
       bookingId,
@@ -27,7 +28,7 @@ export const createDisputeEscalation = async (req, res, next) => {
 
 export const getDisputeEscalations = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id || req.user.id;
     const disputes = await ServiceDisputeEscalation.find({
       $or: [{ userId }, { workerId: userId }],
     })
@@ -47,25 +48,35 @@ export const getDisputeEscalations = async (req, res, next) => {
 export const updateDisputeStatus = async (req, res, next) => {
   try {
     const { disputeId } = req.params;
-    const { status, resolutionNotes } = req.body;
+    const { status, resolutionNotes, refundAmountApproved } = req.body;
 
-    const dispute = await ServiceDisputeEscalation.findByIdAndUpdate(
-      disputeId,
-      { status, resolutionNotes },
-      { new: true, runValidators: true }
-    );
-
-    if (!dispute) {
+    const existingDispute = await ServiceDisputeEscalation.findById(disputeId);
+    if (!existingDispute) {
       return res.status(404).json({ success: false, message: 'Dispute escalation record not found' });
     }
 
+    const previousStatus = existingDispute.status;
+    existingDispute.status = status || existingDispute.status;
+    existingDispute.resolutionNotes = resolutionNotes || existingDispute.resolutionNotes;
+    await existingDispute.save();
+
+    await DisputeArbitrationAudit.create({
+      disputeId: existingDispute._id,
+      arbitratorId: req.user._id || req.user.id,
+      previousStatus,
+      newStatus: existingDispute.status,
+      refundAmountApproved: refundAmountApproved || 0,
+      arbitrationNotes: resolutionNotes || `Arbitration decision updated status from ${previousStatus} to ${existingDispute.status}`,
+    });
+
     res.status(200).json({
       success: true,
-      message: 'Dispute status updated',
-      data: dispute,
+      message: 'Dispute status updated and arbitration audit logged',
+      data: existingDispute,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
