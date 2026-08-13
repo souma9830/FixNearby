@@ -144,21 +144,38 @@
   },
   "footer": {
     "tagline": "Book trusted local professionals for repairs, maintenance, cleaning, and home services with confidence — verified experts, fast response times, and seamless booking.",
-"availableArea": "Available in your local area",
-"support247": "24/7 Customer Support",
-"verifiedTrusted": "Verified & Trusted Professionals",
-"navigation": "Navigation",
-"feedback": "Feedback",
-"stayUpdated": "Stay Updated",
-"newsletterDesc": "Get updates on new services, discounts, and platform features delivered directly to your inbox.",
-"searchPlaceholder": "Search services...",
-"emailPlaceholder": "Enter your email",
-"subscribe": "Subscribe"
+    "availableArea": "Available in your local area",
+    "support247": "24/7 Customer Support",
+    "verifiedTrusted": "Verified & Trusted Professionals",
+    "navigation": "Navigation",
+    "feedback": "Feedback",
+    "stayUpdated": "Stay Updated",
+    "newsletterDesc": "Get updates on new services, discounts, and platform features delivered directly to your inbox.",
+    "searchPlaceholder": "Search services...",
+    "emailPlaceholder": "Enter your email",
+    "subscribe": "Subscribe",
+    "support": "Support",
+    "contact": "Contact",
+    "rights": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "faq": "FAQ"
   },
   "errors": {
     "pageNotFound": "Page Not Found",
     "pageNotFoundDesc": "The page you're looking for doesn't exist or has been moved.",
     "backHome": "Back to Home",
     "networkError": "Network error. Please check your connection."
+  },
+  "home": {
+    "trustBadge": "Trusted by 10,000+ homeowners",
+    "ratingCardTitle": "4.9/5 Rating",
+    "ratingCardSub": "Based on reviews",
+    "quickBookingTitle": "Quick Booking",
+    "quickBookingSub": "Connect with trusted professionals in minutes.",
+    "scoringTitle": "How scoring works: ",
+    "scoringBodyPts": "100 pts",
+    "scoringBodyPrefix": "Each worker is scored up to ",
+    "scoringBodySuffix": " based on rating (30), proximity (25), booking volume (20), response time (15), and repeat customers (10). Higher score = better match for you."
   }
 }

@@ -539,7 +539,7 @@ const Home = () => {
               {/* Trust badge */}
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
                 <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-                Trusted by 10,000+ homeowners
+                {t('home.trustBadge')}
               </div>
 
               {/* Main heading */}
@@ -617,9 +617,9 @@ const Home = () => {
                   </div>
                   <div>
                     <div className="text-base font-extrabold text-slate-900 dark:text-white">
-                      4.9/5 Rating
+                      {t('home.ratingCardTitle')}
                     </div>{' '}
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Based on reviews</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('home.ratingCardSub')}</p>
                   </div>
                 </div>
               </div>
@@ -633,10 +633,10 @@ const Home = () => {
                   </div>
                   <div>
                     <div className="text-base font-extrabold text-slate-900 dark:text-white">
-                      Quick Booking
+                      {t('home.quickBookingTitle')}
                     </div>{' '}
                     <p className="mt-0.5 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                      Connect with trusted professionals in minutes.
+                      {t('home.quickBookingSub')}
                     </p>
                   </div>
                 </div>
@@ -812,10 +812,8 @@ const Home = () => {
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-violet-100 bg-violet-50/60 px-5 py-4 text-sm text-violet-800">
             <IconSparkle className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
             <p>
-              <span className="font-bold">How scoring works: </span>
-              Each worker is scored up to <strong>100 pts</strong> based on rating (30), proximity
-              (25), booking volume (20), response time (15), and repeat customers (10). Higher score
-              = better match for you.
+              <span className="font-bold">{t('home.scoringTitle')}</span>
+              {t('home.scoringBodyPrefix')}<strong>{t('home.scoringBodyPts')}</strong>{t('home.scoringBodySuffix')}
             </p>
           </div>
 
