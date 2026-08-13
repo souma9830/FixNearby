@@ -5,7 +5,8 @@
     "build": "npm --prefix client run build",
     "vercel-build": "npm --prefix client run build",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "verify:i18n": "node scripts/verifyI18nKeys.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.2.0",
