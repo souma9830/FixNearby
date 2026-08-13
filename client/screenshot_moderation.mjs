@@ -1,35 +1,48 @@
 import { chromium } from '@playwright/test';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.join(__dirname, '../../../docs/screenshots');
 
-const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-const page = await context.newPage();
+// Ensure the output directory exists before capturing screenshots
+fs.mkdirSync(outDir, { recursive: true });
 
-// First load base url
-await page.goto('http://localhost:5173/', { waitUntil: 'domcontentloaded' });
+let browser;
+try {
+  browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
 
-// Inject admin mock user
-await page.evaluate(() => {
-  const mockAdmin = {
-    _id: 'admin-user-999',
-    name: 'System Admin',
-    email: 'admin@fixnearby.com',
-    role: 'admin',
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluLXVzZXItOTk5Iiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjk5OTk5OTk5OTl9.mock_signature'
-  };
-  localStorage.setItem('fixnearby_user', JSON.stringify(mockAdmin));
-});
+  // First load base url
+  await page.goto('http://localhost:5173/', { waitUntil: 'domcontentloaded' });
 
-// Navigate to admin moderation
-await page.goto('http://localhost:5173/admin/moderation', { waitUntil: 'domcontentloaded' });
-await page.waitForTimeout(3000);
+  // Inject admin mock user
+  await page.evaluate(() => {
+    const mockAdmin = {
+      _id: 'admin-user-999',
+      name: 'System Admin',
+      email: 'admin@fixnearby.com',
+      role: 'admin',
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluLXVzZXItOTk5Iiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjk5OTk5OTk5OTl9.mock_signature'
+    };
+    localStorage.setItem('fixnearby_user', JSON.stringify(mockAdmin));
+  });
 
-// Capture the admin moderation panel screenshot
-await page.screenshot({ path: path.join(outDir, 'admin_moderation_panel.png'), fullPage: false });
-console.log('✅ Screenshot captured: admin_moderation_panel.png');
+  // Navigate to admin moderation
+  await page.goto('http://localhost:5173/admin/moderation', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(3000);
 
-await browser.close();
+  // Capture the admin moderation panel screenshot
+  await page.screenshot({ path: path.join(outDir, 'admin_moderation_panel.png'), fullPage: false });
+  console.log('✅ Screenshot captured: admin_moderation_panel.png');
+} catch (error) {
+  console.error('❌ Screenshot script failed:', error);
+  process.exitCode = 1;
+} finally {
+  // Always close the browser, even when navigation or capture fails midway
+  if (browser) {
+    await browser.close().catch(() => {});
+  }
+}
