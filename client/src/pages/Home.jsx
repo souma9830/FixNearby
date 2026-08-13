@@ -375,7 +375,7 @@ const RecommendedWorkerCard = ({ worker, rank }) => {
       {/* Header */}
       <div className="mb-4 flex items-start gap-3">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-          <WorkerIcon className="h-7 w-7 text-slate-800" />
+          <WorkerIcon className="h-7 w-7 text-slate-800 dark:text-slate-100" />
         </div>
         <div className="min-w-0">
           <h3 className="truncate font-bold text-slate-900 dark:text-white">{worker.name}</h3>
@@ -412,7 +412,7 @@ const RecommendedWorkerCard = ({ worker, rank }) => {
           {worker.rating}
         </span>
         <span className="h-4 w-px bg-slate-300" />
-        <span className="font-semibold text-slate-800">{worker.price}</span>
+        <span className="font-semibold text-slate-800 dark:text-slate-200">{worker.price}</span>
         <span className="h-4 w-px bg-slate-300" />
         <span className="flex items-center gap-1">
           <IconTrendingUp className="h-3.5 w-3.5 text-emerald-500" />
