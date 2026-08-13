@@ -29,6 +29,11 @@ export const compressImage = async (file, options = {}) => {
     };
   }
 
+  // Preserve PNG output (and transparency) for PNG sources
+  const isPng = file.type === 'image/png';
+  const outputType = isPng ? 'image/png' : 'image/jpeg';
+  const extension = isPng ? '.png' : '.jpg';
+
   return new Promise((resolve) => {
     const reader = new FileReader();
 
@@ -56,20 +61,25 @@ export const compressImage = async (file, options = {}) => {
         canvas.height = height;
 
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, width, height);
+        if (isPng) {
+          // Preserve transparency for PNG sources — leave the canvas clear
+          ctx.clearRect(0, 0, width, height);
+        } else {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
+        }
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Export as JPEG with specified quality
+        // Export as JPEG/PNG with specified quality
         canvas.toBlob(
           (blob) => {
             if (!blob) {
               return resolve({ file, originalSize, compressedSize: originalSize, compressed: false });
             }
 
-            const fileName = file.name.replace(/\.[^/.]+$/, '') + '.jpg';
+            const fileName = file.name.replace(/\.[^/.]+$/, '') + extension;
             const compressedFile = new File([blob], fileName, {
-              type: 'image/jpeg',
+              type: outputType,
               lastModified: Date.now(),
             });
 
@@ -86,8 +96,8 @@ export const compressImage = async (file, options = {}) => {
               height,
             });
           },
-          'image/jpeg',
-          quality
+          outputType,
+          isPng ? undefined : quality
         );
       };
 
