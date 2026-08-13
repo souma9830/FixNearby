@@ -9,6 +9,7 @@
     "test:worker-vcard": "node tests/verifyWorkerVCard.js",
     "test:recent-workers": "node tests/verifyRecentWorkers.js",
     "test:comparison-export": "node tests/verifyWorkerComparisonExport.js",
+    "test:image-compressor": "node tests/verifyImageCompressor.js",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext js,jsx --fix",
     "format": "npx prettier --write .",
