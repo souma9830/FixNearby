@@ -22,4 +22,25 @@ assert.doesNotMatch(card, /0000000000/);
 assert.ok(card.endsWith('\r\n'));
 assert.throws(() => createWorkerVCard({}), /Worker name is required/);
 
+const baseWorker = {
+  name: 'Ravi Kumar',
+  profession: 'Plumber',
+  rating: 4.2,
+  verificationStatus: 'verified',
+};
+
+assert.doesNotMatch(createWorkerVCard(baseWorker, 'https://fixnearby.example/worker/1'), /ADR:/,
+  'missing location must not emit an ADR line');
+assert.doesNotMatch(createWorkerVCard({ ...baseWorker, location: null }, 'https://fixnearby.example/worker/2'), /ADR:/,
+  'null location must not emit an ADR line');
+assert.doesNotMatch(createWorkerVCard({ ...baseWorker, location: {} }, 'https://fixnearby.example/worker/3'), /ADR:/,
+  'empty object location must not emit an ADR line');
+assert.match(createWorkerVCard({ ...baseWorker, location: 'Bengaluru' }, 'https://fixnearby.example/worker/4'),
+  /ADR:;;Bengaluru;;;;/, 'string location must be used verbatim');
+assert.match(createWorkerVCard({
+  ...baseWorker,
+  location: { address: '10/2 MG Road', city: 'Pune' },
+}, 'https://fixnearby.example/worker/5'),
+  /ADR:;;10\/2 MG Road\\, Pune;;;;/, 'partial location must join only present fields');
+
 console.log('Worker vCard verification passed');
