@@ -1,26 +1,31 @@
 import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
+import { sanitizeAttachment } from '../utils/attachmentSanitizer.js';
 
 export const handleUploadAttachment = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`;
-    const attachment = {
-      fileUrl,
+    const attachment = sanitizeAttachment({
+      fileUrl: `/uploads/${req.file.filename}`,
       fileName: req.file.originalname,
       fileType: req.file.mimetype,
       fileSize: req.file.size
-    };
+    });
 
-    res.status(200).json({
+    if (!attachment) {
+      return res.status(400).json({ success: false, message: 'Uploaded file metadata is invalid' });
+    }
+
+    res.status(201).json({
       success: true,
+      message: 'Attachment uploaded successfully',
       attachment
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error processing upload', error: error.message });
+    res.status(500).json({ success: false, message: 'Error processing upload', error: error.message });
   }
 };
 

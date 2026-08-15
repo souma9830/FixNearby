@@ -1,4 +1,5 @@
 import Message from '../models/Message.js';
+import { sanitizeAttachment } from '../utils/attachmentSanitizer.js';
 
 const sanitizeText = (input) => {
   if (typeof input !== 'string') return '';
@@ -20,7 +21,8 @@ export const handleSendMessage = (io, socket, userId, userType) => async (data, 
     }
 
     const sanitizedText = sanitizeText(text || '');
-    if (!sanitizedText.trim() && !attachment) {
+    const sanitizedAttachment = sanitizeAttachment(attachment);
+    if (!sanitizedText.trim() && !sanitizedAttachment) {
       if (callback) callback({ success: false, error: 'Message contains invalid or empty content' });
       return;
     }
@@ -49,12 +51,7 @@ export const handleSendMessage = (io, socket, userId, userType) => async (data, 
       receiverId,
       receiverModel,
       text: sanitizedText,
-      attachment: attachment ? {
-        fileUrl: attachment.fileUrl,
-        fileName: attachment.fileName,
-        fileType: attachment.fileType,
-        fileSize: attachment.fileSize
-      } : null,
+      attachment: sanitizedAttachment,
       createdAt: timestamp ? new Date(timestamp) : undefined
     });
     const msgData = {
