@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { Calendar, Clock, Plus, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import calendarService from '../../services/calendarService';
 
@@ -6,7 +6,7 @@ const AvailabilityCalendar = ({ schedule = [], onUpdateSchedule }) => {
   const [selectedDay, setSelectedDay] = useState('Monday');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
-  const [isRecurring, setIsRecurring] = useState(true);
+  const [isRecurring] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState('');

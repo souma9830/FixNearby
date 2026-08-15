@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 const ServiceTaxonomyNavigator = ({ categories = [], selectedCategory, onSelectCategory }) => {
   return (

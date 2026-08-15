@@ -22,10 +22,12 @@ const getMarkerColor = (status) => {
   }
 };
 
-const CivicIssueMap = ({ issues, selectedIssueId, onMarkerClick, onUpvote }) => {
+const CivicIssueMap = ({ issues, selectedIssueId, onMarkerClick }) => {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersGroupRef = useRef(null);
+  const onMarkerClickRef = useRef(onMarkerClick);
+  onMarkerClickRef.current = onMarkerClick;
   const [leafletLoaded, setLeafletLoaded] = useState(false);
 
   // Dynamically Load Leaflet CSS and JS
@@ -150,7 +152,7 @@ const CivicIssueMap = ({ issues, selectedIssueId, onMarkerClick, onUpvote }) => 
 
       marker.bindPopup(popupContent);
       marker.on("click", () => {
-        if (onMarkerClick) onMarkerClick(issue._id);
+        if (onMarkerClickRef.current) onMarkerClickRef.current(issue._id);
       });
 
       marker.addTo(markersGroup);

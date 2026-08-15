@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { ShieldCheck, Download, RefreshCw, Search, Clock, User } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import { ShieldCheck, Download, RefreshCw, Search, User } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
 const AdminAuditLogs = () => {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [logs, setLogs] = useState([]);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/admin/audit-logs');
@@ -22,11 +22,11 @@ const AdminAuditLogs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading, showToast]);
 
   useEffect(() => {
     fetchLogs();
-  }, []);
+  }, [fetchLogs]);
 
   const handleExportCSV = () => {
     if (logs.length === 0) return showToast('No log data available to export.', 'warning');

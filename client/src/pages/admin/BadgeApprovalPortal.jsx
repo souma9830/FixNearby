@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ShieldCheck, CheckCircle2, XCircle, FileText, AlertCircle, RefreshCw } from 'lucide-react';
+import  { useState, useEffect } from 'react';
+import { ShieldCheck, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import badgeService from '../../services/badgeService';
 
 const BadgeApprovalPortal = () => {

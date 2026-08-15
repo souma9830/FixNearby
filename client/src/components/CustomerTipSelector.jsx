@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { DollarSign, Heart, Sparkles, Send } from 'lucide-react';
+import  { useState } from 'react';
+import {  Heart } from 'lucide-react';
 
-const CustomerTipSelector = ({ onTipSubmit }) => {
+const CustomerTipSelector = () => {
   const [selectedTip, setSelectedTip] = useState(5);
-  const [customTip, setCustomTip] = useState('');
+  const [setCustomTip] = useState('');
 
   const handleSelect = (amount) => {
     setSelectedTip(amount);

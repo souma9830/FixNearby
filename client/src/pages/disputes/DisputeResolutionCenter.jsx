@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShieldAlert, FilePlus, Scale, CheckCircle2, AlertOctagon } from 'lucide-react';
+import  { useState } from 'react';
+import { ShieldAlert, FilePlus, Scale, AlertOctagon } from 'lucide-react';
 import { fileDisputeEscalation, attachDisputeEvidence } from '../../services/disputeEscalationService';
 
 const DisputeResolutionCenter = ({ bookingId, respondentId }) => {
@@ -69,7 +69,7 @@ const DisputeResolutionCenter = ({ bookingId, respondentId }) => {
       {!dispute ? (
         <form onSubmit={handleFileDispute} className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">File Escalation Claim</h2>
-          
+
           <div>
             <label className="block text-xs font-bold mb-1">Dispute Reason</label>
             <select value={reason} onChange={(e) => setReason(e.target.value)} className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-900 text-sm">

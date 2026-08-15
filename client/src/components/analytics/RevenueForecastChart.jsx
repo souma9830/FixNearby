@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, BarChart3, RefreshCw } from 'lucide-react';
+import {  TrendingUp, RefreshCw } from 'lucide-react';
 import api from '../../services/apiClient';
 
 const RevenueForecastChart = () => {

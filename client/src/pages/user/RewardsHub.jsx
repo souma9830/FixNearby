@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Award, Gift, Sparkles, Ticket, CheckCircle, RefreshCw, Copy } from 'lucide-react';
+import  { useState, useEffect } from 'react';
+import { Award, Gift, Ticket, CheckCircle, RefreshCw, Copy } from 'lucide-react';
 import rewardsService from '../../services/rewardsService';
 
 const RewardsHub = () => {

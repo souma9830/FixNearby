@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, DollarSign, ExternalLink, ArrowRight, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { CreditCard, DollarSign, ExternalLink, RefreshCw } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 

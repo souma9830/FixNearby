@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useCallback} from 'react';
 import {
   Plus,
   Pencil,
@@ -40,9 +40,9 @@ const ServiceManager = () => {
 
   useEffect(() => {
     loadServices();
-  }, []);
+  }, [loadServices]);
 
-  const loadServices = async () => {
+  const loadServices = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getMyServices();
@@ -54,7 +54,7 @@ const ServiceManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   const resetForm = () => {
     setFormData({ name: '', description: '', price: '', duration: '60', isActive: true });

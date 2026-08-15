@@ -1,5 +1,5 @@
-import React from 'react';
-import { Ticket, Gift, Sparkles, CheckCircle } from 'lucide-react';
+
+import { Ticket, Gift, Sparkles } from 'lucide-react';
 
 const LoyaltyVoucherCatalog = ({ pointsBalance = 450, onRedeem }) => {
   const tiers = [

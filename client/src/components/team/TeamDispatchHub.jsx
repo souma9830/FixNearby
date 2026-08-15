@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { Users, CheckSquare, Plus, DollarSign, UserPlus, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import { Users, CheckSquare, CheckCircle2 } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
 const TeamDispatchHub = ({ bookingId = 'booking-101' }) => {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [taskBreakdown, setTaskBreakdown] = useState(null);
-  const [newSubTask, setNewSubTask] = useState('');
-  const [newWeight, setNewWeight] = useState(25);
+useState('');
+useState(25);
 
-  const fetchTeamBreakdown = async () => {
+  const fetchTeamBreakdown = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get(`/team-bookings/${bookingId}`);
@@ -22,11 +22,11 @@ const TeamDispatchHub = ({ bookingId = 'booking-101' }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId, setLoading, showToast]);
 
   useEffect(() => {
     fetchTeamBreakdown();
-  }, [bookingId]);
+  }, [fetchTeamBreakdown]);
 
   const handleToggleSubTask = async (taskId, currentStatus) => {
     const nextStatus = currentStatus === 'completed' ? 'pending' : 'completed';

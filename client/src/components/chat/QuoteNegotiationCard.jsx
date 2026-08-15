@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export default function QuoteNegotiationCard({ quote, onRespond }) {
   if (!quote) return null;

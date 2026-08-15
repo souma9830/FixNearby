@@ -1,5 +1,5 @@
-import React from 'react';
-import { Siren, Zap, MapPin, Radio, ShieldAlert } from 'lucide-react';
+
+import { Siren, Zap, Radio } from 'lucide-react';
 
 const EmergencyDispatchBanner = ({ activeTicket, onTriggerSOS }) => {
   return (

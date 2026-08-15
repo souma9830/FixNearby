@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Package, Plus, Trash2, DollarSign, CheckCircle } from 'lucide-react';
+import  { useState } from 'react';
+import { Package, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { submitPartsInvoice } from '../../services/partsBillingService';
 
 const PartsBillingManager = ({ bookingId }) => {
   const [items, setItems] = useState([{ itemName: '', quantity: 1, unitCostUSD: '' }]);
-  const [markup, setMarkup] = useState(10);
+  const [markup] = useState(10);
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState('');
 

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Award, Plus, Trash2, ShieldCheck, CheckCircle } from 'lucide-react';
+import  { useState } from 'react';
+import { Award, CheckCircle } from 'lucide-react';
 import { submitSkillCertification } from '../../services/skillCertificationService';
 
 const SkillCertifications = () => {

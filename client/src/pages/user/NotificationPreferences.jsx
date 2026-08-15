@@ -2,10 +2,10 @@
  * @fileoverview Notification Preferences Page Component
  */
 
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Bell, Mail, MessageSquare, Star, Shield, Smartphone, Send, RotateCcw, Save } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../hooks/useToast';
+import useToast from '../../hooks/useToast';
 import api from '../../services/apiClient';
 
 const defaultPreferences = {
@@ -25,7 +25,7 @@ const sections = [
 ];
 
 export default function NotificationPreferences() {
-  const { user } = useAuth();
+  useAuth();
   const { toast } = useToast();
   const [preferences, setPreferences] = useState(defaultPreferences);
   const [loading, setLoading] = useState(true);
@@ -146,7 +146,7 @@ export default function NotificationPreferences() {
                 <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
               </div>
             </div>
-            
+
             <div className="p-5 bg-gray-50/50 dark:bg-gray-800/50 flex flex-wrap gap-6">
               {[
                 { channel: 'email', label: 'Email', icon: Mail },

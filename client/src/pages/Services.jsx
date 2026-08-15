@@ -21,30 +21,22 @@ import "rc-slider/assets/index.css";
 
 
 import useDocumentTitle from "../hooks/useDocumentTitle";
-import SkeletonLoader from "../components/SkeletonLoader";
 import CenteredLoadingSpinner from "../components/CenteredLoadingSpinner";
 import useToast from "../hooks/useToast";
 
 
 import MapView from "../components/MapView";
 import SearchBar from "../components/SearchBar";
+import SearchResults from "../components/SearchResults";
 import FilterSidebar from "../components/FilterSidebar";
-import ReviewBadge from "../components/ReviewBadge";
 import useSearch from "../hooks/useSearch";
-import { fetchWorkers } from "../services/workerService";
 import { getSearchSuggestions, searchWorkers } from "../services/searchService";
 import { useLocation } from "../context/LocationContext";
-import { getWorkerAvailability } from "../services/availabilityService";
 import { useAuth } from "../context/AuthContext";
 import { getFavorites, toggleFavorite } from "../services/favoriteService";
 import { getEstimatorConfig } from "../utils/estimatorConfig";
-import useToast from "../hooks/useToast";
+import { getRecentWorkers, addRecentWorker, removeRecentWorker, clearRecentWorkers } from "../utils/recentWorkers";
 import EstimateWizard from "../components/EstimateWizard";
-import CostEstimatorWidget from "../components/calculator/CostEstimatorWidget";
-import WorkerMap from "../components/WorkerMap";
-import MapView from "../components/MapView";
-import useToast from "../hooks/useToast";
-import CenteredLoadingSpinner from "../components/CenteredLoadingSpinner";
 
 const mockWorkers = [
   {
@@ -221,156 +213,6 @@ const getDistanceKm = (lat1, lon1, lat2, lon2) => {
   return R * (2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA)));
 };
 
-const formatDistance = (d) =>
-  d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`;
-
-import { useRef } from "react";
-import { getSocket } from "../utils/socketClient";
-
-const WorkerSlots = ({ workerId, mockAvailability, mockResponseTime }) => {
-  const [slots, setSlots] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const [isSocketFallback, setIsSocketFallback] = useState(false);
-  const socketRef = useRef(null);
-
-  useEffect(() => {
-    let active = true;
-    let didReceiveSocketUpdate = false;
-
-    const fetchSlots = async () => {
-      try {
-        const res = await getWorkerAvailability(workerId);
-        if (res?.success && res.availableSlots && active) {
-          setSlots(res.availableSlots);
-        }
-      } catch (err) {
-        console.error("Error fetching slots for worker " + workerId, err);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    // Always fetch once to render immediately.
-    fetchSlots();
-
-    // Subscribe to worker availability updates over WebSockets.
-    const socket = getSocket();
-    socketRef.current = socket;
-
-    const handleAvailabilityUpdate = (payload) => {
-      if (!payload) return;
-      const updatedWorkerId = payload.workerId;
-      if (!updatedWorkerId || updatedWorkerId.toString() !== workerId.toString()) return;
-
-      if (payload.availableSlots && Array.isArray(payload.availableSlots)) {
-        didReceiveSocketUpdate = true;
-        setIsSocketFallback(false);
-        setSlots(payload.availableSlots);
-        setLoading(false);
-      }
-    };
-
-    const startPollingFallback = () => {
-      setIsSocketFallback(true);
-      const interval = setInterval(() => {
-        if (!active) return;
-        if (didReceiveSocketUpdate) {
-          clearInterval(interval);
-          return;
-        }
-        fetchSlots();
-      }, 10000);
-
-      return interval;
-    };
-
-    let pollingInterval = null;
-
-    // Attempt socket connect; if it fails quickly, enable polling.
-    // Socket.IO will also retry, but this keeps UI fresh when backend/socket isn't reachable.
-    const timeoutMs = 4000;
-    let timeoutHandle = setTimeout(() => {
-      if (!didReceiveSocketUpdate) {
-        pollingInterval = startPollingFallback();
-      }
-    }, timeoutMs);
-
-    socket.on("availability:update", handleAvailabilityUpdate);
-
-    // Back-end is expected to emit updates; joining a room/subscription is optional depending on implementation.
-    // We still emit a subscribe hint if the server supports it.
-    socket.emit("availability:subscribe", { workerId });
-
-    if (!socket.connected) {
-      socket.connect();
-    }
-
-    return () => {
-      active = false;
-      clearTimeout(timeoutHandle);
-      if (pollingInterval) clearInterval(pollingInterval);
-      socket.off("availability:update", handleAvailabilityUpdate);
-      socket.emit("availability:unsubscribe", { workerId });
-    };
-  }, [workerId]);
-
-
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 py-1.5">
-        <span className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs text-gray-400">Loading slots...</span>
-      </div>
-    );
-  }
-
-  let urgencyText = "Stable Availability";
-  let urgencyStyle = "bg-green-50 text-green-700 border-green-100";
-  if (slots.length === 0) {
-    urgencyText = "Fully Booked Today";
-    urgencyStyle = "bg-red-50 text-red-700 border-red-100 animate-pulse";
-  } else if (slots.length === 1) {
-    urgencyText = "🚨 High Demand - 1 Slot Left!";
-    urgencyStyle = "bg-red-600 text-white border-red-700 font-bold shadow-sm shadow-red-200 animate-pulse";
-  } else if (slots.length <= 2) {
-    urgencyText = "⚠️ Limited: 2 Slots Left";
-    urgencyStyle = "bg-amber-50 text-amber-700 border-amber-200";
-  } else {
-    urgencyText = `✅ ${slots.length} slots available`;
-    urgencyStyle = "bg-blue-50 text-blue-700 border-blue-100";
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2 text-xs font-semibold">
-        <span className={`rounded-full px-3 py-1 border transition-all ${urgencyStyle}`}>
-          {urgencyText}
-        </span>
-        <span className="rounded-full bg-slate-50 border border-gray-100 px-3 py-1 text-slate-600">
-          {mockResponseTime || "Replies in 15 min"}
-        </span>
-      </div>
-
-      {slots.length > 0 && (
-        <div className="flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 border border-slate-100/50">
-          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Next available times:</span>
-          <div className="flex flex-wrap gap-1.5 mt-0.5">
-            {slots.slice(0, 3).map((slot, index) => (
-              <span
-                key={index}
-                className="text-[11px] font-semibold bg-white border border-slate-200 text-slate-700 rounded-lg px-2 py-0.5 shadow-sm"
-              >
-                {slot.label}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const Services = () => {
   useDocumentTitle("Services");
 
@@ -473,8 +315,6 @@ const Services = () => {
     favoriteSearches,
     saveFavoriteSearch,
     removeFavoriteSearch,
-    loadFavoriteSearch,
-    getShareableUrl,
   } = useSearch({
     category: categoryFilter,
     minPrice: 0,
@@ -587,6 +427,7 @@ const Services = () => {
         availability: urlAvailability,
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-way URL -> state sync; re-running on state changes would override UI-driven filters with stale URL params
   }, [searchParams]);
 
   // SYNC STATE TO URL PARAMS
@@ -597,7 +438,7 @@ const Services = () => {
     if (categoryFilter !== "All") params.category = categoryFilter;
     if (sortBy !== "distance") params.sort = sortBy;
     if (urgentFilter) params.urgent = "true";
-    
+
     if (advancedFilters.minPrice > 0) params.minPrice = advancedFilters.minPrice;
     if (advancedFilters.maxPrice < 100) params.maxPrice = advancedFilters.maxPrice;
     if (advancedFilters.minRating > 0) params.minRating = advancedFilters.minRating;
@@ -793,7 +634,7 @@ const Services = () => {
     if (categoryFilter !== "All") params.set('category', categoryFilter);
     if (sortBy !== "distance") params.set('sort', sortBy);
     if (urgentFilter) params.set('urgent', "true");
-    
+
     if (advancedFilters.minPrice > 0) params.set('minPrice', advancedFilters.minPrice);
     if (advancedFilters.maxPrice < 100) params.set('maxPrice', advancedFilters.maxPrice);
     if (advancedFilters.minRating > 0) params.set('minRating', advancedFilters.minRating);
@@ -1291,7 +1132,7 @@ const Services = () => {
                           <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center text-slate-400 font-bold text-5xl group-hover:scale-105 transition-transform duration-500">
                             {worker.name.charAt(0)}
                           </div>
-                          
+
                           {/* Badges Overlay */}
                           <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
                             <span className="rounded-lg bg-slate-900/90 dark:bg-slate-950/90 px-2.5 py-1 text-xs font-extrabold text-white backdrop-blur-sm shadow-sm border border-white/10">

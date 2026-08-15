@@ -1,5 +1,5 @@
-import React from 'react';
-import { ShieldCheck, Award, AlertTriangle, CheckCircle2 } from 'lucide-react';
+
+import { ShieldCheck, Award, AlertTriangle } from 'lucide-react';
 
 const WorkerVerificationBadge = ({ complianceStatus = 'UNVERIFIED', isIdentityVerified = false }) => {
   if (complianceStatus === 'FULLY_COMPLIANT' || (isIdentityVerified && complianceStatus !== 'UNVERIFIED')) {

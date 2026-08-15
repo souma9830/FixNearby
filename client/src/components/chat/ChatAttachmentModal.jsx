@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Paperclip, X, UploadCloud, FileText, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import  { useState } from 'react';
+import {  X, UploadCloud, FileText, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import apiClient from '../../services/apiClient';
 
 const ChatAttachmentModal = ({ isOpen, onClose, onSendAttachment, initialFileType = 'all' }) => {

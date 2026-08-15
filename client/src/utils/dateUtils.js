@@ -2,7 +2,7 @@
  * Timezone & Daylight Saving Time (DST) Normalization Utilities
  */
 
-export const normalizeDateToUtc = (dateString, timezone = 'UTC') => {
+export const normalizeDateToUtc = (dateString) => {
   if (!dateString) return new Date().toISOString();
   const date = new Date(dateString);
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();

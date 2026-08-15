@@ -1,30 +1,30 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  X, ChevronLeft, ChevronRight, Package, Clock, DollarSign,
+  X, ChevronLeft, ChevronRight, Package, Clock,
   Calendar, MapPin, CheckCircle2, AlertCircle, Info, Calculator
 } from "lucide-react";
 import FocusTrap from "./FocusTrap";
 import { getWorkerAvailability } from "../services/availabilityService";
 import { previewEstimate, confirmEstimate } from "../services/estimateService";
 import { createBooking } from "../services/bookingService";
-import { getEstimatorConfig, parseHourlyRate } from "../utils/estimatorConfig";
+import { getEstimatorConfig } from "../utils/estimatorConfig";
 
 const EstimateWizard = ({ isOpen, onClose, worker, onBookingSuccess }) => {
   const [step, setStep] = useState(1);
   const [inputs, setInputs] = useState({});
   const [preview, setPreview] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
-  const [previewError, setPreviewError] = useState("");
+  const [setPreviewError] = useState("");
 
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [address, setAddress] = useState("123 Main St, New York");
   const [notes, setNotes] = useState("");
-  
+
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState("");
-  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [, setBookingSuccess] = useState(false);
 
   const [animateIn, setAnimateIn] = useState(false);
   const [isClosing, setIsClosing] = useState(false);

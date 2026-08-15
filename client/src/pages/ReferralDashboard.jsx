@@ -15,8 +15,7 @@ import {
   RefreshCw,
   Share2,
   CheckCircle2,
-  AlertCircle
-} from 'lucide-react';
+ } from 'lucide-react';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import {
   getReferralStats,

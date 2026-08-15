@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { submitWarrantyClaim } from '../../services/warrantyClaimService';
 
 export default function WarrantyClaimModal({ bookingId, originalWorkerId, onClose, onSuccess }) {

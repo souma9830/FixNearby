@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, Download, TrendingUp, Calendar, FileText, PieChart } from 'lucide-react';
+import {  Download, TrendingUp } from 'lucide-react';
 import api from '../services/apiClient';
 import useToast from '../hooks/useToast';
 
 const WorkerEarningsDashboard = () => {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -15,7 +15,7 @@ const WorkerEarningsDashboard = () => {
       })
       .catch(() => showToast('Failed to load earnings analytics', 'error'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [showToast]);
 
   const handleDownloadTaxReport = () => {
     if (!data) return;

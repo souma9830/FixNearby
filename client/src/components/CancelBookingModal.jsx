@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import {  AlertTriangle } from 'lucide-react';
 import FocusTrap from './FocusTrap';
 
 const CANCEL_REASONS = [

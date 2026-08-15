@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ShieldCheck, CheckCircle, XCircle, FileText, Clock } from 'lucide-react';
+import  { useState, useEffect } from 'react';
+import { ShieldCheck, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { getPendingBadgeRequests, reviewBadgeRequest } from '../../services/badgeService';
 
 const BadgeApprovals = () => {

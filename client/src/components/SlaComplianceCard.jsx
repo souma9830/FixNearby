@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { ShieldCheck, AlertTriangle, Clock, Award } from 'lucide-react';
 
 const SlaComplianceCard = ({ complianceRate = 98.5, totalJobs = 45, violations = 1, avgResponseTime = 14 }) => {

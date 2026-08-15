@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Heart, DollarSign, Sparkles, CheckCircle } from 'lucide-react';
+import  { useState } from 'react';
+import { Heart, CheckCircle } from 'lucide-react';
 import { submitPostJobTip } from '../../services/gratuityBonusService';
 
-const TipAndBonusModal = ({ bookingId, workerId, onClose }) => {
+const TipAndBonusModal = ({ bookingId, workerId }) => {
   const [tipAmount, setTipAmount] = useState(15);
   const [customTip, setCustomTip] = useState('');
   const [compliments, setCompliments] = useState(['Punctual', 'Expert Skill']);
-  const [note, setNote] = useState('');
+  const [note] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState('');
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Layers, Plus, Trash2, Edit2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import  { useState, useEffect } from 'react';
+import { Layers, Plus, Trash2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import categoryService from '../../services/categoryService';
 
 const CategoryManager = () => {

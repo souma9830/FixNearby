@@ -12,6 +12,7 @@ import {
   FaUser,
   FaSignOutAlt,
 } from "react-icons/fa";
+import FeedList from "../components/FeedList";
 
 import api from "../services/apiClient";
 import useToast from "../hooks/useToast";
@@ -110,13 +111,6 @@ const WorkerDashboard = () => {
       setIsAvailable(!newStatus); // Revert back
     }
   };
-
-  const statIcons = [
-    { icon: <FaBriefcase />, color: "text-blue-600 bg-blue-50" },
-    { icon: <FaClock />, color: "text-amber-600 bg-amber-50" },
-    { icon: <FaCheckCircle />, color: "text-emerald-600 bg-emerald-50" },
-    { icon: <FaStar />, color: "text-pink-600 bg-pink-50" },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50">

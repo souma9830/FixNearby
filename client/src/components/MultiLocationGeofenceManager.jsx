@@ -1,5 +1,5 @@
-import React from 'react';
-import { MapPin, Navigation, Compass, Shield } from 'lucide-react';
+
+import {  Navigation } from 'lucide-react';
 
 const MultiLocationGeofenceManager = ({ zones = [] }) => {
   return (

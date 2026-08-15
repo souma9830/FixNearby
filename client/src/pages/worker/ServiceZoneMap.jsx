@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MapPin, Navigation, Compass, CheckCircle } from 'lucide-react';
+import  { useState, useEffect } from 'react';
+import {  Compass, CheckCircle } from 'lucide-react';
 import geofenceService from '../../services/geofenceService';
 
 const ServiceZoneMap = () => {

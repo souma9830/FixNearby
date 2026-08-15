@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { submitPostJobTip } from '../../services/gratuityBonusService';
 
 export default function PostJobTipModal({ bookingId, workerId, onClose, onSuccess }) {
@@ -39,7 +39,7 @@ export default function PostJobTipModal({ bookingId, workerId, onClose, onSucces
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
         <h3 className="text-xl font-extrabold text-gray-900 dark:text-white text-center">Add a Tip for Your Worker</h3>
-        
+
         <div className="flex justify-center space-x-3">
           {[5, 10, 15, 25].map((amt) => (
             <button

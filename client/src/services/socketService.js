@@ -81,7 +81,7 @@ export const isConnected = () => socket?.connected || false;
 export const measureSocketLatency = (callback) => {
   if (!socket?.connected) return;
   const start = Date.now();
-  socket.emit('ping_check', { clientTimestamp: start }, (res) => {
+  socket.emit('ping_check', { clientTimestamp: start }, () => {
     const rtt = Date.now() - start;
     if (typeof callback === 'function') callback(rtt);
   });

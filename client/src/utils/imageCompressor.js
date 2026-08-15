@@ -9,7 +9,6 @@ export const compressImage = async (file, options = {}) => {
     maxWidth = 1920,
     maxHeight = 1920,
     quality = 0.8,
-    maxSizeMB = 0.5,
   } = options;
 
   if (!file || !(file instanceof File) || !file.type.startsWith('image/')) {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Calendar, Clock, Plus, Trash2, CheckCircle } from 'lucide-react';
+import  { useState } from 'react';
+import { Calendar, CheckCircle } from 'lucide-react';
 import { addAvailabilitySlot, updateCalendarSettings } from '../../services/calendarService';
 
 const AvailabilityCalendar = () => {

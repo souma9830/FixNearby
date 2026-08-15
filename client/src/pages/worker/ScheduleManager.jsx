@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Calendar as CalendarIcon,
   Clock,
-  Plus,
   Trash2,
   RefreshCw,
   AlertCircle,
@@ -83,11 +82,14 @@ const ScheduleManager = () => {
   const [dragStart, setDragStart] = useState(null); // { dayIdx, dateStr, hour }
   const [dragCurrent, setDragCurrent] = useState(null); // { dayIdx, dateStr, hour }
 
-  const weekDates = getWeekDates(weekStart);
-  const dateRange = {
-    startDate: formatDate(weekDates[0]),
-    endDate: formatDate(weekDates[6]),
-  };
+  const weekDates = useMemo(() => getWeekDates(weekStart), [weekStart]);
+  const dateRange = useMemo(
+    () => ({
+      startDate: formatDate(weekDates[0]),
+      endDate: formatDate(weekDates[6]),
+    }),
+    [weekDates]
+  );
 
   const fetchSchedule = useCallback(async () => {
     setLoading(true);
@@ -117,7 +119,7 @@ const ScheduleManager = () => {
     } finally {
       setLoading(false);
     }
-  }, [dateRange.startDate, dateRange.endDate]);
+  }, [dateRange, weekDates]);
 
   useEffect(() => {
     fetchSchedule();
@@ -446,7 +448,6 @@ const ScheduleManager = () => {
               {weekDates.map((d, dayIdx) => {
                 const dateKey = formatDate(d);
                 const dayData = schedule[dateKey] || {};
-                const hourStr = `${String(hour).padStart(2, "0")}:00`;
 
                 // Find if there is a booking during this hour
                 const bookingInHour = dayData.bookings?.find((b) => {

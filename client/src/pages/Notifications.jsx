@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 import {
   Bell,
   MessageCircle,
@@ -9,7 +9,7 @@ import {
   CheckCheck,
   Trash2,
   Clock,
-  AlertTriangle,
+
   Package,
 } from "lucide-react";
 import useDocumentTitle from "../hooks/useDocumentTitle";
@@ -192,9 +192,6 @@ const Notifications = () => {
     setPage(nextPage);
     fetchNotifications(nextPage, activeFilter, true);
   };
-
-  const activeCount =
-    activeFilter === "unread" ? unreadCount : notifications.length;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">

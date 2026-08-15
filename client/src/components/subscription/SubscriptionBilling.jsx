@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { CreditCard, ShieldCheck, Zap, Check, Star, RefreshCw } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import { CreditCard, Check } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
 const SubscriptionBilling = () => {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [subscription, setSubscription] = useState(null);
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [upgrading, setUpgrading] = useState(false);
 
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/subscriptions/active');
@@ -22,11 +22,11 @@ const SubscriptionBilling = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading]);
 
   useEffect(() => {
     fetchSubscription();
-  }, []);
+  }, [fetchSubscription]);
 
   const handleUpgrade = async (planTier) => {
     setUpgrading(true);

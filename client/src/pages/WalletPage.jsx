@@ -6,19 +6,18 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   CreditCard,
-  Building2,
+  Zap,
   ShieldCheck,
   RefreshCw,
   AlertCircle,
   CheckCircle2,
-  Lock,
   X,
   Gift,
 } from "lucide-react";
 import {
   getWalletBalance,
   topupWallet,
-  getWalletTransactions,
+
 } from "../services/walletService";
 import { useAuth } from "../context/AuthContext";
 
@@ -69,7 +68,7 @@ const statusBadge = (status) => {
 
 export const WalletPage = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  useNavigate();
 
   const [walletData, setWalletData] = useState(null);
   const [loading, setLoading] = useState(true);

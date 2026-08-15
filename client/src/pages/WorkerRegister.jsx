@@ -16,7 +16,7 @@ import {
 
 import { workerSignup } from "../services/workerService";
 import useToast from "../hooks/useToast";
-import { validateEmail, validatePassword, getPasswordStrength } from "../utils/clientValidation";
+import { validateEmail, validatePassword, isValidCoordinates, getPasswordStrength } from "../utils/clientValidation";
 
 const WorkerRegister = () => {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ const WorkerRegister = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [docVerificationStatus, setDocVerificationStatus] = useState("pending");
+useState("pending");
 
   const [error, setError] = useState("");
 

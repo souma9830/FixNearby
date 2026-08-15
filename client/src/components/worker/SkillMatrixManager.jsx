@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect , useCallback} from 'react';
 import { fetchWorkerSkills, submitSkillCertification } from '../../services/skillCertificationService';
 
 export default function SkillMatrixManager({ workerId }) {
@@ -17,7 +17,7 @@ export default function SkillMatrixManager({ workerId }) {
   const categories = ['Plumbing', 'Electrical', 'HVAC', 'Carpentry', 'Appliance Repair', 'Roofing', 'Painting', 'General Maintenance'];
   const proficiencies = ['Apprentice', 'Journeyman', 'Master', 'Certified Specialist'];
 
-  const loadSkills = async () => {
+  const loadSkills = useCallback(async () => {
     if (!workerId) return;
     setLoading(true);
     try {
@@ -30,11 +30,11 @@ export default function SkillMatrixManager({ workerId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [workerId, setLoading, setError]);
 
   useEffect(() => {
     loadSkills();
-  }, [workerId]);
+  }, [loadSkills]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

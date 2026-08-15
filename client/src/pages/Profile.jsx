@@ -5,7 +5,7 @@ import useToast from "../hooks/useToast";
 import TwoFactorSetup from "../components/TwoFactorSetup";
 import MfaSettings from "../components/auth/MfaSettings";
 import api from "../services/apiClient";
-import { ShieldCheck, ShieldAlert, Lock, Trash2, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, ShieldAlert, CheckCircle2 } from "lucide-react";
 
 const Profile = () => {
   const { user, token, login } = useAuth();
@@ -60,7 +60,7 @@ const Profile = () => {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
       });
-      
+
       login(updatedUser);
       showToast("Profile updated successfully!", "success");
     } catch (error) {

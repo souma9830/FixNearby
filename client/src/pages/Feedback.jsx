@@ -11,6 +11,21 @@ import {
   X,
 } from "lucide-react";
 
+const FEEDBACK_HINTS = [
+  {
+    title: "Start with your name",
+    text: "Enter your full name so we can personalize your feedback experience.",
+  },
+  {
+    title: "Give a star rating",
+    text: "Click on the stars to rate your overall experience.",
+  },
+  {
+    title: "Share detailed feedback",
+    text: "Tell us what you liked and what we can improve.",
+  },
+];
+
 const Feedback = () => {
   const [form, setForm] = useState({
     name: "",
@@ -25,26 +40,13 @@ const Feedback = () => {
   const [showHints, setShowHints] = useState(true);
   const [activeHint, setActiveHint] = useState(0);
 
-  const hints = [
-    {
-      title: "Start with your name",
-      text: "Enter your full name so we can personalize your feedback experience.",
-    },
-    {
-      title: "Give a star rating",
-      text: "Click on the stars to rate your overall experience.",
-    },
-    {
-      title: "Share detailed feedback",
-      text: "Tell us what you liked and what we can improve.",
-    },
-  ];
+  const hints = FEEDBACK_HINTS;
 
   useEffect(() => {
     if (!showHints) return;
 
     const interval = setInterval(() => {
-      setActiveHint((prev) => (prev + 1) % hints.length);
+      setActiveHint((prev) => (prev + 1) % FEEDBACK_HINTS.length);
     }, 4000);
 
     return () => clearInterval(interval);

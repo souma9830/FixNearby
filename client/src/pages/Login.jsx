@@ -4,7 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import { loginUser } from "../services/authService";
 import useToast from "../hooks/useToast";
 import { parseApiError } from "../utils/apiErrorHandler";
-import { validateEmail, validatePassword } from "../utils/clientValidation";
+import TwoFactorChallenge from "../components/TwoFactorChallenge";
+
 import {
   FaEye,
   FaEyeSlash,

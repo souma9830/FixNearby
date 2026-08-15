@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Award, Trophy, Gift, Star, Zap, CheckCircle2, RefreshCw } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import {  Trophy } from 'lucide-react';
 import api from '../services/apiClient';
 import useToast from '../hooks/useToast';
 
 const LoyaltyRewardsPortal = () => {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [reward, setReward] = useState(null);
   const [redeeming, setRedeeming] = useState(false);
 
-  const fetchRewards = async () => {
+  const fetchRewards = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/rewards/profile');
@@ -21,11 +21,11 @@ const LoyaltyRewardsPortal = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading, showToast]);
 
   useEffect(() => {
     fetchRewards();
-  }, []);
+  }, [fetchRewards]);
 
   const handleRedeemVoucher = async (title, discountPct, xpCost) => {
     setRedeeming(true);

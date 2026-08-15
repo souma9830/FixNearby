@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Star, Award, MapPin } from 'lucide-react';
+import { Sparkles, Star } from 'lucide-react';
 import api from '../../services/apiClient';
 
 const RecommendationCarousel = () => {

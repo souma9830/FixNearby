@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Upload, AlertCircle, Loader2 } from 'lucide-react';
+import { MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import useGeolocation from '../hooks/useGeolocation';
 import useToast from '../hooks/useToast';
 import { checkForDuplicates, getNearbyCandidates } from '../services/duplicateDetectionService';
@@ -7,7 +7,6 @@ import { createIssue, upvoteIssue } from '../services/issueService';
 import { setIssuesCache } from '../services/issuesCache';
 import DuplicateWarningModal from './DuplicateWarningModal';
 import ImageUpload from './ImageUpload';
-import { compressImage } from '../utils/imageCompressor';
 
 const ISSUE_CATEGORIES = [
   'Traffic Light',
@@ -138,30 +137,6 @@ const IssueSubmissionForm = ({ onSubmitSuccess }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle image change
-  // Handle image change with client-side compression
-  const handleImageChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        showToast('Please upload a valid image file', 'error');
-        return;
-      }
-
-      try {
-        const compressedResult = await compressImage(file, { maxWidth: 1920, maxHeight: 1920, quality: 0.8 });
-        setFormData((prev) => ({ ...prev, imageFile: compressedResult.file }));
-        setImagePreview(URL.createObjectURL(compressedResult.file));
-        if (compressedResult.compressed) {
-          showToast(`Image compressed from ${(compressedResult.originalSize / 1024 / 1024).toFixed(1)}MB to ${(compressedResult.compressedSize / 1024).toFixed(0)}KB for 3G upload`, 'success');
-        }
-      } catch (err) {
-        setFormData((prev) => ({ ...prev, imageFile: file }));
-        setImagePreview(URL.createObjectURL(file));
-      }
-    }
-  };
-
   // Validate form
   const validateForm = () => {
     const newErrors = {};
@@ -195,7 +170,7 @@ const IssueSubmissionForm = ({ onSubmitSuccess }) => {
     if (!issueId) return;
     try {
       setIsSubmitting(true);
-      const response = await upvoteIssue(issueId);
+      await upvoteIssue(issueId);
       showToast('Upvoted!', 'success');
       setShowDuplicateModal(false);
       setDuplicateIssue(null);

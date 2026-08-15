@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Star, X, CheckCircle, ShieldAlert } from 'lucide-react';
+import  { useState } from 'react';
+import { Star, X, ShieldAlert } from 'lucide-react';
 import { submitReview } from '../services/reviewService';
 
 const ReviewModal = ({ isOpen, onClose, booking, onSuccess }) => {
