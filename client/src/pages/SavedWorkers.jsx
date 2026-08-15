@@ -6,6 +6,9 @@ import { useNavigate } from "react-router-dom";
 import useToast from "../hooks/useToast";
 import SkeletonLoader from "../components/SkeletonLoader";
 
+const FAVORITES_CACHE_KEY = "favoritesCache";
+const FAVORITES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 // ────────────────────────────────────────────────────────
 //  Inline styles — no extra CSS file needed
 // ────────────────────────────────────────────────────────
@@ -285,9 +288,6 @@ const SavedWorkers = () => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const FAVORITES_CACHE_KEY = "favoritesCache";
-  const FAVORITES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
   const navigate = useNavigate();
   const { showToast } = useToast();

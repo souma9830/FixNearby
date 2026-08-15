@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 
 export const ChatImageLightboxViewer = ({ imageUrl, altText = 'Chat attachment' }) => {
   const [isOpen, setIsOpen] = useState(false);

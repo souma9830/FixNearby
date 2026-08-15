@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useCallback} from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Users,
-  Wrench,
-  ClipboardList,
-  DollarSign,
+
+
+
+
   TrendingUp,
   Activity,
   ShieldAlert,
@@ -12,7 +12,6 @@ import {
   Download,
   Printer,
   RefreshCw,
-  ArrowUpRight,
   Server,
   Database,
   Cpu,
@@ -20,45 +19,17 @@ import {
 } from 'lucide-react';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import { getAdminStats } from '../../services/adminService';
-import api from '../../services/apiClient';
+
 import { exportToCSV, exportToPDFReport } from '../../utils/exportUtils';
 
-import SpatialHeatmap from '../../components/admin/SpatialHeatmap';
-import DisputeArbitrationPanel from '../../components/admin/DisputeArbitrationPanel';
-import SlaComplianceTracker from '../../components/admin/SlaComplianceTracker';
-import AdminAuditLogs from '../../components/admin/AdminAuditLogs';
-import { Flame, Scale, ShieldCheck } from 'lucide-react';
 
-const StatCard = ({ icon: Icon, label, value, color, change, link, subtext }) => (
-  <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700/60 hover:shadow-md transition duration-200">
-    <div className="flex items-center justify-between">
-      <div className={`p-3 rounded-2xl ${color}`}>
-        <Icon className="h-6 w-6 text-white" />
-      </div>
-      {change && (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-          <ArrowUpRight className="h-3 w-3 mr-0.5" />
-          {change}
-        </span>
-      )}
-    </div>
-    <div className="mt-4">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
-      <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white mt-1">{value}</h3>
-      {subtext && <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">{subtext}</p>}
-    </div>
-    {link && (
-      <div className="mt-4 pt-3 border-t border-gray-50 dark:border-slate-700/50">
-        <Link to={link} className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1">
-          View details &rarr;
-        </Link>
-      </div>
-    )}
-  </div>
-);
+
+
+
+
 
 // SVG Line Chart Component for Signups & Revenue Trends
-const SimpleTrendChart = ({ data, dataKey, color = '#2563eb', height = 180 }) => {
+const SimpleTrendChart = ({ data, dataKey, color = '#2563eb' }) => {
   if (!data || data.length === 0) return <div className="h-44 flex items-center justify-center text-gray-400 text-sm">No analytics data available</div>;
 
   const values = data.map(d => Number(d[dataKey]) || 0);
@@ -175,14 +146,14 @@ const AdminDashboard = () => {
 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('signups'); // signups, bookings, revenue
-  const [mainTab, setMainTab] = useState('overview'); // overview, heatmap, disputes, sla, audit
+useState('overview'); // overview, heatmap, disputes, sla, audit
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getAdminStats();
       if (data.success) {
-        setStats(data.stats || stats);
+        setStats((current) => data.stats || current);
         setAnalytics(data.analytics || []);
         setActivity(data.recentActivity || []);
         if (data.systemHealth) setHealth(data.systemHealth);
@@ -192,11 +163,11 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [loadDashboardData]);
 
   const handleCSVExport = () => {
     const exportData = analytics.map(item => ({

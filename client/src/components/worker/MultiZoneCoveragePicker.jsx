@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect , useCallback} from 'react';
 import { addWorkerServiceZone, fetchWorkerServiceZones } from '../../services/zoneManagementService';
 
 export default function MultiZoneCoveragePicker({ workerId }) {
@@ -12,7 +12,7 @@ export default function MultiZoneCoveragePicker({ workerId }) {
     travelSurcharge: 10,
   });
 
-  const loadZones = async () => {
+  const loadZones = useCallback(async () => {
     if (!workerId) return;
     setLoading(true);
     try {
@@ -23,11 +23,11 @@ export default function MultiZoneCoveragePicker({ workerId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [workerId, setLoading]);
 
   useEffect(() => {
     loadZones();
-  }, [workerId]);
+  }, [loadZones]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

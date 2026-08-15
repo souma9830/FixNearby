@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Activity, ShieldCheck, Wrench, AlertTriangle, Plus, Calendar, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import { Activity, Wrench, Plus } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
 const PredictiveMaintenance = () => {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [appliances, setAppliances] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -14,7 +14,7 @@ const PredictiveMaintenance = () => {
   const [model, setModel] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchAppliances = async () => {
+  const fetchAppliances = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/maintenance/appliances');
@@ -26,11 +26,11 @@ const PredictiveMaintenance = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading]);
 
   useEffect(() => {
     fetchAppliances();
-  }, []);
+  }, [fetchAppliances]);
 
   const handleRegister = async (e) => {
     e.preventDefault();

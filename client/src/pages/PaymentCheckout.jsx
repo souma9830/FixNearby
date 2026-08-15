@@ -57,7 +57,7 @@ const PaymentCheckout = () => {
 
   // Wallet state
   const [walletBalance, setWalletBalance] = useState(0);
-  const [walletLoading, setWalletLoading] = useState(true);
+  const [, setWalletLoading] = useState(true);
   const [quickTopupLoading, setQuickTopupLoading] = useState(false);
 
   useEffect(() => {

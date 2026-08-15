@@ -1,5 +1,5 @@
-import React from 'react';
-import { Award, CheckBadge, ShieldCheck, AlertCircle } from 'lucide-react';
+
+import { Award } from 'lucide-react';
 
 const WorkerSkillsMatrix = ({ skills = [] }) => {
   return (

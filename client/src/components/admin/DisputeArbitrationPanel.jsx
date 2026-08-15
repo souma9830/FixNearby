@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Scale, ShieldAlert, CheckCircle2, XCircle, RefreshCw, User, FileText, Image as ImageIcon, DollarSign } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import { Scale, CheckCircle2, RefreshCw } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
@@ -10,11 +10,11 @@ const DisputeArbitrationPanel = () => {
   const [selectedDispute, setSelectedDispute] = useState(null);
 
   const [notes, setNotes] = useState('');
-  const [splitRefund, setSplitRefund] = useState(0);
-  const [splitPayout, setSplitPayout] = useState(0);
+  const [splitRefund] = useState(0);
+  const [splitPayout] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchDisputes = async () => {
+  const fetchDisputes = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/disputes');
@@ -29,11 +29,11 @@ const DisputeArbitrationPanel = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDispute, showToast]);
 
   useEffect(() => {
     fetchDisputes();
-  }, []);
+  }, [fetchDisputes]);
 
   const handleResolve = async (action) => {
     if (!selectedDispute) return;

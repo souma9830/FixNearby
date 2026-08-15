@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { MapPin, Navigation, Save, CheckCircle, AlertCircle } from 'lucide-react';
+import  { useState } from 'react';
+import {  Navigation, Save, CheckCircle } from 'lucide-react';
 import geofenceService from '../../services/geofenceService';
 
 const GeofenceRadiusPicker = ({ currentRadius = 10, currentAddress = '', onSaved }) => {

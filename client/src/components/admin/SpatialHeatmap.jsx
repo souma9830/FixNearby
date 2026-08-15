@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { MapPin, Users, Flame, Zap, Layers, RefreshCw } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import {  Flame, RefreshCw } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
@@ -15,7 +15,7 @@ const SpatialHeatmap = () => {
 
   const categories = ['All', 'Electrician', 'Plumber', 'Carpenter', 'Painter', 'HVAC Technician', 'Cleaner'];
 
-  const fetchHeatmap = async () => {
+  const fetchHeatmap = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/admin/heatmap');
@@ -30,11 +30,11 @@ const SpatialHeatmap = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchHeatmap();
-  }, []);
+  }, [fetchHeatmap]);
 
   const filteredPoints = heatmapData.filter(p => {
     if (filterCategory === 'All') return true;

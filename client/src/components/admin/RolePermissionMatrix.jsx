@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ShieldCheck, Lock, Check, X, RefreshCw } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import { ShieldCheck, Lock, RefreshCw } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
@@ -8,7 +8,7 @@ const RolePermissionMatrix = () => {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState([]);
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/roles');
@@ -20,11 +20,11 @@ const RolePermissionMatrix = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchRoles();
-  }, []);
+  }, [fetchRoles]);
 
   const handleToggleScope = async (roleName, scope, currentAllowed) => {
     try {

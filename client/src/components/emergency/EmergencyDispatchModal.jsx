@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { AlertOctagon, Flame, X, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import emergencyService from '../../services/emergencyService';
 

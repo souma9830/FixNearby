@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Zap, AlertCircle, Info, Check, MapPin, Calculator } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import { Zap, Calculator } from 'lucide-react';
 import api from '../../services/apiClient';
 
 const DynamicPricingWidget = ({ baseRate = 45, category = 'Plumbing', onPriceCalculated }) => {
   const [distanceKm, setDistanceKm] = useState(5);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [pricing, setPricing] = useState({
     baseRate: 45,
     surgeMultiplier: 1.0,
@@ -14,7 +14,7 @@ const DynamicPricingWidget = ({ baseRate = 45, category = 'Plumbing', onPriceCal
     isSurgeActive: false
   });
 
-  const calculatePrice = async () => {
+  const calculatePrice = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.post('/pricing/estimate', {
@@ -30,11 +30,11 @@ const DynamicPricingWidget = ({ baseRate = 45, category = 'Plumbing', onPriceCal
     } finally {
       setLoading(false);
     }
-  };
+  }, [distanceKm, category, onPriceCalculated, setLoading]);
 
   useEffect(() => {
     calculatePrice();
-  }, [distanceKm, category]);
+  }, [calculatePrice]);
 
   return (
     <div className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-xl space-y-4">

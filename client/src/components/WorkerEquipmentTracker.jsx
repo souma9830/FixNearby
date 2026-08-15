@@ -1,5 +1,5 @@
-import React from 'react';
-import { Package, Plus, AlertCircle, Wrench } from 'lucide-react';
+
+import {  Plus, Wrench } from 'lucide-react';
 
 const WorkerEquipmentTracker = ({ items = [] }) => {
   return (

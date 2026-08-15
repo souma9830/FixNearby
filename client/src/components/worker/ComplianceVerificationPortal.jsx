@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect , useCallback} from 'react';
 import { submitWorkerInsurance, fetchWorkerComplianceRecord } from '../../services/complianceService';
 
 export default function ComplianceVerificationPortal({ workerId }) {
   const [record, setRecord] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     insurancePolicyNumber: '',
     insuranceProvider: '',
@@ -11,7 +11,7 @@ export default function ComplianceVerificationPortal({ workerId }) {
     insuranceExpirationDate: '',
   });
 
-  const loadRecord = async () => {
+  const loadRecord = useCallback(async () => {
     if (!workerId) return;
     setLoading(true);
     try {
@@ -22,11 +22,11 @@ export default function ComplianceVerificationPortal({ workerId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [workerId, setLoading]);
 
   useEffect(() => {
     loadRecord();
-  }, [workerId]);
+  }, [loadRecord]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

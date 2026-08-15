@@ -1,5 +1,5 @@
-import React from 'react';
-import { WifiOff, RefreshCw, CheckCircle2 } from 'lucide-react';
+
+import { WifiOff, RefreshCw } from 'lucide-react';
 
 const SocketStatusBanner = ({ status = 'connected', pendingCount = 0 }) => {
   if (status === 'connected') return null;

@@ -1,5 +1,5 @@
-import React from 'react';
-import { Shield, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+
+import { Shield } from 'lucide-react';
 
 const WarrantyBadge = ({ daysLeft = 30, status = 'ACTIVE' }) => {
   const isExpired = status === 'EXPIRED' || daysLeft <= 0;

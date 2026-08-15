@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -44,7 +44,6 @@ const SavedWorkers     = lazy(() => import('./pages/SavedWorkers'));
 const Recommendations  = lazy(() => import('./pages/Recommendations')); // ✨ NEW
 const CivicIssues         = lazy(() => import('./pages/CivicIssues'));
 const ReportIssue         = lazy(() => import('./components/IssueSubmissionForm'));
-const IssueDetail         = lazy(() => import('./pages/IssueDetail'));
 const NotFound            = lazy(() => import('./pages/NotFound'));
 const CompareWorkers      = lazy(() => import('./pages/CompareWorkers'));
 const VerificationPage    = lazy(() => lazyWithRetry(() => import('./pages/worker/VerificationPage')));
@@ -52,6 +51,7 @@ const Notifications       = lazy(() => lazyWithRetry(() => import('./pages/Notif
 
 const AdminDashboard      = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers          = lazy(() => import('./pages/admin/AdminUsers'));
+const ModerationPanel     = lazy(() => import('./pages/admin/ModerationPanel'));
 
 const ForgotPasswordUser = lazy(()=>import('./pages/ForgotPasswordUser'));
 const ResetPasswordUser = lazy(()=>import('./pages/ResetPasswordUser'));
@@ -154,16 +154,6 @@ const ROUTES = [
   // Fallback
   { path: "*", element: <NotFound /> },
 ];
-
-// ─── Page Loader (shown while lazy chunks load) ───────────────────────────────
-const PageLoader = () => (
-  <div className="flex min-h-[60vh] items-center justify-center">
-    <div className="flex flex-col items-center gap-4">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#0056D2]" />
-      <p className="text-sm font-medium text-slate-400">Loading...</p>
-    </div>
-  </div>
-);
 
 // ─── App Content ──────────────────────────────────────────────────────────────
 function AppContent() {

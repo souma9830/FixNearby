@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShieldCheck, AlertCircle, FileCheck, CheckCircle2, Clock } from 'lucide-react';
+import  { useState } from 'react';
+import { ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { submitWarrantyClaim } from '../../services/warrantyClaimService';
 
 const WarrantyClaimTracker = ({ bookingId, originalWorkerId }) => {

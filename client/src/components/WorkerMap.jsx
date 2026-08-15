@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ZoomIn, ZoomOut, MapPin, Star, RotateCcw } from 'lucide-react';
+import { ZoomIn, ZoomOut, Star, RotateCcw } from 'lucide-react';
 
 const STATUS_COLORS = {
   available: '#22c55e',

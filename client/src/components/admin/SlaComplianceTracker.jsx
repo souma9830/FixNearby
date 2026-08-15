@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Clock, AlertTriangle, CheckCircle2, UserCheck, RefreshCw, ArrowRight } from 'lucide-react';
+import { useState, useEffect , useCallback} from 'react';
+import { Clock, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
 const SlaComplianceTracker = () => {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [complianceRate, setComplianceRate] = useState(96);
   const [overdueCount, setOverdueCount] = useState(0);
   const [overdueBookings, setOverdueBookings] = useState([]);
@@ -14,7 +14,7 @@ const SlaComplianceTracker = () => {
   const [reassignWorkerId, setReassignWorkerId] = useState('');
   const [reassigning, setReassigning] = useState(false);
 
-  const fetchSlaData = async () => {
+  const fetchSlaData = useCallback(async () => {
     setLoading(true);
     try {
       const [slaRes, workersRes] = await Promise.all([
@@ -36,11 +36,11 @@ const SlaComplianceTracker = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading, showToast]);
 
   useEffect(() => {
     fetchSlaData();
-  }, []);
+  }, [fetchSlaData]);
 
   const handleReassign = async (e) => {
     e.preventDefault();

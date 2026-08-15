@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 
-const CustomerTipModal = ({ booking, onTipSuccess, onClose }) => {
+const CustomerTipModal = ({ onTipSuccess, onClose }) => {
   const [tipAmount, setTipAmount] = useState(10);
   const [customTip, setCustomTip] = useState('');
   const [message, setMessage] = useState('');
@@ -16,7 +16,7 @@ const CustomerTipModal = ({ booking, onTipSuccess, onClose }) => {
     <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border">
       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Show Appreciation with a Tip</h3>
       <p className="text-sm text-gray-500 mb-4">100% of your tip goes directly to the worker.</p>
-      
+
       <div className="flex gap-3 mb-4">
         {[5, 10, 20, 50].map((amt) => (
           <button

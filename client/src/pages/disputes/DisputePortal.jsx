@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import disputeService from '../../services/disputeService';
-import DisputeEscalationCard from '../../components/DisputeEscalationCard';
+
 
 
 const DisputePortal = () => {

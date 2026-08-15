@@ -39,7 +39,7 @@ export const parseApiError = (error) => {
 };
 
 export const showApiError = (error, showToast) => {
-  const { message, status, errors } = parseApiError(error);
+  const { message: message, errors: errors } = parseApiError(error);
 
   if (errors && Array.isArray(errors)) {
     errors.forEach((err) => {

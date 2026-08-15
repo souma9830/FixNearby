@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { Star, X, AlertCircle } from 'lucide-react';
 
 const ChatFeedbackModal = ({ isOpen, onClose, onSubmit, workerName }) => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ShieldCheck, QrCode, Copy, Download, CheckCircle2, AlertTriangle, Key, X, RefreshCw } from "lucide-react";
+import { ShieldCheck, Copy, Download, CheckCircle2, AlertTriangle, Key, X, RefreshCw } from "lucide-react";
 import api from "../services/apiClient";
 import useToast from "../hooks/useToast";
 

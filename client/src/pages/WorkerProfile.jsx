@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 
 import api from "../services/apiClient";
 import { getEstimatorConfig } from "../utils/estimatorConfig";
@@ -11,30 +11,30 @@ import {
   Briefcase,
   Phone,
   MessageCircle,
-  CalendarCheck,
+
   LayoutGrid,
   Calculator,
   MessageSquare,
   Image,
   Award,
-  HelpCircle,
-  ChevronDown,
-  ChevronUp,
+
+
+
   Heart,
   Share2,
-  DollarSign,
+
   CheckCircle,
   Download,
 } from "lucide-react";
 
 import SkeletonLoader from "../components/SkeletonLoader";
 import BookingConfirmationModal from "../components/BookingConfirmationModal";
-import WorkerVerificationBadge from "../components/WorkerVerificationBadge";
+
 import SmartEstimator from "../components/SmartEstimator";
 import EstimateWizard from "../components/EstimateWizard";
 import ImageGallery from "../components/ImageGallery";
 import { createBooking } from "../services/bookingService";
-import WorkerBookingCalendar from "../components/WorkerBookingCalendar";
+
 import { useAuth } from "../context/AuthContext";
 import { getWorkerAvailability } from "../services/availabilityService";
 import { getFavorites, toggleFavorite } from "../services/favoriteService";
@@ -43,7 +43,7 @@ import ReviewBadge from "../components/ReviewBadge";
 import { shareWorkerProfile } from "../utils/shareWorkerProfile";
 import { getWorkerServices } from "../services/workerService";
 import { downloadWorkerVCard } from "../utils/workerVCard";
-import MultiLocationGeofenceCard from "../components/MultiLocationGeofenceCard";
+
 
 
 /* ✅ Move data outside component */
@@ -236,24 +236,6 @@ const WORKERS = {
   },
 };
 
-const REVIEWS = [
-  {
-    name: "User A",
-    rating: 5,
-    text: "Great service, arrived on time and fixed everything perfectly.",
-  },
-  {
-    name: "User B",
-    rating: 4.5,
-    text: "Professional, polite, and highly knowledgeable.",
-  },
-  {
-    name: "User C",
-    rating: 4.8,
-    text: "Affordable pricing and excellent work quality.",
-  },
-];
-
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutGrid },
   { id: "estimator", label: "Get Estimate", icon: Calculator },
@@ -320,7 +302,7 @@ const ReviewList = ({ reviews, isOwnProfile, workerName, onReplyAdded }) => {
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">Based on {totalReviews} reviews</p>
           </div>
-          
+
           <div className="md:col-span-2 space-y-2">
             {[5, 4, 3, 2, 1].map(stars => {
               const count = distribution[stars - 1];
@@ -491,7 +473,7 @@ const WorkerProfile = () => {
   const [showWizardModal, setShowWizardModal] = useState(false);
 
   const [reviews, setReviews] = useState([]);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [, setReviewsLoading] = useState(false);
   const [workerServices, setWorkerServices] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(false);
 
@@ -638,7 +620,7 @@ const WorkerProfile = () => {
         try {
           const res = await api.get(`/workers/${id}`);
           const backendWorker = res.data.worker || res.data;
-          
+
           setWorker({
             id: backendWorker._id || backendWorker.id,
             name: backendWorker.name,
@@ -688,6 +670,10 @@ const WorkerProfile = () => {
   // Auto-trigger quick booking when navigated here from Saved Workers.
   // Usage: /worker/:id?quickBook=1
   const [autoQuickBookStarted, setAutoQuickBookStarted] = useState(false);
+  const handleBookingRef = useRef(null);
+  useEffect(() => {
+    handleBookingRef.current = handleBooking;
+  });
   useEffect(() => {
     const shouldQuickBook = searchParams.get("quickBook") === "1";
     if (!shouldQuickBook) return;
@@ -697,7 +683,7 @@ const WorkerProfile = () => {
     // Once we have the worker and estimator readiness, kick off booking.
     setAutoQuickBookStarted(true);
     // handleBooking may redirect to /login when unauthenticated.
-    handleBooking();
+    handleBookingRef.current?.();
   }, [searchParams, worker, autoQuickBookStarted, hasEstimator]);
 
   /* ── Quick book — show estimate prompt if config exists, else book directly ── */

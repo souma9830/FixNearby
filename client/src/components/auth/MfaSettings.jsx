@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ShieldCheck, ShieldAlert, Key, QrCode, Download, CheckCircle2, Lock, RefreshCw, Smartphone } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
@@ -10,7 +10,7 @@ const MfaSettings = () => {
   const [setupData, setSetupData] = useState(null);
   const [verificationToken, setVerificationToken] = useState('');
   const [backupCodes, setBackupCodes] = useState([]);
-  const [webAuthnRegistered, setWebAuthnRegistered] = useState(false);
+useState(false);
 
   const handleSetupMfa = async () => {
     setLoading(true);

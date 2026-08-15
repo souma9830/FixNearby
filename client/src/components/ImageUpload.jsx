@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import  { useState, useRef } from 'react';
+import { Upload, X, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { compressImage, formatFileSize } from '../utils/imageCompressor';
 
 /**
@@ -8,7 +8,6 @@ import { compressImage, formatFileSize } from '../utils/imageCompressor';
  */
 const ImageUpload = ({
   onImageSelect,
-  selectedFile,
   previewUrl: initialPreview,
   label = "Upload Job Photo",
   error = null,
@@ -42,7 +41,7 @@ const ImageUpload = ({
     try {
       // Compress image client-side before dispatching
       const result = await compressImage(file, { maxWidth: 1920, maxHeight: 1920, quality: 0.8 });
-      
+
       setMetrics(result);
       setPreview(URL.createObjectURL(result.file));
 

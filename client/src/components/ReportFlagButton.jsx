@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import ReportModal from './ReportModal';
 
 export default function ReportFlagButton({ targetType, targetId }) {

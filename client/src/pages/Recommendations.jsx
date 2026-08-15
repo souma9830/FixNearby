@@ -8,15 +8,15 @@ import {
   Sparkles,
   Star,
   MapPin,
-  Clock,
-  TrendingUp,
-  Sliders,
+
+
+
   RefreshCw,
   Award,
   ThumbsUp,
   UserCheck,
-  ShieldCheck,
-  ChevronRight,
+
+
 } from "lucide-react";
 
 // Mock Fallback Data in case API is temporarily unavailable
@@ -156,13 +156,13 @@ export const Recommendations = () => {
 
   const [recommendData, setRecommendData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [setError] = useState(null);
 
   // Filters & Controls
   const [activeCategory, setActiveCategory] = useState("All");
   const [sortBy, setSortBy] = useState("score");
-  const [minRating, setMinRating] = useState(0);
-  const [showFilters, setShowFilters] = useState(false);
+  const [minRating] = useState(0);
+useState(false);
   const [page, setPage] = useState(1);
   const PER_PAGE = 6;
 
@@ -185,7 +185,7 @@ export const Recommendations = () => {
     } finally {
       setLoading(false);
     }
-  }, [coords]);
+  }, [coords, setError]);
 
   useEffect(() => {
     fetchRecs();

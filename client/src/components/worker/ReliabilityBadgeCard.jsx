@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { fetchReliabilityScore } from '../../services/reliabilityService';
 
 export default function ReliabilityBadgeCard({ workerId }) {

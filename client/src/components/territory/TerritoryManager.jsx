@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { MapPin, Navigation, Save, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, Navigation, Save, RefreshCw } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 

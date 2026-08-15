@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { fileDisputeEscalation, fetchDisputesForBooking, attachDisputeEvidence } from '../../services/disputeEscalationService';
+import  { useState, useEffect , useCallback} from 'react';
+import { fileDisputeEscalation, fetchDisputesForBooking } from '../../services/disputeEscalationService';
 
 export default function DisputeResolutionCenter({ bookingId, respondentId }) {
   const [disputes, setDisputes] = useState([]);
@@ -12,7 +12,7 @@ export default function DisputeResolutionCenter({ bookingId, respondentId }) {
 
   const reasons = ['Incomplete Work', 'Property Damage', 'Unsatisfactory Quality', 'Billing Discrepancy', 'No Show', 'Safety Violation'];
 
-  const loadDisputes = async () => {
+  const loadDisputes = useCallback(async () => {
     if (!bookingId) return;
     setLoading(true);
     try {
@@ -23,11 +23,11 @@ export default function DisputeResolutionCenter({ bookingId, respondentId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId, setLoading]);
 
   useEffect(() => {
     loadDisputes();
-  }, [bookingId]);
+  }, [loadDisputes]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

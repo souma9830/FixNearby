@@ -15,9 +15,9 @@ const ratingBreakdown = (reviews) => {
   return { total, average, breakdown };
 };
 
-export default function ReviewList({ reviews = [], workerId }) {
+export default function ReviewList({ reviews = [] }) {
   const [sortBy, setSortBy] = useState('newest');
-  const [allReviews, setAllReviews] = useState(reviews);
+  const [allReviews] = useState(reviews);
 
   const sorted = [...allReviews].sort((a, b) => {
     if (sortBy === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);

@@ -24,17 +24,25 @@
   "rules": {
     "react-refresh/only-export-components": "off",
     "react/prop-types": "off",
-    "no-unused-vars": "off",
+    "no-unused-vars": "warn",
     "react/no-unescaped-entities": "off",
     "react/react-in-jsx-scope": "off",
     "no-useless-escape": "off",
     "no-empty": "off",
     "react/display-name": "off",
     "no-unsafe-finally": "off",
-    "no-undef": "off",
+    "no-undef": "error",
     "no-control-regex": "off",
     "no-case-declarations": "off",
-    "react-hooks/exhaustive-deps": "off",
-    "react-hooks/rules-of-hooks": "off"
-  }
+    "react-hooks/exhaustive-deps": "warn",
+    "react-hooks/rules-of-hooks": "error"
+  },
+  "overrides": [
+    {
+      "files": ["tests/**", "src/tests/**", "*.test.js", "*.test.jsx"],
+      "env": {
+        "node": true
+      }
+    }
+  ]
 }

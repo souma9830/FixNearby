@@ -22,6 +22,8 @@ const MapView = ({ workers = [], selectedWorkerId, onMarkerClick }) => {
   const mapInstanceRef = useRef(null);
   const markersGroupRef = useRef(null);
   const coverageCircleRef = useRef(null);
+  const onMarkerClickRef = useRef(onMarkerClick);
+  onMarkerClickRef.current = onMarkerClick;
   const [leafletLoaded, setLeafletLoaded] = useState(false);
   const [activeWorker, setActiveWorker] = useState(null);
 
@@ -119,12 +121,12 @@ const MapView = ({ workers = [], selectedWorkerId, onMarkerClick }) => {
 
     workersWithCoords.forEach(({ worker, coords }) => {
       let addedToCluster = false;
-      
+
       for (let cluster of clusters) {
         const center = cluster.center;
         const latDiff = Math.abs(center[0] - coords[0]);
         const lonDiff = Math.abs(center[1] - coords[1]);
-        
+
         if (latDiff < CLUSTER_DISTANCE && lonDiff < CLUSTER_DISTANCE) {
           cluster.workers.push(worker);
           addedToCluster = true;
@@ -145,9 +147,9 @@ const MapView = ({ workers = [], selectedWorkerId, onMarkerClick }) => {
       if (cluster.workers.length === 1) {
         const w = cluster.workers[0];
         const isSelected = activeWorker && String(w._id || w.id) === String(activeWorker._id || activeWorker.id);
-        
+
         const price = w.price ? (w.price.toString().startsWith('$') ? w.price : `$${w.price}`) : '$40';
-        
+
         const icon = window.L.divIcon({
           className: 'custom-map-marker',
           html: `
@@ -170,7 +172,7 @@ const MapView = ({ workers = [], selectedWorkerId, onMarkerClick }) => {
         const marker = window.L.marker(cluster.center, { icon });
         marker.on('click', () => {
           setActiveWorker(w);
-          if (onMarkerClick) onMarkerClick(w._id || w.id);
+          if (onMarkerClickRef.current) onMarkerClickRef.current(w._id || w.id);
         });
         marker.addTo(markersGroup);
       } else {
@@ -235,7 +237,7 @@ const MapView = ({ workers = [], selectedWorkerId, onMarkerClick }) => {
           <span className="text-xs font-semibold text-slate-400">Loading Leaflet Map...</span>
         </div>
       )}
-      
+
       {/* Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
 

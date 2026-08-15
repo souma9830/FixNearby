@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Layers, ChevronRight, FolderTree } from 'lucide-react';
 
 const CategoryTaxonomyTree = ({ categories = [] }) => {

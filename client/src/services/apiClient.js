@@ -40,7 +40,7 @@ api.interceptors.response.use(
       const url = response.config.url || '';
       if (duration > TIMING_THRESHOLD_SLOW) {
         console.warn(`[API SLOW] ${method} ${url} took ${duration.toFixed(0)}ms`);
-      } else if (process.env.NODE_ENV !== 'production') {
+      } else if (import.meta.env.DEV) {
         console.debug(`[API] ${method} ${url} ${duration.toFixed(0)}ms`);
       }
     }
@@ -125,11 +125,11 @@ api.interceptors.response.use(null, async (error) => {
   if (shouldRetry) {
     config.retryCount += 1;
     console.warn(`[API RETRY] Retrying request (${config.retryCount}/3) for ${config.method?.toUpperCase()} ${config.url}`);
-    
+
     // Exponential backoff delay
     const delay = Math.pow(2, config.retryCount) * 1000;
     await new Promise(resolve => setTimeout(resolve, delay));
-    
+
     return api(config);
   }
 

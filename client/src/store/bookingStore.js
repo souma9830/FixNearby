@@ -3,7 +3,7 @@ import { create } from 'zustand';
 /**
  * Global Booking State Machine & Normalized Store
  */
-export const useBookingStore = create((set, get) => ({
+export const useBookingStore = create((set) => ({
   bookings: [],
   selectedStatus: 'all',
   page: 1,

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { CreditCard, DollarSign, ExternalLink, ArrowUpRight, ShieldCheck, AlertTriangle, RefreshCw } from 'lucide-react';
+import  { useState, useEffect } from 'react';
+import { CreditCard, DollarSign, ExternalLink, ShieldCheck, AlertTriangle, RefreshCw } from 'lucide-react';
 import payoutService from '../../services/payoutService';
 
 const PayoutSettings = () => {

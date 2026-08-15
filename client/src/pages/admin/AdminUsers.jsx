@@ -11,7 +11,7 @@ import {
   X,
   Download,
   Calendar,
-  DollarSign,
+
   User as UserIcon,
   Wrench,
   Shield,

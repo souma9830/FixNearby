@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ShieldCheck, History, XCircle, CheckCircle, AlertCircle } from 'lucide-react';
+import  { useState, useEffect } from 'react';
+import {  History } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
@@ -22,7 +22,7 @@ const VerificationAuditLogViewer = ({ workerId }) => {
       }
     };
     fetchLogs();
-  }, [workerId]);
+  }, [workerId, showToast]);
 
   if (loading) return <div className="p-4 text-slate-500">Loading audit history...</div>;
   if (!logs.length) return <div className="p-4 text-slate-500">No verification audit logs recorded yet.</div>;

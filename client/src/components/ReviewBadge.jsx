@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 export default function ReviewBadge({ rating = 5.0, count = 0 }) {
   let label = "Rising Star";

@@ -156,7 +156,7 @@ const HowItWorks = () => (
 // Insert this block before your existing return in SmartEstimator
 const ProgressTracker = ({ issue }) => {
     if (!issue.estimatedArrival) return null;
-    
+
     return (
         <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mt-6">
             <div className="flex justify-between items-center mb-2">
@@ -222,7 +222,6 @@ const SmartEstimator = ({ profession, priceString, onBookWithEstimate, issue}) =
     );
   }
 
-  const matPct    = estimate ? Math.round((estimate.materialCost / estimate.totalCost) * 100) : 0;
   const isReady   = estimate && estimate.totalCost > 0;
 
   return (

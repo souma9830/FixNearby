@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 
-const DisputeEscalationCard = ({ dispute, onStatusUpdate }) => {
-  const [notes, setNotes] = useState(dispute.resolutionNotes || '');
-  const [updating, setUpdating] = useState(false);
+const DisputeEscalationCard = ({ dispute }) => {
+useState(dispute.resolutionNotes || '');
+useState(false);
 
   const getStatusBadge = (status) => {
     switch (status) {

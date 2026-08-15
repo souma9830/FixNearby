@@ -1,6 +1,6 @@
-import React from 'react';
 
-const MultiLocationGeofenceCard = ({ geofenceConfig, onZoneToggle }) => {
+
+const MultiLocationGeofenceCard = ({ geofenceConfig }) => {
   if (!geofenceConfig) return null;
 
   return (

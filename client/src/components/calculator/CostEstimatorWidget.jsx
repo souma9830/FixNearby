@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Calculator, DollarSign, Wrench, Sparkles, CheckCircle2 } from 'lucide-react';
+import  { useState } from 'react';
+import { Calculator, Sparkles } from 'lucide-react';
 import estimatorService from '../../services/estimatorService';
 
 const CostEstimatorWidget = () => {

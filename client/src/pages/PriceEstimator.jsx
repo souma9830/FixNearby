@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Calculator, DollarSign, Clock, Zap, AlertCircle } from 'lucide-react';
+import  { useState } from 'react';
+import { Calculator } from 'lucide-react';
 import { getDynamicPricingEstimate } from '../services/estimateService';
 
 const PriceEstimator = () => {

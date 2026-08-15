@@ -27,6 +27,11 @@ export const validatePhone = (phone) => {
   return '';
 };
 
+export const isValidCoordinates = (lat, lng) => {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+};
+
 export const getPasswordStrength = (password) => {
   if (!password) return { level: 'none', label: '', color: '' };
   if (password.length < 6) return { level: 'weak', label: 'Weak', color: 'text-red-500 bg-red-500 w-1/3' };

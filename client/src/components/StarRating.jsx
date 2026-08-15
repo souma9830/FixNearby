@@ -1,5 +1,5 @@
 import { useState, memo } from "react";
-import { Star } from "lucide-react";
+
 
 const StarRating = memo(({ rating, onRatingChange, size = "md" }) => {
   const [hoverRating, setHoverRating] = useState(0);

@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useDocumentTitle from "../hooks/useDocumentTitle";
-import CenteredLoadingSpinner from "../components/CenteredLoadingSpinner";
+
 import SkeletonLoader from "../components/SkeletonLoader";
-import StarRating from "../components/StarRating";
+
 import { Package, Clock, DollarSign, ChevronDown, ChevronUp, Zap, AlertCircle, X, History, MessageSquare } from "lucide-react";
 import BookingTimeline from "../components/BookingTimeline";
 import useBookingTimeline from "../hooks/useBookingTimeline";
@@ -316,7 +316,7 @@ const EstimateBreakdown = ({ specs }) => {
 };
 
 const BookingTimelineInline = ({ bookingId, currentStatus }) => {
-  const { steps, loading, error } = useBookingTimeline(bookingId);
+  const { steps: steps, loading: loading } = useBookingTimeline(bookingId);
 
   return (
     <BookingTimeline

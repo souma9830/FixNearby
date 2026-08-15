@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import {
   Droplet,
   Zap,
@@ -8,23 +8,23 @@ import {
   Sparkles,
   Plug,
   Leaf,
-  Upload,
+
   X,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
   MapPin,
-  Clock,
-  DollarSign,
+
+
   Camera,
-  AlertCircle,
-  HelpCircle,
-  FileText,
+
+
+
   ShieldCheck,
 } from "lucide-react";
 import { createRequest } from "../services/serviceRequestService";
 import useToast from "../hooks/useToast";
-import useGeolocation from "../hooks/useGeolocation";
+
 import { compressImage } from "../utils/imageCompressor";
 import { useLocation } from "../context/LocationContext";
 
@@ -180,7 +180,7 @@ const QuoteRequestWizard = ({ onComplete }) => {
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [photos, setPhotos] = useState([]);
   const [location, setLocation] = useState(geoAddress || "");
-  const [urgency, setUrgency] = useState("medium");
+  const [urgency] = useState("medium");
   const [schedule, setSchedule] = useState("ASAP");
   const [budget, setBudget] = useState("Not sure");
   const [submitting, setSubmitting] = useState(false);
@@ -307,7 +307,7 @@ const QuoteRequestWizard = ({ onComplete }) => {
 
   return (
     <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900">
-      
+
       {/* Wizard Header Progress Bar */}
       <div className="border-b border-slate-100 bg-slate-50/80 p-6 dark:border-slate-800 dark:bg-slate-800/40">
         <div className="flex items-center justify-between">
@@ -345,7 +345,7 @@ const QuoteRequestWizard = ({ onComplete }) => {
 
       {/* Content Container */}
       <div className="p-6 md:p-8">
-        
+
         {/* SUCCESS CONFIRMATION STATE */}
         {submittedLead ? (
           <div className="py-8 text-center space-y-6 animate-in zoom-in-95 duration-300">
@@ -369,7 +369,7 @@ const QuoteRequestWizard = ({ onComplete }) => {
                 <span>Qualified Lead Details</span>
                 <span className="text-blue-600 dark:text-blue-400">Status: Pending Offers</span>
               </div>
-              
+
               <div className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
                 <p>📍 <strong>Location:</strong> {submittedLead.location}</p>
                 <p>📅 <strong>Preferred Schedule:</strong> {submittedLead.preferredSchedule}</p>

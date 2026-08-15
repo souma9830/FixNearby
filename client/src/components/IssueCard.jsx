@@ -1,4 +1,4 @@
-import { MapPin, ThumbsUp, Clock, User, CheckCircle2, AlertCircle } from 'lucide-react';
+import { MapPin, ThumbsUp, Clock, User, CheckCircle2 } from 'lucide-react';
 
 const getSeverityBadgeColor = (severity) => {
   const sev = (severity || 'medium').toLowerCase();

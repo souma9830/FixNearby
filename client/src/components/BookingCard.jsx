@@ -1,7 +1,7 @@
-import React from 'react';
-import { Clock, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
 
-const BookingCard = ({ booking, onAction }) => {
+import { Clock, Calendar } from 'lucide-react';
+
+const BookingCard = ({ booking }) => {
   if (!booking) return null;
 
   const isPending = booking.status === 'Pending';

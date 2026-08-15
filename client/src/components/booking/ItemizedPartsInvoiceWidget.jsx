@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect , useCallback} from 'react';
 import { fetchPartsForBooking, setPartsApprovalStatus } from '../../services/partsBillingService';
 
 export default function ItemizedPartsInvoiceWidget({ bookingId, isCustomer }) {
   const [partsData, setPartsData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadParts = async () => {
+  const loadParts = useCallback(async () => {
     if (!bookingId) return;
     setLoading(true);
     try {
@@ -16,11 +16,11 @@ export default function ItemizedPartsInvoiceWidget({ bookingId, isCustomer }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId, setLoading]);
 
   useEffect(() => {
     loadParts();
-  }, [bookingId]);
+  }, [loadParts]);
 
   const handleApproval = async (status) => {
     try {

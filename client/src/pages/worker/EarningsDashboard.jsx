@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   DollarSign,
   Calendar,
-  Clock,
+
   CheckCircle2,
   ArrowUpRight,
   RefreshCw,
@@ -20,7 +20,7 @@ import {
   Briefcase,
   ShieldCheck,
   X,
-  ChevronRight,
+
 } from "lucide-react";
 import {
   getEarningsSummary,

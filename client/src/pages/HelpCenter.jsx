@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import  { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   FaQuestionCircle,
@@ -110,7 +110,7 @@ const HelpCenter = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 text-gray-800 overflow-hidden">
-      
+
       {/* HERO */}
       <header className="relative bg-gray-950 text-white py-20 px-6">
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_#3b82f6,_transparent_40%)]"></div>

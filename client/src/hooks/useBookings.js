@@ -38,7 +38,7 @@ export const useBookings = (initialParams = {}) => {
 
   useEffect(() => {
     fetchBookings();
-  }, [params.status]);
+  }, [fetchBookings]);
 
   /**
    * Cancel a booking via the API with an optimistic local update that rolls

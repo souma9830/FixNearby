@@ -1,13 +1,13 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import {
   ShieldCheck,
   CheckCircle2,
   Lock,
   Star,
-  AlertTriangle,
-  ArrowRight,
-  DollarSign,
-  Info,
+
+
+
+
   Building2,
   UserCheck,
 } from "lucide-react";
@@ -31,7 +31,7 @@ const JobCompletionFlow = ({
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
   const [releasedData, setReleasedData] = useState(null);
-  const [showDisputeModal, setShowDisputeModal] = useState(false);
+useState(false);
 
   if (!isOpen || !booking) return null;
 
@@ -85,7 +85,7 @@ const JobCompletionFlow = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-slate-900 dark:border dark:border-slate-800">
-        
+
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 p-6 text-white">
           <div className="flex items-center justify-between">

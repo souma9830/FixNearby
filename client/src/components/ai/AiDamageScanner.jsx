@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Camera, Sparkles, AlertTriangle, CheckCircle2, DollarSign, Upload, RefreshCw } from 'lucide-react';
+import { Camera, Sparkles, AlertTriangle, RefreshCw } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 
@@ -7,7 +7,7 @@ const AiDamageScanner = ({ onAssessmentComplete }) => {
   const { showToast } = useToast();
   const [scanning, setScanning] = useState(false);
   const [assessment, setAssessment] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
+useState(null);
 
   const handleScanImage = async () => {
     setScanning(true);

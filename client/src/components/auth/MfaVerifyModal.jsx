@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, ShieldCheck, Key, X } from 'lucide-react';
+import { Lock, Key, X } from 'lucide-react';
 import api from '../../services/apiClient';
 import useToast from '../../hooks/useToast';
 

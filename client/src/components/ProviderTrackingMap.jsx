@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Phone, Navigation, Clock, ShieldCheck, MapPin, AlertCircle, RefreshCw } from 'lucide-react';
+import { Phone, Navigation, Clock, MapPin, RefreshCw } from 'lucide-react';
 import { getSocket } from '../utils/socketClient';
 
 const getDistanceKm = (lat1, lon1, lat2, lon2) => {
@@ -31,13 +31,13 @@ const ProviderTrackingMap = ({
   const mapInstanceRef = useRef(null);
   const providerMarkerRef = useRef(null);
   const routeLineRef = useRef(null);
-  
+
   const [leafletLoaded, setLeafletLoaded] = useState(false);
-  const [providerLocation, setProviderLocation] = useState(initialProviderLocation);
+  const [, setProviderLocation] = useState(initialProviderLocation);
   const [distanceKm, setDistanceKm] = useState(0);
   const [etaMinutes, setEtaMinutes] = useState(15);
   const [isSimulating, setIsSimulating] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [, setLastUpdated] = useState(new Date());
 
   // 1. Dynamic Leaflet Loader
   useEffect(() => {
@@ -139,7 +139,7 @@ const ProviderTrackingMap = ({
         mapInstanceRef.current = null;
       }
     };
-  }, [leafletLoaded]);
+  }, [leafletLoaded, customerLocation, initialProviderLocation, providerName]);
 
   // 3. Compute Distance & ETA
   const updateMetrics = useCallback(
