@@ -65,23 +65,30 @@ export const getNearbyIssues = async (req, res) => {
       return res.status(200).json({ type: 'cluster', data: clusters });
     }
 
-    let query = {
-      location: {
-        $near: {
-          $geometry: { type: 'Point', coordinates: [lng, lat] },
-          $maxDistance: maxDistanceMeters
+    const matchQuery = category && category !== 'All' ? { category } : {};
+
+    const issues = await Issue.aggregate([
+      {
+        $geoNear: {
+          near: { type: 'Point', coordinates: [lng, lat] },
+          distanceField: 'dist.calculated',
+          maxDistance: maxDistanceMeters,
+          spherical: true,
+          key: 'location',
+          query: matchQuery
         }
-      }
-    };
+      },
+      {
+        $sort: {
+          'dist.calculated': 1,
+          upvotes: -1,
+          createdAt: -1
+        }
+      },
+      { $limit: 100 }
+    ]);
 
-    if (category && category !== 'All') {
-      query.category = category;
-    }
-
-    const issues = await Issue.find(query)
-      .populate('reportedBy', 'name email')
-      .sort({ upvotes: -1, createdAt: -1 })
-      .limit(100);
+    await Issue.populate(issues, { path: 'reportedBy', select: 'name email' });
 
     return res.status(200).json({ type: 'list', data: issues });
   } catch (err) {
