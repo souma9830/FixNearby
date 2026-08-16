@@ -15,8 +15,8 @@ class CacheService {
    * Check if Redis is available.
    * @returns {boolean} True if Redis is available.
    */
-  isAvailable() {
-    const redis = getRedis();
+  async isAvailable() {
+    const redis = await getRedis();
     return redis !== null && redis.status === 'ready';
   }
 
@@ -27,7 +27,7 @@ class CacheService {
    */
   async get(key) {
     try {
-      const redis = getRedis();
+      const redis = await getRedis();
       if (!redis) return null;
       const data = await redis.get(key);
       if (!data) return null;
@@ -47,7 +47,7 @@ class CacheService {
    */
   async set(key, value, ttlSeconds) {
     try {
-      const redis = getRedis();
+      const redis = await getRedis();
       if (!redis) return false;
       const data = JSON.stringify(value);
       await redis.setex(key, ttlSeconds, data);
@@ -65,7 +65,7 @@ class CacheService {
    */
   async del(key) {
     try {
-      const redis = getRedis();
+      const redis = await getRedis();
       if (!redis) return false;
       await redis.del(key);
       return true;
@@ -82,7 +82,7 @@ class CacheService {
    */
   async invalidatePattern(pattern) {
     try {
-      const redis = getRedis();
+      const redis = await getRedis();
       if (!redis) return false;
       
       // Using SCAN to avoid blocking Redis with KEYS

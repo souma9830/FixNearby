@@ -17,7 +17,8 @@ export const responseCache = (ttlSeconds) => {
       return next();
     }
 
-    const key = `${req.method}:${req.originalUrl}:${req.user?.role || 'anonymous'}`;
+    const cacheScope = String(req.user?._id || req.user?.id || req.user?.role || 'anonymous');
+    const key = `${req.method}:${req.originalUrl}:${cacheScope}`;
 
     try {
       const cachedResponse = await cacheService.get(key);

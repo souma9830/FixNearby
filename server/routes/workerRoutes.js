@@ -20,6 +20,7 @@ import {
 import { protectWorker, requireRole } from '../middleware/authMiddleware.js';
 import upload from '../middleware/uploadMiddleware.js';
 import { validateGeoCoordinates } from '../middleware/geoValidator.js';
+import { responseCache, invalidateCache } from '../middleware/responseCacheMiddleware.js';
 import {
   addService,
   updateService,
@@ -45,10 +46,10 @@ router.get('/dashboard/stats', protectWorker, requireRole('provider', 'worker', 
 router.post('/recalculate-karma', protectWorker, requireRole('provider', 'worker', 'admin'), recalculateKarmaScoresController);
 
 // Service catalog management (protected - worker/provider/admin only)
-router.get('/services', protectWorker, requireRole('provider', 'worker', 'admin'), getMyServices);
-router.post('/services', protectWorker, requireRole('provider', 'worker', 'admin'), addService);
-router.put('/services/:serviceId', protectWorker, requireRole('provider', 'worker', 'admin'), updateService);
-router.delete('/services/:serviceId', protectWorker, requireRole('provider', 'worker', 'admin'), removeService);
+router.get('/services', protectWorker, requireRole('provider', 'worker', 'admin'), responseCache(300), getMyServices);
+router.post('/services', protectWorker, requireRole('provider', 'worker', 'admin'), invalidateCache('GET:/api/workers*services*'), addService);
+router.put('/services/:serviceId', protectWorker, requireRole('provider', 'worker', 'admin'), invalidateCache('GET:/api/workers*services*'), updateService);
+router.delete('/services/:serviceId', protectWorker, requireRole('provider', 'worker', 'admin'), invalidateCache('GET:/api/workers*services*'), removeService);
 router.put('/hourly-rate', protectWorker, requireRole('provider', 'worker', 'admin'), updateHourlyRate);
 
 // Public routes
@@ -56,6 +57,6 @@ router.get('/', getWorkers);
 router.get('/:id', getWorkerById);
 router.get('/:id/availability', getWorkerAvailability);
 router.get('/:id/reviews', getWorkerReviews);
-router.get('/:id/services', getWorkerServices);
+router.get('/:id/services', responseCache(300), getWorkerServices);
 
 export default router;
