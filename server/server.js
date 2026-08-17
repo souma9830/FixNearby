@@ -233,7 +233,6 @@ app.use('/api/admin/moderation', moderationRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/workers/compliance', complianceRoutes);
-app.use('/api/disputes/arbitration-escalation', serviceDisputeEscalationRoutes);
 app.use('/api/warranties/manager', serviceWarrantyManagerRoutes);
 app.use('/api/verification', verificationRoutes);
 app.use('/api/disputes', disputeRoutes);
