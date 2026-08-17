@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const rewardVoucherSchema = new mongoose.Schema({
   userId: {
@@ -47,4 +47,4 @@ const rewardVoucherSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('RewardVoucher', rewardVoucherSchema);
+export default mongoose.model('RewardVoucher', rewardVoucherSchema);

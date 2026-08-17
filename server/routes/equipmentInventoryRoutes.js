@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import { addInventoryItem, getWorkerInventory } from '../controllers/equipmentInventoryController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const inventoryController = require('../controllers/equipmentInventoryController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.post('/add', protect, inventoryController.addInventoryItem);
-router.get('/my-inventory', protect, inventoryController.getWorkerInventory);
+router.post('/add', protect, addInventoryItem);
+router.get('/my-inventory', protect, getWorkerInventory);
 
-module.exports = router;
+export default router;

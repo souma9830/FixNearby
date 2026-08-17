@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import { generateVoucher, getUserVouchers } from '../controllers/voucherRedemptionController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const voucherController = require('../controllers/voucherRedemptionController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.post('/redeem-points', protect, voucherController.generateVoucher);
-router.get('/my-vouchers', protect, voucherController.getUserVouchers);
+router.post('/redeem-points', protect, generateVoucher);
+router.get('/my-vouchers', protect, getUserVouchers);
 
-module.exports = router;
+export default router;

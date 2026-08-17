@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const slaMetricSchema = new mongoose.Schema({
   bookingId: {
@@ -62,4 +62,4 @@ const slaMetricSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('SlaMetric', slaMetricSchema);
+export default mongoose.model('SlaMetric', slaMetricSchema);

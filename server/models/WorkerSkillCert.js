@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const workerSkillCertSchema = new mongoose.Schema({
   workerId: {
@@ -29,4 +29,4 @@ const workerSkillCertSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('WorkerSkillCert', workerSkillCertSchema);
+export default mongoose.model('WorkerSkillCert', workerSkillCertSchema);

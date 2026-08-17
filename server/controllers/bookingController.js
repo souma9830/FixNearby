@@ -27,7 +27,12 @@ export const createBooking = async (req, res, next) => {
       }
     }
 
-    const { workerId, service, scheduledTime, durationHours, address, price, timezone = 'UTC' } = req.body;
+    const { workerId, service, scheduledTime, durationHours, address, price, timezone = 'UTC', latitude, longitude } = req.body;
+
+    const location =
+      latitude !== undefined && longitude !== undefined
+        ? { type: 'Point', coordinates: [Number(longitude), Number(latitude)] }
+        : undefined;
     // Normalize time to UTC to prevent DST offset mismatches
     const rawStart = new Date(scheduledTime);
     const start = new Date(Date.UTC(rawStart.getUTCFullYear(), rawStart.getUTCMonth(), rawStart.getUTCDate(), rawStart.getUTCHours(), rawStart.getUTCMinutes()));
@@ -98,6 +103,7 @@ export const createBooking = async (req, res, next) => {
         scheduledTime: start,
         durationHours,
         address,
+        location,
         price,
         status: 'Pending',
         statusHistory: [{

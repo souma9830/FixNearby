@@ -1,7 +1,7 @@
-const SlaMetric = require('../models/SlaMetric');
-const Worker = require('../models/Worker');
+import SlaMetric from '../models/SlaMetric.js';
+import Worker from '../models/Worker.js';
 
-exports.evalSlaForBooking = async ({ bookingId, workerId, customerId, actualResponseTimeMinutes, actualArrivalDelayMinutes, slaTier = 'STANDARD' }) => {
+export const evalSlaForBooking = async ({ bookingId, workerId, customerId, actualResponseTimeMinutes, actualArrivalDelayMinutes, slaTier = 'STANDARD' }) => {
   const maxResponseTime = slaTier === 'EMERGENCY_VIP' ? 15 : slaTier === 'PRIORITY' ? 30 : 60;
   const isViolated = actualResponseTimeMinutes > maxResponseTime || actualArrivalDelayMinutes > 30;
 
@@ -32,7 +32,7 @@ exports.evalSlaForBooking = async ({ bookingId, workerId, customerId, actualResp
   return slaRecord;
 };
 
-exports.getWorkerSlaStats = async (req, res) => {
+export const getWorkerSlaStats = async (req, res) => {
   try {
     const { workerId } = req.params;
     const stats = await SlaMetric.aggregate([

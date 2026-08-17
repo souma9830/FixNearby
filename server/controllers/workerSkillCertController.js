@@ -1,6 +1,6 @@
-const WorkerSkillCert = require('../models/WorkerSkillCert');
+import WorkerSkillCert from '../models/WorkerSkillCert.js';
 
-exports.submitSkillCert = async (req, res) => {
+export const submitSkillCert = async (req, res) => {
   try {
     const { skillTitle, issuingAuthority, licenseNumber, issuedDate, expirationDate, certDocumentUrl } = req.body;
     const cert = await WorkerSkillCert.create({
@@ -19,7 +19,7 @@ exports.submitSkillCert = async (req, res) => {
   }
 };
 
-exports.getWorkerSkills = async (req, res) => {
+export const getWorkerSkills = async (req, res) => {
   try {
     const certs = await WorkerSkillCert.find({ workerId: req.params.workerId || req.user._id });
     return res.status(200).json({ success: true, data: certs });

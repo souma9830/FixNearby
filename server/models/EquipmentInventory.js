@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const equipmentInventorySchema = new mongoose.Schema({
   workerId: {
@@ -39,4 +39,4 @@ const equipmentInventorySchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('EquipmentInventory', equipmentInventorySchema);
+export default mongoose.model('EquipmentInventory', equipmentInventorySchema);

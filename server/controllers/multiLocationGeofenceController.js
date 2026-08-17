@@ -1,6 +1,6 @@
-const MultiLocationGeofence = require('../models/MultiLocationGeofence');
+import MultiLocationGeofence from '../models/MultiLocationGeofence.js';
 
-exports.addServiceZone = async (req, res) => {
+export const addServiceZone = async (req, res) => {
   try {
     const { zoneName, centerCoordinates, radiusKm } = req.body;
     const zone = await MultiLocationGeofence.create({
@@ -16,7 +16,7 @@ exports.addServiceZone = async (req, res) => {
   }
 };
 
-exports.getWorkerZones = async (req, res) => {
+export const getWorkerZones = async (req, res) => {
   try {
     const zones = await MultiLocationGeofence.find({ workerId: req.user._id, isActive: true });
     return res.status(200).json({ success: true, data: zones });

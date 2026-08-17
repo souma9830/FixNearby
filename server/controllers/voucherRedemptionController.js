@@ -1,8 +1,8 @@
-const RewardVoucher = require('../models/RewardVoucher');
-const User = require('../models/User');
-const crypto = require('crypto');
+import RewardVoucher from '../models/RewardVoucher.js';
+import User from '../models/User.js';
+import crypto from 'crypto';
 
-exports.generateVoucher = async (req, res) => {
+export const generateVoucher = async (req, res) => {
   try {
     const { pointsCost, discountAmount, title } = req.body;
     const userId = req.user._id;
@@ -37,7 +37,7 @@ exports.generateVoucher = async (req, res) => {
   }
 };
 
-exports.getUserVouchers = async (req, res) => {
+export const getUserVouchers = async (req, res) => {
   try {
     const vouchers = await RewardVoucher.find({ userId: req.user._id }).sort({ createdAt: -1 });
     return res.status(200).json({ success: true, data: vouchers });

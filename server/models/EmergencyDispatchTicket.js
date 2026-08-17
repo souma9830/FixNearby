@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const emergencyDispatchTicketSchema = new mongoose.Schema({
   customerId: {
@@ -43,4 +43,4 @@ const emergencyDispatchTicketSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('EmergencyDispatchTicket', emergencyDispatchTicketSchema);
+export default mongoose.model('EmergencyDispatchTicket', emergencyDispatchTicketSchema);

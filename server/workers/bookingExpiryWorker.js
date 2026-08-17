@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { Worker } from 'bullmq';
-import mongoose from 'mongoose';
+import IORedis from 'ioredis';
 import Booking from '../models/Booking.js';
 import { getRedis } from '../utils/redis.js';
 import { getIo } from '../socket.js';
@@ -11,9 +11,7 @@ dotenv.config();
 
 const isDbConnected = () => mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2;
 
-const isDbConnected = () => mongoose.connection.readyState === 1;
-
-export const startBookingExpiryScheduler = () => {
+export const startBookingExpiryScheduler = async () => {
   console.log('[BullMQ Expiry Worker]: Initializing booking expiry check worker...');
 
   if (!isDbConnected()) {
@@ -21,6 +19,7 @@ export const startBookingExpiryScheduler = () => {
     return;
   }
 
+  const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
   let connection = null;
   try {
     connection = new IORedis(redisUrl, {
@@ -55,16 +54,17 @@ export const startBookingExpiryScheduler = () => {
   };
 
   if (connection) {
-    const expiryWorker = new Worker(
-      'booking-expiry-queue',
-      async (job) => {
-        if (job.name === 'check_expiry') {
-          console.log('[BullMQ Expiry Worker]: Executing scheduled expiry scan...');
-          await performExpiryCheck();
-        }
-      },
-      { connection }
-    );
+    try {
+      const expiryWorker = new Worker(
+        'booking-expiry-queue',
+        async (job) => {
+          if (job.name === 'check_expiry') {
+            console.log('[BullMQ Expiry Worker]: Executing scheduled expiry scan...');
+            await performExpiryCheck();
+          }
+        },
+        { connection }
+      );
 
       expiryWorker.on('completed', (job) => {
         console.log(`[BullMQ Expiry Worker]: Job completed successfully: ${job.id}`);

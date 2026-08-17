@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import { submitSkillCert, getWorkerSkills } from '../controllers/workerSkillCertController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const certController = require('../controllers/workerSkillCertController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.post('/submit', protect, certController.submitSkillCert);
-router.get('/worker/:workerId', certController.getWorkerSkills);
+router.post('/submit', protect, submitSkillCert);
+router.get('/worker/:workerId', getWorkerSkills);
 
-module.exports = router;
+export default router;
