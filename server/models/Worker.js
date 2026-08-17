@@ -45,6 +45,11 @@ const workerSchema = new mongoose.Schema(
       enum: ['UNVERIFIED', 'PARTIALLY_COMPLIANT', 'FULLY_COMPLIANT'],
       default: 'UNVERIFIED',
     },
+    verificationStatus: {
+      type: String,
+      enum: ['unverified', 'pending', 'verified'],
+      default: 'unverified',
+    },
     backgroundCheckDate: {
       type: Date,
       default: null,

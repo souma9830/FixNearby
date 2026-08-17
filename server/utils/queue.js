@@ -1,4 +1,5 @@
 import { Queue } from 'bullmq';
+import IORedis from 'ioredis';
 import { getRedis } from './redis.js';
 import dotenv from 'dotenv';
 
@@ -12,6 +13,7 @@ let notificationQueue = null;
 export const getRedisConnection = () => {
   if (connection) return connection;
   try {
+    const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
     connection = new IORedis(redisUrl, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
@@ -23,6 +25,8 @@ export const getRedisConnection = () => {
   }
   return connection;
 };
+
+export const redisConnection = getRedisConnection();
 
 export const getNotificationQueue = () => {
   if (notificationQueue) return notificationQueue;
@@ -49,6 +53,26 @@ export const getNotificationQueue = () => {
 
 export { notificationQueue };
 
+const queueWith = (conn) => {
+  try {
+    return new Queue('notification-queue', {
+      connection: conn,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000
+        },
+        removeOnComplete: true,
+        removeOnFail: false
+      }
+    });
+  } catch (err) {
+    console.warn('[Queue] Failed to create notification queue:', err.message);
+    return null;
+  }
+};
+
 export const queueNotification = async (jobName, data) => {
   const queue = getNotificationQueue();
   if (!queue) {
@@ -57,28 +81,15 @@ export const queueNotification = async (jobName, data) => {
   }
 
   if (!notificationQueueInstance) {
-    try {
-      notificationQueueInstance = new Queue('notification-queue', {
-        connection: conn,
-        defaultJobOptions: {
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 1000
-          },
-          removeOnComplete: true,
-          removeOnFail: false
-        }
-      });
-    } catch (err) {
-      console.warn('[Queue] Failed to create notification queue:', err.message);
+    notificationQueueInstance = queueWith(queue.opts?.connection || getRedisConnection());
+    if (!notificationQueueInstance) {
       console.log(`[Queue Fallback Logging] Simulating queueing of Job: "${jobName}" due to error:`, data);
       return null;
     }
   }
 
   try {
-    const job = await queue.add(jobName, data);
+    const job = await notificationQueueInstance.add(jobName, data);
     console.log(`[Queue] Job queued successfully: "${jobName}", Job ID: ${job.id}`);
     return job;
   } catch (error) {
