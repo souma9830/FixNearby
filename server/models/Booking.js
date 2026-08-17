@@ -63,7 +63,7 @@ const bookingSchema = new mongoose.Schema({
     coordinates: {
       type: [Number],
       validate: {
-        validator: (coords) => !coords || (coords.length === 2 && coords[0] >= -180 && coords[0] <= 180 && coords[1] >= -90 && coords[1] <= 90),
+        validator: (coords) => !coords || coords.length === 0 || (coords.length === 2 && coords[0] >= -180 && coords[0] <= 180 && coords[1] >= -90 && coords[1] <= 90),
         message: 'Invalid location coordinates. Must be [lng, lat] within bounds.'
       }
     }

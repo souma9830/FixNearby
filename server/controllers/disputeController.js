@@ -10,7 +10,7 @@ import { processDisputeEvidence } from '../services/disputeWorkflowService.js';
 // @access  Private (User)
 export const createDispute = async (req, res, next) => {
   try {
-    const { bookingId, reasonCategory, description, claimAmount, evidenceImages } = req.body;
+    const { bookingId, reasonCategory, description, claimAmount, evidenceImages, evidenceUrls } = req.body;
 
     const booking = await Booking.findById(bookingId);
     if (!booking) {
