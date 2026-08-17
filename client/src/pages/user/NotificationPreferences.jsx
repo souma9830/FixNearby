@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Mail, MessageSquare, Star, Shield, Smartphone, Send, RotateCcw, Save } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../hooks/useToast';
+import useToast from '../../hooks/useToast';
 import api from '../../services/apiClient';
 
 const defaultPreferences = {

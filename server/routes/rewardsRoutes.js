@@ -1,5 +1,5 @@
 import express from 'express';
-import { getLoyaltyProfile, redeemVoucher } from '../controllers/rewardsController.js';
+import { getLoyaltyProfile, getUserRewards, redeemVoucher, redeemCoupon } from '../controllers/rewardsController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -8,8 +8,8 @@ router.use(protect);
 
 router.get('/profile', getLoyaltyProfile);
 router.post('/redeem', redeemVoucher);
-router.get('/my-rewards', protect, getUserRewards);
-router.post('/redeem', protect, redeemCoupon);
+router.get('/my-rewards', getUserRewards);
+router.post('/coupon/redeem', redeemCoupon);
 router.get('/tier-rules', (req, res) => {
   res.status(200).json({
     tiers: [

@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import { addServiceZone, getWorkerZones } from '../controllers/multiLocationGeofenceController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const geofenceController = require('../controllers/multiLocationGeofenceController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.post('/add-zone', protect, geofenceController.addServiceZone);
-router.get('/my-zones', protect, geofenceController.getWorkerZones);
+router.post('/add-zone', protect, addServiceZone);
+router.get('/my-zones', protect, getWorkerZones);
 
-module.exports = router;
+export default router;

@@ -24,7 +24,6 @@ import { dbSupervisor } from './config/dbPoolSupervisor.js';
 import { validateEnv } from './config/envValidate.js';
 
 import authRoutes from './routes/authRoutes.js';
-import workerSkillCertRoutes from './routes/workerSkillCertRoutes.js';
 import multiLocationGeofenceRoutes from './routes/multiLocationGeofenceRoutes.js';
 import workerRoutes from './routes/workerRoutes.js';
 import issueRoutes from './routes/issueRoutes.js';
@@ -34,7 +33,7 @@ import voucherRedemptionRoutes from './routes/voucherRedemptionRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import authMiddleware from './middleware/authMiddleware.js';
 import errorHandler from './middleware/errorHandler.js';
-import csrfProtection from './middleware/csrfMiddleware.js';
+import { csrfProtection } from './middleware/csrfMiddleware.js';
 import { compressionMiddleware } from './middleware/compression.js';
 import securityHeaders from './middleware/securityHeaders.js';
 import { sanitizeInput } from './middleware/securitySanitize.js';
@@ -88,6 +87,8 @@ import geofenceRoutes from './routes/geofenceRoutes.js';
 import estimatorRoutes from './routes/estimatorRoutes.js';
 import referralRoutes from './routes/referralRoutes.js';
 import mfaRoutes from './routes/mfaRoutes.js';
+import telemetryRoutes from './routes/telemetryRoutes.js';
+import emergencyRoutes from './routes/emergencyRoutes.js';
 import pricingRoutes from './routes/pricingRoutes.js';
 import maintenanceRoutes from './routes/maintenanceRoutes.js';
 import zoneManagementRoutes from './routes/zoneManagementRoutes.js';
@@ -232,7 +233,6 @@ app.use('/api/admin/moderation', moderationRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/workers/compliance', complianceRoutes);
-app.use('/api/disputes/arbitration-escalation', serviceDisputeEscalationRoutes);
 app.use('/api/warranties/manager', serviceWarrantyManagerRoutes);
 app.use('/api/verification', verificationRoutes);
 app.use('/api/disputes', disputeRoutes);
@@ -249,6 +249,7 @@ app.use('/api/categories/taxonomy', serviceCategoryTaxonomyRoutes);
 app.use('/api/emergency', emergencyRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/referrals', referralRoutes);
+app.use('/api/telemetry', telemetryRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
@@ -272,7 +273,7 @@ app.use('/api/notifications', notificationRoutes);
   );
   // Initialize Weekly Karma Scheduler
   initKarmaScheduler();
-  startWorker().catch(err =>
+  Promise.resolve(startWorker()).catch(err =>
     console.error('[Server] Notification worker failed:', err.message)
   );
 })();

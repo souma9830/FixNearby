@@ -79,6 +79,7 @@ export const getNearbyIssues = async (req, res) => {
     }
 
     const issues = await Issue.find(query)
+      .select('title description category location latitude longitude status upvotes reportedAt reportedBy')
       .populate('reportedBy', 'name email')
       .sort({ upvotes: -1, createdAt: -1 })
       .limit(100);

@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const serviceWarrantySchema = new mongoose.Schema({
   bookingId: {
@@ -39,4 +39,4 @@ const serviceWarrantySchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('ServiceWarranty', serviceWarrantySchema);
+export default mongoose.model('ServiceWarranty', serviceWarrantySchema);

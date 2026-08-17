@@ -40,10 +40,11 @@ export const getLoyaltyProfile = async (req, res, next) => {
     }
 
     const loyaltyPreview = calculateLoyaltyPointsEarned(100, userRewards.tier.toUpperCase());
+    const availableCoupons = (userRewards.activeCoupons || []).filter((c) => !c.isUsed);
 
     res.status(200).json({
       success: true,
-      reward
+      reward,
       balance: userRewards.balance,
       tier: userRewards.tier,
       lifetimeEarned: userRewards.lifetimeEarned,
@@ -51,6 +52,33 @@ export const getLoyaltyProfile = async (req, res, next) => {
       activeCoupons: userRewards.activeCoupons || [],
       availableCoupons,
       loyaltyPreview
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get current user's reward points profile
+// @route   GET /api/rewards/my-rewards
+// @access  Private
+export const getUserRewards = async (req, res, next) => {
+  try {
+    let userRewards = await RewardPoints.findOne({ user: req.user.id });
+    if (!userRewards) {
+      userRewards = new RewardPoints({ user: req.user.id, balance: 100, lifetimeEarned: 100 });
+      await userRewards.save();
+    }
+
+    const availableCoupons = (userRewards.activeCoupons || []).filter((c) => !c.isUsed);
+
+    res.status(200).json({
+      success: true,
+      balance: userRewards.balance,
+      tier: userRewards.tier,
+      lifetimeEarned: userRewards.lifetimeEarned,
+      history: userRewards.transactions,
+      activeCoupons: userRewards.activeCoupons || [],
+      availableCoupons
     });
   } catch (error) {
     next(error);
@@ -94,15 +122,34 @@ export const redeemVoucher = async (req, res, next) => {
       success: true,
       message: `Voucher "${code}" unlocked for ${xpCost} XP!`,
       voucher: { code, title, discountPct }
-    const catalog = {
-      c1: { title: '$10 Off Plumbing Services', discount: 10, pointsCost: 50 },
-      c2: { title: '$25 Off Electrical Repair', discount: 25, pointsCost: 100 },
-      c3: { title: '50% Off House Cleaning', discount: 50, pointsCost: 200 }
-    };
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const catalog = {
+  c1: { title: '$10 Off Plumbing Services', discount: 10, pointsCost: 50 },
+  c2: { title: '$25 Off Electrical Repair', discount: 25, pointsCost: 100 },
+  c3: { title: '50% Off House Cleaning', discount: 50, pointsCost: 200 }
+};
+
+// @desc    Redeem points for a discount coupon
+// @route   POST /api/rewards/redeem
+// @access  Private
+export const redeemCoupon = async (req, res, next) => {
+  try {
+    const { couponId } = req.body;
 
     const targetCoupon = catalog[couponId] || catalog.c1;
 
-    if (!userRewards || userRewards.balance < targetCoupon.pointsCost) {
+    let userRewards = await RewardPoints.findOne({ user: req.user.id });
+    if (!userRewards) {
+      userRewards = new RewardPoints({ user: req.user.id, balance: 100, lifetimeEarned: 100 });
+      await userRewards.save();
+    }
+
+    if (userRewards.balance < targetCoupon.pointsCost) {
       return res.status(400).json({ message: `Insufficient points! Required: ${targetCoupon.pointsCost}` });
     }
 

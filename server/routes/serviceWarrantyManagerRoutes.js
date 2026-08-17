@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import { issueWarranty, getUserWarranties } from '../controllers/serviceWarrantyManagerController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const warrantyController = require('../controllers/serviceWarrantyManagerController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.post('/issue', protect, warrantyController.issueWarranty);
-router.get('/my-warranties', protect, warrantyController.getUserWarranties);
+router.post('/issue', protect, issueWarranty);
+router.get('/my-warranties', protect, getUserWarranties);
 
-module.exports = router;
+export default router;

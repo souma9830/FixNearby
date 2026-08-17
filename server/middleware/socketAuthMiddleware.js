@@ -44,7 +44,7 @@ export const socketAuthMiddleware = async (socket, next) => {
     }
 
     if (!user) {
-      const err = new Error('Authentication error: Account not found or deactivated');
+      const err = new Error('Authentication error: User/Worker not found');
       err.data = { code: 'USER_NOT_FOUND' };
       return next(err);
     }
@@ -57,7 +57,8 @@ export const socketAuthMiddleware = async (socket, next) => {
 
     next();
   } catch (error) {
-    const err = new Error('Authentication error: Invalid or expired token');
+    const isExpired = error instanceof jwt.TokenExpiredError;
+    const err = new Error(isExpired ? 'Authentication error: Token has expired' : 'Authentication error: Invalid token');
     err.data = { code: 'INVALID_TOKEN', detail: error.message };
     next(err);
   }

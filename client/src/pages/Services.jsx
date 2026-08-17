@@ -38,13 +38,9 @@ import { getWorkerAvailability } from "../services/availabilityService";
 import { useAuth } from "../context/AuthContext";
 import { getFavorites, toggleFavorite } from "../services/favoriteService";
 import { getEstimatorConfig } from "../utils/estimatorConfig";
-import useToast from "../hooks/useToast";
 import EstimateWizard from "../components/EstimateWizard";
 import CostEstimatorWidget from "../components/calculator/CostEstimatorWidget";
 import WorkerMap from "../components/WorkerMap";
-import MapView from "../components/MapView";
-import useToast from "../hooks/useToast";
-import CenteredLoadingSpinner from "../components/CenteredLoadingSpinner";
 
 const mockWorkers = [
   {

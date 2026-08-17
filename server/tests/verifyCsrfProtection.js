@@ -1,7 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
-import csrfProtection from '../middleware/csrfMiddleware.js';
+import { csrfProtection } from '../middleware/csrfMiddleware.js';
 
 dotenv.config();
 

@@ -8,23 +8,38 @@ import SearchPreset from '../models/SearchPreset.js';
 export const saveSearchPreset = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { name, category, minPrice, maxPrice, minRating, radius, keywords } = req.body;
+    const { name, category, minPrice, maxPrice, minRating, radius, keywords, query, filters } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, message: 'Preset name is required' });
     }
 
+    const savedFilters = filters && typeof filters === 'object'
+      ? {
+          category: filters.category || 'All',
+          minPrice: Number(filters.minPrice) || 0,
+          maxPrice: Number(filters.maxPrice) || 100,
+          minRating: Number(filters.minRating) || 0,
+          maxDistance: Number(filters.maxDistance) || 50,
+          availability: filters.availability || 'all',
+          sortBy: filters.sortBy || 'distance'
+        }
+      : {
+          category: category || 'All',
+          minPrice: Number(minPrice) || 0,
+          maxPrice: Number(maxPrice) || 100,
+          minRating: Number(minRating) || 0,
+          maxDistance: Number(radius) || 50,
+          availability: 'all',
+          sortBy: 'distance'
+        };
+
     const preset = await SearchPreset.create({
-      userId,
+      user: userId,
+      userModel: 'User',
       name: name.trim(),
-      filters: {
-        category: category || 'All',
-        minPrice: Number(minPrice) || 0,
-        maxPrice: Number(maxPrice) || 1000,
-        minRating: Number(minRating) || 0,
-        radius: Number(radius) || 50,
-        keywords: keywords || ''
-      }
+      query: (query || keywords) ? String(query || keywords) : '',
+      filters: savedFilters
     });
 
     res.status(201).json({
@@ -49,7 +64,7 @@ export const saveSearchPreset = async (req, res) => {
 export const getUserSearchPresets = async (req, res) => {
   try {
     const userId = req.user._id;
-    const presets = await SearchPreset.find({ userId }).sort({ createdAt: -1 }).lean();
+    const presets = await SearchPreset.find({ user: userId }).sort({ createdAt: -1 }).lean();
 
     res.status(200).json({
       success: true,
@@ -75,7 +90,7 @@ export const deleteSearchPreset = async (req, res) => {
     const userId = req.user._id;
     const { id } = req.params;
 
-    const preset = await SearchPreset.findOneAndDelete({ _id: id, userId });
+    const preset = await SearchPreset.findOneAndDelete({ _id: id, user: userId });
     if (!preset) {
       return res.status(404).json({ success: false, message: 'Search preset not found' });
     }

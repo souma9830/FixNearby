@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const multiLocationGeofenceSchema = new mongoose.Schema({
   workerId: {
@@ -29,4 +29,4 @@ const multiLocationGeofenceSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('MultiLocationGeofence', multiLocationGeofenceSchema);
+export default mongoose.model('MultiLocationGeofence', multiLocationGeofenceSchema);

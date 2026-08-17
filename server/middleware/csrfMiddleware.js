@@ -3,13 +3,20 @@ import crypto from 'crypto';
 /**
  * Double-Submit CSRF Token & SameSite Cookie Protection Middleware
  */
+const readCookie = (req, name) => {
+  const fromParsed = req.cookies?.[name];
+  if (fromParsed) return fromParsed;
+  const header = req.headers?.cookie || '';
+  const match = header.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+  return match ? match[1] : null;
+};
 
 export const csrfProtection = (req, res, next) => {
   // Generate CSRF token cookie if missing
-  let csrfToken = req.cookies?.['XSRF-TOKEN'];
+  let csrfToken = readCookie(req, 'csrf-token');
   if (!csrfToken) {
     csrfToken = crypto.randomBytes(32).toString('hex');
-    res.cookie('XSRF-TOKEN', csrfToken, {
+    res.cookie('csrf-token', csrfToken, {
       httpOnly: false, // Accessible by frontend JavaScript for request headers
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -27,7 +34,7 @@ export const csrfProtection = (req, res, next) => {
   if (!clientHeaderToken || clientHeaderToken !== csrfToken) {
     return res.status(403).json({
       success: false,
-      message: 'CSRF Validation Failed: Invalid or missing X-CSRF-Token header.'
+      message: 'CSRF token validation failed'
     });
   }
 

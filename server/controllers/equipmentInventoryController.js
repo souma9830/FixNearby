@@ -1,6 +1,6 @@
-const EquipmentInventory = require('../models/EquipmentInventory');
+import EquipmentInventory from '../models/EquipmentInventory.js';
 
-exports.addInventoryItem = async (req, res) => {
+export const addInventoryItem = async (req, res) => {
   try {
     const { itemName, category, stockQuantity, unitPrice, reorderThreshold, sku } = req.body;
     const workerId = req.user._id;
@@ -21,7 +21,7 @@ exports.addInventoryItem = async (req, res) => {
   }
 };
 
-exports.getWorkerInventory = async (req, res) => {
+export const getWorkerInventory = async (req, res) => {
   try {
     const items = await EquipmentInventory.find({ workerId: req.user._id }).sort({ itemName: 1 });
     return res.status(200).json({ success: true, data: items });

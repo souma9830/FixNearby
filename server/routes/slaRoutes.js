@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { getWorkerSlaStats } from '../controllers/slaController.js';
+import { protect } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const slaController = require('../controllers/slaController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.get('/worker/:workerId', protect, slaController.getWorkerSlaStats);
+router.get('/worker/:workerId', protect, getWorkerSlaStats);
 
-module.exports = router;
+export default router;
